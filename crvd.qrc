@@ -1,0 +1,30 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/minus.png</file>
+        <file>images/plus.png</file>
+        <file>images/advancedsettings.png</file>
+        <file>images/applications_system.png</file>
+        <file>images/green_switch_256.png</file>
+        <file>images/red_switch_256.png</file>
+        <file>images/stocks.png</file>
+        <file>images/clipboard_new.png</file>
+        <file>images/utilities_system_monitor_128.png</file>
+        <file>images/button_cancel.png</file>
+        <file>images/refresh.png</file>
+        <file>images/apply.png</file>
+        <file>images/Wait0_24.png</file>
+        <file>images/Wait1_24.png</file>
+        <file>images/Wait2_24.png</file>
+        <file>images/Wait3_24.png</file>
+        <file>images/block_24.png</file>
+        <file>images/connect_24.png</file>
+        <file>images/disconnect_24.png</file>
+        <file>images/serial_port.png</file>
+        <file>images/document_save.png</file>
+        <file>images/arrow_up.png</file>
+        <file>images/meter3.png</file>
+        <file>images/stop_24.png</file>
+        <file>images/warning_24.png</file>
+        <file>images/memory.png</file>
+    </qresource>
+</RCC>
