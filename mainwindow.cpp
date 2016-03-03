@@ -147,8 +147,7 @@ void MainWindow::Connect_Disconnect(bool state)
 	{
 	for(int i=0;i<2;i++)
 		{
-		if(i==0)
-			if(state!=OktServExt[i]->StateOn) OktServExt[i]->StartStop(state);
+		if(state!=OktServExt[i]->StateOn) OktServExt[i]->StartStop(state);
 
 		OktServExt[i]->OktServStatus1_Label->setText(OktServExt[i]->StateOn?tr("включен"):tr("выключен"));
 		if(!OktServExt[i]->StateOn)
