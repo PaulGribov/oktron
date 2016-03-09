@@ -1579,6 +1579,10 @@ void RegSetupTableView::keyPressEvent(QKeyEvent *e)
 			nextInFocusChain();
 			break;
 */
+		case Qt::Key_Escape:
+			parentWidget()->close();
+			break;
+
 		default:
 			QTableView::keyPressEvent(e);
 		}

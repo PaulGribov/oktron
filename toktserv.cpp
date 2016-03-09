@@ -236,7 +236,7 @@ void TOktServ::DataSender()
 
 	//Отправка данных в осциллограммы каждые 20мс
 	//Первые 5 пакетов относятся к данным осциллографирования
-	if(((DataSender_Prescale&0x1)==0)&&((PacketUpdatedFlags&0x1D)==0x1D))
+	if(/*((DataSender_Prescale&0x3)==0)&&*/((PacketUpdatedFlags&0x1D)==0x1D))
 		{
 		TOscDataWithIndic od={
 			{
@@ -254,7 +254,7 @@ void TOktServ::DataSender()
 	int m,i;
 	for(i=0;i<16;i++)
 		{
-		QMutexLocker locker(&DataToSendLocker);
+		//QMutexLocker locker(&DataToSendLocker);
 		m=1<<i;
 		if(PacketToSendQuicklyFlags&m)
 			{
@@ -267,7 +267,7 @@ void TOktServ::DataSender()
 		}
 
 	//Отправка данных по последовательному порту для инициализации обмена - каждые 320мс
-	if((DataSender_Prescale&0x1F)==0)
+	if((DataSender_Prescale&0x0F)==0)
 		{
 		PutPacket(OKTSERV_DIAGPACKET_INDEX);
 #ifndef REGSETUPDBG
@@ -314,94 +314,57 @@ void TOktServ::PutPacket(int PacketIndex)
 void TOktServ::ReadData()
 	{
 	qint64 BytesRead=CommPort->read((char *)&DataBuf[DataBufIndex], DATA_BUF_SIZE-1-DataBufIndex);
-	if(BytesRead)
-		{
-		DataBufIndex+=BytesRead;
-		}
-	else
-		{
-		StartStop(false);
-		}
-
-	/*
-	((MainWindow *)pMW)->TextOut(tr("DataBufIndex=%1").arg(DataBufIndex));
-	for(int i=0;i<DataBufIndex;i++)
-		{
-		((MainWindow *)pMW)->TextOut(tr("0x%1").arg(DataBuf[i],0,16));
-		}
-	*/
+	DataBufIndex+=BytesRead;
 
 	//Выделение все пакетов из текущих данных
-	do
+	//Поиск первого пакета
+	int i=0;
+NextSyncFind_loc:
+	for(;i<DataBufIndex-1;i++)
 		{
-		Indic(0, DataBufIndex);
-
-		//Поиск первого пакета
-		int SyncDataFound;
-		for(int i=0;i<DataBufIndex-1;i++)
+		if((DataBuf[i]==0x34)&&(DataBuf[i+1]==0x12))
 			{
-			if((DataBuf[i]==0x34)&&(DataBuf[i+1]==0x12))
+			while((DataBufIndex-i)>=OKTSERV_FULL_PACKETSIZE) //Есть маркер и объем данный соответствует размеру пакета
 				{
-				SyncDataFound=i;
-				goto NextChk_loc;
+				//Указатель на строку начала пакета
+				unsigned char *p=&DataBuf[i];
+
+				//Смещение индекса
+				i+=OKTSERV_FULL_PACKETSIZE;
+
+				//Содержимое пакета верно?
+				if(Crc8Calc(p, OKTSERV_FULL_PACKETSIZE-1)==p[OKTSERV_FULL_PACKETSIZE-1])
+					{
+					TimeoutCnt=0;
+
+					//Целевой номер пакета
+					int PacketIndex=p[OKTSERV_FULL_PACKETSIZE-2]&0x0F;
+
+					//ID пакета
+					PacketID[PacketIndex]=(p[OKTSERV_FULL_PACKETSIZE-2]>>4)&0x0F;
+
+					PktCnt++;
+
+					ErrorFlags&=~OKTSERVERR_NO_REGULATOR_FLAG;
+					memcpy(&(ReceivedData.UnstructuredPacket[PacketIndex]), (p+2), OKTSERV_DATA_PACKETSIZE);
+					PacketUpdatedFlags|=1<<PacketIndex;
+					}
+				//Если не совпала CRC, то проверка синхронизирующих байт...
+				else goto NextSyncFind_loc;
 				}
-			}
-
-		DataBufIndex=0;
-		break;
-
-NextChk_loc:
-
-		//Есть маркер и объем данный соответствует размеру пакета
-		if((DataBufIndex-SyncDataFound)<OKTSERV_FULL_PACKETSIZE)
-			{
+			int j=DataBufIndex-i;
+			if(j<OKTSERV_FULL_PACKETSIZE)
+				{
+				memcpy(DataBuf, &DataBuf[i], j);
+				DataBufIndex=j;
+				return;
+				}
 			break;
 			}
+		}
+	DataBufIndex=0;
+	return;
 
-		//Указатель на строку начала пакета
-		unsigned char *p=&DataBuf[SyncDataFound];
-
-		//Содержимое пакета верно?
-		if(Crc8Calc(p, OKTSERV_FULL_PACKETSIZE-1)==p[OKTSERV_FULL_PACKETSIZE-1])
-			{
-			TimeoutCnt=0;
-
-			//Целевой номер пакета
-			int PacketIndex=p[OKTSERV_FULL_PACKETSIZE-2]&0x0F;
-
-			//ID пакета
-			PacketID[PacketIndex]=(p[OKTSERV_FULL_PACKETSIZE-2]>>4)&0x0F;
-
-			PktCnt++;
-
-			//Если данные не обновлены регулятором, то его нет...
-			if((PacketIndex==0)&&(p[2]==0x55))
-				{
-				for(int i=1;i<OKTSERV_DATA_PACKETSIZE;i++)
-					{
-					if(p[i+2]!=0x55) goto thisisdata_loc;
-					}
-				if(!(ErrorFlags&OKTSERVERR_NO_REGULATOR_FLAG))
-					{
-					//ErrorFlags|=OKTSERVERR_NO_REGULATOR_FLAG;
-					//ErrorCallback();
-					}
-				}
-			else
-				{
-thisisdata_loc:
-				ErrorFlags&=~OKTSERVERR_NO_REGULATOR_FLAG;
-				memcpy(&(ReceivedData.UnstructuredPacket[PacketIndex]), (p+2), OKTSERV_DATA_PACKETSIZE);
-				PacketUpdatedFlags|=1<<PacketIndex;
-				}
-			}
-
-		for(int i=SyncDataFound+OKTSERV_FULL_PACKETSIZE;i<DataBufIndex;i++)
-			{
-			DataBuf[i-SyncDataFound-OKTSERV_FULL_PACKETSIZE]=DataBuf[i];
-			}
-		DataBufIndex-=SyncDataFound+OKTSERV_FULL_PACKETSIZE;
-		} while(1);
 	}
 
 
@@ -428,17 +391,21 @@ bool TOktServ::StartStop(bool StateOnIn)
 		//QString p=CommPortSettingsTexts.CommPort.at(Settings.CommPort_index);
 		//QMessageBox::information(this, QObject::tr("Port"), p);
 		DataBufIndex=0;
+		/*
 		{
 		QMutexLocker lock(&DataToSendLocker);
 		memset(&(DataToSend.UnstructuredPacket[0]), 0x55, OKTSERV_DATA_PACKETSIZE);
 		PacketToSendQuicklyFlags=0x01;
 		}
+		*/
+		PacketToSendQuicklyFlags=0;
 		PacketUpdatedFlags=0;
 		ErrorFlags=0;
 		TimeoutCnt=0;
 		DataSender_Prescale=0;
 
 #ifndef __i386__
+		/*
 		//Предварительное открытие порта
 		struct termios tio;
 		int tty_fd;
@@ -470,6 +437,7 @@ bool TOktServ::StartStop(bool StateOnIn)
 			StateOnIn=false;
 			goto OpenPortQuit_loc;
 			}
+		*/
 #endif
 		CommPort->setPortName(CommPortSettingsTexts.CommPort.at(Settings.CommPort_index));
 		CommPort->setBaudRate(CommPortSettingsTexts.BaudRate.at(Settings.BaudRate_index).toInt());
@@ -489,9 +457,9 @@ bool TOktServ::StartStop(bool StateOnIn)
 		}
 
 #ifndef __i386__
-OpenPortQuit_loc:
+//OpenPortQuit_loc:
 #endif
-	if(StateOnIn) DataSender_QTimer->start(10);
+	if(StateOnIn) DataSender_QTimer->start(20);
 	else DataSender_QTimer->stop();
 	return StateOn=StateOnIn;
 	}

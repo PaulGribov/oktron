@@ -202,13 +202,15 @@ void MainWindow::SystemTimeTick()
 	OktServExt[1]->ForceMaster=OktServExt[0]->ErrorFlags || !OktServExt[0]->StateOn;
 	OktServExt[0]->ForceMaster=OktServExt[1]->ErrorFlags || !OktServExt[1]->StateOn;
 
-	for(int i=0;i<1;i++)
+	/*
+	for(int i=0;i<2;i++)
 		//Попытка восстановить связь при таймауте
 		if((OktServExt[i]->ErrorFlags & OKTSERVERR_TIMEOUT_FLAG))
 			{
 			//Выкл-Вкл сервера (флаги ошибок при вкл.сбрасываются)
 			OktServExt[i]->StartStop(!OktServExt[i]->StateOn);
 			}
+	*/
 #ifdef __linux__
 
 	static int scale;
@@ -310,6 +312,13 @@ void MainWindow::KeysPoll()
 								Qt::Key_Space,
 								Qt::NoModifier));
 					}
+				else if(mask==OKT_KEY_ESC_MASK)
+					{
+					QApplication::postEvent(QApplication::focusWidget(),
+						new QKeyEvent(QEvent::KeyPress,
+						Qt::Key_Escape,
+						Qt::NoModifier));
+					}
 				else
 					CheckGrowKeys(mask);
 
@@ -342,7 +351,7 @@ void MainWindow::DataProcess(TOscDataWithIndic &od, TOscDataWithIndic &previous_
 		okt_serv->Master = od.OscData.Packet0.ModeFlags1 & REG_SELECTED_MODEFALGS1_BIT;
 
 		//Осциллографирование данных
-		okt_serv->OscService->AddOscRecord(od, print);
+		//okt_serv->OscService->AddOscRecord(od, print);
 
 		//SystemTime_Label->setText(QString("0x%1").arg(okt_serv->PacketUpdatedFlags, 4, 16, QLatin1Char('0')).toUpper());
 
