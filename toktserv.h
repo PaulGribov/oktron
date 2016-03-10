@@ -12,7 +12,15 @@
 #include <QLabel>
 #include <QTimer>
 #include "OscService.h"
-
+#ifdef __linux__
+	#include <string.h>
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <unistd.h>
+	#include <fcntl.h>
+	#include <termios.h>
+	#include <stdio.h>
+#endif
 
 typedef struct {
 	int CommPort_index;
@@ -58,6 +66,7 @@ class TOktServ : public QWidget
 #define OKTSERVERR_NO_REGULATOR_FLAG		0x02
 		TCommPortSettings Settings;
 		static TCommPortSettingsTexts CommPortSettingsTexts;
+		void DataSender();
 
 	Q_SIGNALS:
 		void DataUpdate(TOscDataWithIndic &);
@@ -67,9 +76,7 @@ class TOktServ : public QWidget
 	signals:
 
 	public slots:
-		//void ReadData();
 		void ErrorHandler(QSerialPort::SerialPortError error);
-		void DataSender();
 
 	private:
 		xComboBox *CommPort_ComboBox;
@@ -78,10 +85,8 @@ class TOktServ : public QWidget
 		xComboBox *Parity_ComboBox;
 		xComboBox *StopBits_ComboBox;
 		xComboBox *FlowControl_ComboBox;
-		QTimer *DataSender_QTimer;
 
 		int PutPacket(int);
-		QSerialPort *CommPort;
 
 		unsigned char DataBuf[DATA_BUF_SIZE];
 		int DataBufIndex;
@@ -89,6 +94,8 @@ class TOktServ : public QWidget
 		int DataSender_Prescale;
 #ifdef __linux__
 		int CommPortFD;
+#else
+		QSerialPort *CommPort;
 #endif
 	};
 

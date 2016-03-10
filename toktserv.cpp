@@ -1,14 +1,6 @@
 #include "toktserv.h"
 #include "mainwindow.h"
-#ifdef __linux__
-	#include <string.h>
-	#include <stdlib.h>
-	#include <stdio.h>
-	#include <unistd.h>
-	#include <fcntl.h>
-	#include <termios.h>
-	#include <stdio.h>
-#endif
+
 
 TCommPortSettingsTexts TOktServ::CommPortSettingsTexts;
 static const char SYNC_DATA[] = {0x34, 0x12, 0x00};
@@ -21,10 +13,10 @@ TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox, QString name0) : QWidget(Po
 	PktCnt=0;
 	DataSender_Prescale=0;
 
+#ifndef __linux__
 	CommPort = new QSerialPort();
 	QWidget::connect(CommPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(ErrorHandler(QSerialPort::SerialPortError)));
-	//QWidget::connect(CommPort, SIGNAL(readyRead()), this, SLOT(ReadData()));
-	//QWidget::connect(CommPort, SIGNAL(bytesWritten(qint64)), this, SLOT(DataWritten(qint64)));
+#endif
 
 	//Создание списков настроек порта
 	if(CommPortSettingsTexts.CommPort.isEmpty())
@@ -102,6 +94,7 @@ quitchkport_loc:
 	QVBoxLayout *PortSettings_Layout = new QVBoxLayout();
 	PortSettings_GroupBox->setLayout(PortSettings_Layout);
 	CREATE_COMBOBOX_PARAMETER(CommPort, "Порт:", PortSettings)
+#ifndef __linux__
 	QGroupBox *Settings_GroupBox=new QGroupBox();
 	Settings_GroupBox->setTitle(tr("Параметры"));
 	QVBoxLayout *Settings_Layout = new QVBoxLayout();
@@ -118,13 +111,10 @@ quitchkport_loc:
 	PortSettings_GroupBox->parentWidget()->setTabOrder(DataBits_ComboBox, Parity_ComboBox);
 	PortSettings_GroupBox->parentWidget()->setTabOrder(Parity_ComboBox, StopBits_ComboBox);
 	PortSettings_GroupBox->parentWidget()->setTabOrder(StopBits_ComboBox, FlowControl_ComboBox);
-
+#endif
 	//Заполнить списки и вывод текущих настроек
 	PrintPortsParameters();
 
-	DataSender_QTimer = new QTimer(this);
-	connect(DataSender_QTimer , SIGNAL(timeout()), this, SLOT(DataSender()));
-	DataSender_QTimer->stop();
 	PacketToSendQuicklyFlags=0;
 	PacketToSendIndex=0;
 	}
@@ -135,11 +125,13 @@ quitchkport_loc:
 void TOktServ::PortSettingsApply()
 	{
 	Settings.CommPort_index=CommPort_ComboBox->currentIndex();
+#ifndef __linux__
 	Settings.BaudRate_index=BaudRate_ComboBox->currentIndex();
 	Settings.DataBits_index=DataBits_ComboBox->currentIndex();
 	Settings.Parity_index=Parity_ComboBox->currentIndex();
 	Settings.StopBits_index=StopBits_ComboBox->currentIndex();
 	Settings.FlowControl_index=FlowControl_ComboBox->currentIndex();
+#endif
 	}
 
 //===========================================================================
@@ -147,6 +139,7 @@ void TOktServ::PortSettingsApply()
 //===========================================================================
 void TOktServ::PrintPortsParameters()
 	{
+#ifndef __linux__
 	BaudRate_ComboBox->clear();
 	BaudRate_ComboBox->addItems(CommPortSettingsTexts.BaudRate);
 	BaudRate_ComboBox->setCurrentIndex(Settings.BaudRate_index);
@@ -162,6 +155,7 @@ void TOktServ::PrintPortsParameters()
 	FlowControl_ComboBox->clear();
 	FlowControl_ComboBox->addItems(CommPortSettingsTexts.FlowControl);
 	FlowControl_ComboBox->setCurrentIndex(Settings.FlowControl_index);
+#endif
 	CommPort_ComboBox->clear();
 	if(CommPortSettingsTexts.CommPort.count())
 		{
@@ -176,7 +170,6 @@ void TOktServ::PrintPortsParameters()
 		{
 		CommPort_ComboBox->addItem(tr("нет доступных портов"));
 		}
-
 	}
 
 
@@ -234,17 +227,16 @@ void TOktServ::DataSender()
 	int i;
 
 #ifdef __linux__
-	//tcdrain(CommPortFD);
 	BytesRead=read(CommPortFD, (char *)&DataBuf[DataBufIndex], DATA_BUF_SIZE-DataBufIndex);
 #else
 	BytesRead=CommPort->read((char *)&DataBuf[DataBufIndex], DATA_BUF_SIZE-DataBufIndex);
 #endif
 
+	//Обработка полученных данных
 	if(BytesRead>0)
 		{
 		DataBufIndex+=BytesRead;
 
-		//Выделение все пакетов из текущих данных
 		//Поиск первого пакета
 		i=0;
 NextSyncFind_loc:
@@ -298,7 +290,6 @@ NextSyncFind_loc:
 DataSender_loc:
 	++DataSender_Prescale;
 
-
 	//Отправка данных в осциллограммы каждые 20мс
 	//Первые 5 пакетов относятся к данным осциллографирования
 	if(((DataSender_Prescale&0x3)==0)&&((PacketUpdatedFlags&0x1D)==0x1D))
@@ -318,11 +309,11 @@ DataSender_loc:
 	//Отсылка срочных пакетов
 	int m;
 	for(i=0;i<16;i++)
-		{
-		//QMutexLocker locker(&DataToSendLocker);
+		{		
 		m=1<<i;
 		if(PacketToSendQuicklyFlags&m)
 			{
+			QMutexLocker locker(&DataToSendLocker);
 			static int j;
 			j++;
 			PacketToSendQuicklyFlags&=~m;
@@ -380,79 +371,17 @@ int TOktServ::PutPacket(int PacketIndex)
 	return BytesWritten;
 	}
 
-/*
-//===========================================================================
-//Обработка полученных данных
-//===========================================================================
-void TOktServ::ReadData()
-	{
-	qint64 BytesRead=CommPort->read((char *)&DataBuf[DataBufIndex], DATA_BUF_SIZE-1-DataBufIndex);
-	DataBufIndex+=BytesRead;
-
-	//Выделение все пакетов из текущих данных
-	//Поиск первого пакета
-	int i=0;
-NextSyncFind_loc:
-
-	for(;i<DataBufIndex-1;i++)
-		{
-		if((DataBuf[i]==0x34)&&(DataBuf[i+1]==0x12))
-			{
-			while((DataBufIndex-i)>=OKTSERV_FULL_PACKETSIZE) //Есть маркер и объем данный соответствует размеру пакета
-				{
-				//Указатель на строку начала пакета
-				unsigned char *p=&DataBuf[i];
-
-				//Смещение индекса
-				i+=OKTSERV_FULL_PACKETSIZE;
-
-				//Содержимое пакета верно?
-				if(Crc8Calc(p, OKTSERV_FULL_PACKETSIZE-1)==p[OKTSERV_FULL_PACKETSIZE-1])
-					{
-					TimeoutCnt=0;
-
-					//Целевой номер пакета
-					int PacketIndex=p[OKTSERV_FULL_PACKETSIZE-2]&0x0F;
-
-					//ID пакета
-					PacketID[PacketIndex]=(p[OKTSERV_FULL_PACKETSIZE-2]>>4)&0x0F;
-
-					PktCnt++;
-
-					ErrorFlags&=~OKTSERVERR_NO_REGULATOR_FLAG;
-					memcpy(&(ReceivedData.UnstructuredPacket[PacketIndex]), (p+2), OKTSERV_DATA_PACKETSIZE);
-					PacketUpdatedFlags|=1<<PacketIndex;
-					}
-				//Если не совпала CRC, то проверка синхронизирующих байт...
-				else goto NextSyncFind_loc;
-				}
-			int j=DataBufIndex-i;
-			if(j<OKTSERV_FULL_PACKETSIZE)
-				{
-				memcpy(DataBuf, &DataBuf[i], j);
-				DataBufIndex=j;
-				return;
-				}
-			break;
-			}
-		}
-	DataBufIndex=0;
-	return;
-
-	}
-*/
 
 void TOktServ::ErrorHandler(QSerialPort::SerialPortError error)
 	{
 	if(error == QSerialPort::ResourceError)
 		{
-#ifndef __i386__
+#ifndef __linux__
 		QMessageBox::critical(this, tr("Ошибка"), CommPort->errorString());
 		StartStop(false);
 #endif
 		}
 	}
-
 
 
 //===========================================================================
@@ -462,16 +391,7 @@ bool TOktServ::StartStop(bool StateOnIn)
 	{
 	if(StateOnIn&&(StateOn!=StateOnIn))
 		{
-		//QString p=CommPortSettingsTexts.CommPort.at(Settings.CommPort_index);
-		//QMessageBox::information(this, QObject::tr("Port"), p);
 		DataBufIndex=0;
-		/*
-		{
-		QMutexLocker lock(&DataToSendLocker);
-		memset(&(DataToSend.UnstructuredPacket[0]), 0x55, OKTSERV_DATA_PACKETSIZE);
-		PacketToSendQuicklyFlags=0x01;
-		}
-		*/
 		PacketToSendQuicklyFlags=0;
 		PacketUpdatedFlags=0;
 		ErrorFlags=0;
@@ -493,22 +413,6 @@ bool TOktServ::StartStop(bool StateOnIn)
 			cfsetispeed(&tio,B115200);            // 115200 baud
 			tcsetattr(CommPortFD,TCSANOW,&tio);
 			tcflush(CommPortFD, TCIOFLUSH);
-			/*
-			unsigned char tmp;
-			int n;
-			do
-				{
-				//n=PutPacket(OKTSERV_DIAGPACKET_INDEX);
-
-				QByteArray p(OKTSERV_FULL_PACKETSIZE, 0);
-				QString txt="0123456789012345678901234567890123456789";
-				tcdrain(CommPortFD);
-				//n=write(CommPortFD, txt.toAscii(), 40);
-				n=write(CommPortFD, (char *)p.data(), OKTSERV_FULL_PACKETSIZE);
-
-				qDebug() << tr("bytes writen: %1").arg(n);
-				} while(1);
-			*/
 			}
 		else
 			{
@@ -539,7 +443,5 @@ bool TOktServ::StartStop(bool StateOnIn)
 
 		}
 
-	if(StateOnIn) DataSender_QTimer->start(20);
-	else DataSender_QTimer->stop();
 	return StateOn=StateOnIn;
 	}

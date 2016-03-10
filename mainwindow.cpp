@@ -42,6 +42,10 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(SystemTime_QTimer, SIGNAL(timeout()), this, SLOT(SystemTimeTick()));
 	SystemTime_QTimer->start(1000);
 
+	DataSender_QTimer = new QTimer(this);
+	connect(DataSender_QTimer , SIGNAL(timeout()), this, SLOT(DataSender()));
+	DataSender_QTimer->stop();
+
 
 	DestDiskState_Label=new QLabel();
 	DestDiskState_Label->setText(tr("Диска нет"));
@@ -175,6 +179,7 @@ void MainWindow::Connect_Disconnect(bool state)
 			{
 			OktServExt[i]->RegSetup_GetBlocksID->Stop();
 			}
+		DataSender_QTimer->stop();
 		}
 	else
 		{
@@ -185,11 +190,15 @@ void MainWindow::Connect_Disconnect(bool state)
 			OktServExt[i]->RegSetup_GetBlocksID->ReadSettingsDesc();
 			OktServExt[i]->RegSetup_GetBlocksID->GetBlocksIDSlot();
 			}
-
+		DataSender_QTimer->start(20);
 		}
 
-	//Read_qpb->setIconSize(pixmap.rect().size());
-	//OktServStatus0_Label->setPixmap(QPixmap(OktServ0->StateOn?":/images/connect_24.png":":/images/disconnect_24.png"));
+	}
+
+void MainWindow::DataSender()
+	{
+	OktServExt[0]->DataSender();
+	OktServExt[1]->DataSender();
 	}
 
 
@@ -202,15 +211,6 @@ void MainWindow::SystemTimeTick()
 	OktServExt[1]->ForceMaster=OktServExt[0]->ErrorFlags || !OktServExt[0]->StateOn;
 	OktServExt[0]->ForceMaster=OktServExt[1]->ErrorFlags || !OktServExt[1]->StateOn;
 
-	/*
-	for(int i=0;i<2;i++)
-		//Попытка восстановить связь при таймауте
-		if((OktServExt[i]->ErrorFlags & OKTSERVERR_TIMEOUT_FLAG))
-			{
-			//Выкл-Вкл сервера (флаги ошибок при вкл.сбрасываются)
-			OktServExt[i]->StartStop(!OktServExt[i]->StateOn);
-			}
-	*/
 #ifdef __linux__
 
 	static int scale;
@@ -351,7 +351,7 @@ void MainWindow::DataProcess(TOscDataWithIndic &od, TOscDataWithIndic &previous_
 		okt_serv->Master = od.OscData.Packet0.ModeFlags1 & REG_SELECTED_MODEFALGS1_BIT;
 
 		//Осциллографирование данных
-		//okt_serv->OscService->AddOscRecord(od, print);
+		okt_serv->OscService->AddOscRecord(od, print);
 
 		//SystemTime_Label->setText(QString("0x%1").arg(okt_serv->PacketUpdatedFlags, 4, 16, QLatin1Char('0')).toUpper());
 

@@ -65,6 +65,8 @@ class MainWindow : public QMainWindow
 		void SystemTimeTick();
 		void KeysPoll();
 		void CheckGrowKeys(unsigned short mask);
+		void DataSender();
+
 
 		void on_ParsOfReserv_Button_clicked();
 		void on_ParsOfBase_Button_clicked();
@@ -96,7 +98,7 @@ class MainWindow : public QMainWindow
 #define OKT_KEYS_NUM	16
 		int KeyTimeCnt[OKT_KEYS_NUM];
 		QTimer *KeysPoll_QTimer;
-
+		QTimer *DataSender_QTimer;
 
 
 
