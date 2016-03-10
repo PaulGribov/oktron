@@ -67,7 +67,7 @@ class TOktServ : public QWidget
 	signals:
 
 	public slots:
-		void ReadData();
+		//void ReadData();
 		void ErrorHandler(QSerialPort::SerialPortError error);
 		void DataSender();
 
@@ -80,14 +80,16 @@ class TOktServ : public QWidget
 		xComboBox *FlowControl_ComboBox;
 		QTimer *DataSender_QTimer;
 
-		void PutPacket(int);
+		int PutPacket(int);
 		QSerialPort *CommPort;
 
 		unsigned char DataBuf[DATA_BUF_SIZE];
 		int DataBufIndex;
 		int TimeoutCnt;
-		quint64 DataSender_Prescale;
-
+		int DataSender_Prescale;
+#ifdef __linux__
+		int CommPortFD;
+#endif
 	};
 
 #define OKTSERV_BOX_MINWIDTH    200

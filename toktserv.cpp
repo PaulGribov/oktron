@@ -1,6 +1,6 @@
 #include "toktserv.h"
 #include "mainwindow.h"
-#ifndef __i386__
+#ifdef __linux__
 	#include <string.h>
 	#include <stdlib.h>
 	#include <stdio.h>
@@ -23,7 +23,7 @@ TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox, QString name0) : QWidget(Po
 
 	CommPort = new QSerialPort();
 	QWidget::connect(CommPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(ErrorHandler(QSerialPort::SerialPortError)));
-	QWidget::connect(CommPort, SIGNAL(readyRead()), this, SLOT(ReadData()));
+	//QWidget::connect(CommPort, SIGNAL(readyRead()), this, SLOT(ReadData()));
 	//QWidget::connect(CommPort, SIGNAL(bytesWritten(qint64)), this, SLOT(DataWritten(qint64)));
 
 	//Создание списков настроек порта
@@ -230,13 +230,78 @@ unsigned char TOktServ::Crc8Calc(unsigned char *data, int n)
 //===========================================================================
 void TOktServ::DataSender()
 	{
+	int BytesRead;
+	int i;
+
+#ifdef __linux__
+	//tcdrain(CommPortFD);
+	BytesRead=read(CommPortFD, (char *)&DataBuf[DataBufIndex], DATA_BUF_SIZE-DataBufIndex);
+#else
+	BytesRead=CommPort->read((char *)&DataBuf[DataBufIndex], DATA_BUF_SIZE-DataBufIndex);
+#endif
+
+	if(BytesRead>0)
+		{
+		DataBufIndex+=BytesRead;
+
+		//Выделение все пакетов из текущих данных
+		//Поиск первого пакета
+		i=0;
+NextSyncFind_loc:
+
+		for(;i<DataBufIndex-1;i++)
+			{
+			if((DataBuf[i]==0x34)&&(DataBuf[i+1]==0x12))
+				{
+				while((DataBufIndex-i)>=OKTSERV_FULL_PACKETSIZE) //Есть маркер и объем данный соответствует размеру пакета
+					{
+					//Указатель на строку начала пакета
+					unsigned char *p=&DataBuf[i];
+
+					//Смещение индекса
+					i+=OKTSERV_FULL_PACKETSIZE;
+
+					//Содержимое пакета верно?
+					if(Crc8Calc(p, OKTSERV_FULL_PACKETSIZE-1)==p[OKTSERV_FULL_PACKETSIZE-1])
+						{
+						TimeoutCnt=0;
+
+						//Целевой номер пакета
+						int PacketIndex=p[OKTSERV_FULL_PACKETSIZE-2]&0x0F;
+
+						//ID пакета
+						PacketID[PacketIndex]=(p[OKTSERV_FULL_PACKETSIZE-2]>>4)&0x0F;
+
+						PktCnt++;
+
+						ErrorFlags&=~OKTSERVERR_NO_REGULATOR_FLAG;
+						memcpy(&(ReceivedData.UnstructuredPacket[PacketIndex]), (p+2), OKTSERV_DATA_PACKETSIZE);
+						PacketUpdatedFlags|=1<<PacketIndex;
+						}
+					//Если не совпала CRC, то проверка синхронизирующих байт...
+					else goto NextSyncFind_loc;
+					}
+				//Перенос остатка в начало буфера
+				int j=DataBufIndex-i;
+				if(j>0)
+					{
+					memcpy(DataBuf, &DataBuf[i], j);
+					DataBufIndex=j;
+					goto DataSender_loc;
+					}
+				break;
+				}
+			}
+		DataBufIndex=0;
+		}
+
+DataSender_loc:
 	++DataSender_Prescale;
 
-	//ReceivedData.UnstructuredPacket[14]=ReceivedData.UnstructuredPacket[OKTSERV_IOPACKET_INDEX];
 
 	//Отправка данных в осциллограммы каждые 20мс
 	//Первые 5 пакетов относятся к данным осциллографирования
-	if(/*((DataSender_Prescale&0x3)==0)&&*/((PacketUpdatedFlags&0x1D)==0x1D))
+	if(((DataSender_Prescale&0x3)==0)&&((PacketUpdatedFlags&0x1D)==0x1D))
 		{
 		TOscDataWithIndic od={
 			{
@@ -251,7 +316,7 @@ void TOktServ::DataSender()
 		}
 
 	//Отсылка срочных пакетов
-	int m,i;
+	int m;
 	for(i=0;i<16;i++)
 		{
 		//QMutexLocker locker(&DataToSendLocker);
@@ -288,7 +353,7 @@ void TOktServ::DataSender()
 		}
 	}
 
-void TOktServ::PutPacket(int PacketIndex)
+int TOktServ::PutPacket(int PacketIndex)
 	{
 	QByteArray p(OKTSERV_FULL_PACKETSIZE, 0);
 
@@ -304,10 +369,18 @@ void TOktServ::PutPacket(int PacketIndex)
 	//CRC8
 	p.data()[OKTSERV_FULL_PACKETSIZE-1]=(unsigned char)Crc8Calc((unsigned char *)&(p.data()[0]), OKTSERV_FULL_PACKETSIZE-1);
 
+	int BytesWritten;
+
+#ifdef __linux__
+	tcdrain(CommPortFD);
+	BytesWritten=write(CommPortFD, (char *)p.data(), OKTSERV_FULL_PACKETSIZE);
+#else
 	CommPort->write(p);
+#endif
+	return BytesWritten;
 	}
 
-
+/*
 //===========================================================================
 //Обработка полученных данных
 //===========================================================================
@@ -320,6 +393,7 @@ void TOktServ::ReadData()
 	//Поиск первого пакета
 	int i=0;
 NextSyncFind_loc:
+
 	for(;i<DataBufIndex-1;i++)
 		{
 		if((DataBuf[i]==0x34)&&(DataBuf[i+1]==0x12))
@@ -366,7 +440,7 @@ NextSyncFind_loc:
 	return;
 
 	}
-
+*/
 
 void TOktServ::ErrorHandler(QSerialPort::SerialPortError error)
 	{
@@ -404,41 +478,44 @@ bool TOktServ::StartStop(bool StateOnIn)
 		TimeoutCnt=0;
 		DataSender_Prescale=0;
 
-#ifndef __i386__
-		/*
-		//Предварительное открытие порта
+#ifdef __linux__
 		struct termios tio;
-		int tty_fd;
-		int n;
-		char tmp;
-
 		memset(&tio,0,sizeof(tio));
 		tio.c_cflag=CS8|CREAD|CLOCAL;           // 8n1, see termios.h for more information
 		tio.c_cc[VMIN]=1;
 		tio.c_cc[VTIME]=5;
 
 		QString p="/dev/"+CommPortSettingsTexts.CommPort.at(Settings.CommPort_index);
-		tty_fd=::open(p.toAscii(), O_RDWR | O_NONBLOCK);
-		if(tty_fd)
+		CommPortFD=::open(p.toAscii(), O_RDWR | O_NONBLOCK);
+		if(CommPortFD)
 			{
 			cfsetospeed(&tio,B115200);            // 115200 baud
 			cfsetispeed(&tio,B115200);            // 115200 baud
-			tcsetattr(tty_fd,TCSANOW,&tio);
-			tcflush(tty_fd, TCIOFLUSH);
+			tcsetattr(CommPortFD,TCSANOW,&tio);
+			tcflush(CommPortFD, TCIOFLUSH);
+			/*
+			unsigned char tmp;
+			int n;
 			do
 				{
-				n=read(tty_fd, &tmp, 1);
-				} while(n>0);
-			::close(tty_fd);
+				//n=PutPacket(OKTSERV_DIAGPACKET_INDEX);
+
+				QByteArray p(OKTSERV_FULL_PACKETSIZE, 0);
+				QString txt="0123456789012345678901234567890123456789";
+				tcdrain(CommPortFD);
+				//n=write(CommPortFD, txt.toAscii(), 40);
+				n=write(CommPortFD, (char *)p.data(), OKTSERV_FULL_PACKETSIZE);
+
+				qDebug() << tr("bytes writen: %1").arg(n);
+				} while(1);
+			*/
 			}
 		else
 			{
-			QMessageBox::critical(this, QObject::tr("Ошибка"), QObject::tr("Ошибка предварительного открытия порта"));
+			QMessageBox::critical(this, QObject::tr("Ошибка"), QObject::tr("Ошибка при открытии порта"));
 			StateOnIn=false;
-			goto OpenPortQuit_loc;
 			}
-		*/
-#endif
+#else
 		CommPort->setPortName(CommPortSettingsTexts.CommPort.at(Settings.CommPort_index));
 		CommPort->setBaudRate(CommPortSettingsTexts.BaudRate.at(Settings.BaudRate_index).toInt());
 		CommPort->setDataBits(static_cast<QSerialPort::DataBits>(CommPortSettingsTexts.DataBits.at(Settings.DataBits_index).toInt()));
@@ -450,15 +527,18 @@ bool TOktServ::StartStop(bool StateOnIn)
 			QMessageBox::critical(this, QObject::tr("Ошибка при открытии порта"), CommPort->errorString());
 			StateOnIn=false;
 			}
+#endif
 		}
 	else
 		{
+#ifdef __linux__
+		::close(CommPortFD);
+#else
 		CommPort->close();
+#endif
+
 		}
 
-#ifndef __i386__
-//OpenPortQuit_loc:
-#endif
 	if(StateOnIn) DataSender_QTimer->start(20);
 	else DataSender_QTimer->stop();
 	return StateOn=StateOnIn;
