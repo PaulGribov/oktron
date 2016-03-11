@@ -194,28 +194,40 @@ class xTabWidget : public QTabWidget
 
 		bool eventFilter(QObject *object, QEvent *e)
 			{
-			if((object->inherits("QTableView")==false) && (object->inherits("QPushButton")==false) && (object->inherits("QComboBox")==false) && (e->type() == QEvent::KeyPress))
+			if(e->type() == QEvent::KeyPress)
 				{
 				QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
-
-				switch(keyEvent->key())
+				if(keyEvent->key()==Qt::Key_Escape)
 					{
-					case Qt::Key_Up:
-						QApplication::postEvent(this,
-									new QKeyEvent(QEvent::KeyPress,
-									Qt::Key_Backtab,
-									Qt::NoModifier));
-						return true;
-					case Qt::Key_Down:
-						QApplication::postEvent(this,
-									new QKeyEvent(QEvent::KeyPress,
-									Qt::Key_Tab,
-									Qt::NoModifier));
-						return true;
+					QWidget *w=parentWidget();
+					while(w->inherits("QMainWindow")==false)
+						{
+						w=w->parentWidget();
+						}
+					w->close();
+					return true;
+					}
+				else if((object->inherits("QTableView")==false) && (object->inherits("QPushButton")==false) && (object->inherits("QComboBox")==false))
+					{
 
-					case Qt::Key_Space:
-					default:
-						break;
+					switch(keyEvent->key())
+						{
+						case Qt::Key_Up:
+							QApplication::postEvent(this,
+										new QKeyEvent(QEvent::KeyPress,
+										Qt::Key_Backtab,
+										Qt::NoModifier));
+							return true;
+						case Qt::Key_Down:
+							QApplication::postEvent(this,
+										new QKeyEvent(QEvent::KeyPress,
+										Qt::Key_Tab,
+										Qt::NoModifier));
+							return true;
+						case Qt::Key_Space:
+						default:
+							break;
+						}
 					}
 				}
 			return false;

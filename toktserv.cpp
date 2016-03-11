@@ -160,7 +160,6 @@ void TOktServ::PrintPortsParameters()
 	if(CommPortSettingsTexts.CommPort.count())
 		{
 		CommPort_ComboBox->addItems(CommPortSettingsTexts.CommPort);
-		//Main_GroupBox->setEnabled(true);
 		if(Settings.CommPort_index<CommPortSettingsTexts.CommPort.count())
 			{
 			CommPort_ComboBox->setCurrentIndex(Settings.CommPort_index);

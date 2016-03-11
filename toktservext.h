@@ -38,7 +38,7 @@ class TOktServExt : public TOktServ
 		void GetDataOktServ(TOscDataWithIndic &od)
 			{
 			bool print=false;
-			if((++PktCntPrescale&0x3F)==0)
+			if((++PktCntPrescale&0x0F)==0)
 				{
 				/*
 				if(ForceMaster)
@@ -50,8 +50,10 @@ class TOktServExt : public TOktServ
 					OktServIndic_Label->setPixmap(*wait_qp[(PktCntPrescale>>3) & 0x03]);
 					}
 				*/
+				OktServIndic_Label->setPixmap(*wait_qp[(PktCntPrescale>>3) & 0x03]);
 				OktServIndic_Label->clear();
-				PktCnt_Label->setText(tr("Пакеты: %1").arg(PktCnt));
+				//PktCnt_Label->setText(tr("Пакеты: %1").arg(PktCnt));
+				PktCnt_Label->clear();
 				print=true;
 				}
 			DataProcessLocal(od, previous_od, this, 0, print);
