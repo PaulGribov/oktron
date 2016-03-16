@@ -477,11 +477,13 @@ void MainWindow::on_MakeOsc_Button_clicked()
 	//TEvent Event={QDateTime::currentDateTime(), tr("Старт")};
 	//OscService0->OscStart(Event);
 	//OscService1->OscStart(Event);
-	//close();
+	close();
+	/*
 	QApplication::postEvent(QApplication::focusWidget(),
 		new QKeyEvent(QEvent::KeyPress,
 		Qt::Key_Up,
 		Qt::NoModifier));
+	*/
 	}
 
 void MainWindow::on_RegsSetup_Button_clicked()

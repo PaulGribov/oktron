@@ -318,6 +318,7 @@ remdeverr_loc:
 		goto remdeverr_loc;
 
 	//Сброс USB-устройства - для обновления записи в /dev
+	usbreset("/dev/bus/usb/001/001");
 	usbreset("/dev/bus/usb/002/001");
 
 	sleep(5);
