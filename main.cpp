@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 		return 1;
 		}
 
-#ifdef __linux__
+#if defined(__linux__) && (!defined(__i386__))
 	if(QDir::setCurrent("/mnt/localdisk"))
 		{
 		//Создание подкаталога oscs

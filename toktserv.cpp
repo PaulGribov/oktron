@@ -405,7 +405,11 @@ bool TOktServ::StartStop(bool StateOnIn)
 		tio.c_cc[VTIME]=5;
 
 		QString p="/dev/"+CommPortSettingsTexts.CommPort.at(Settings.CommPort_index);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+		CommPortFD=::open(p.toLatin1(), O_RDWR | O_NONBLOCK);
+#else
 		CommPortFD=::open(p.toAscii(), O_RDWR | O_NONBLOCK);
+#endif
 		if(CommPortFD)
 			{
 			cfsetospeed(&tio,B115200);            // 115200 baud

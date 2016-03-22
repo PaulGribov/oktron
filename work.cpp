@@ -214,7 +214,11 @@ char *LastConnectedDiskFind()
 #ifndef __i386__
 		dev_name[2]='a'+i;
 #else
-		dev_name[2]='b'+i;
+	#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+		dev_name[2]='c'+i; //на ноуте, где qt5.5.1, дисков 2
+	#else
+		dev_name[2]='b'+i; //на компе, где qt4.8.4, диск 1
+	#endif
 #endif
 		dev_name[3]=0;
 		if(GetDestDiskState(dev_name))
@@ -264,8 +268,6 @@ bool GetDestDiskState(char *dev_name)
 bool usbreset(const char *dev_name)
 	{
 	int fd;
-	int rc;
-
 	fd = open(dev_name, O_WRONLY);
 	if (fd < 0)
 		{
@@ -273,8 +275,10 @@ bool usbreset(const char *dev_name)
 		return false;
 		}
 
-	rc = ioctl(fd, USBDEVFS_RESET, 0);
+	ioctl(fd, USBDEVFS_RESET, 0);
 	/*
+	int rc;
+	rc = ioctl(fd, USBDEVFS_RESET, 0);
 	if (rc < 0)
 		{
 		qDebug() << "usbreset: Error in ioctl";
@@ -348,7 +352,11 @@ remdeverr_loc:
 
 			//Копирование содержимого каталога
 			strcpy(command, "cp -v -f -r /mnt/localdisk/oscs /mnt/destdisk/osc_from__");
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+			strcat(command, QDateTime::currentDateTime().toString("dd_MM_yyyy__hh_mm_ss").toLatin1().data());
+#else
 			strcat(command, QDateTime::currentDateTime().toString("dd_MM_yyyy__hh_mm_ss").toAscii().data());
+#endif
 			fp = popen(command, "r");
 			if(fp)
 				{
@@ -418,7 +426,11 @@ bool SetSystemClock(QDateTime &date)
 #ifndef __i386__
 	strcat(command, date.toString("yyyyMMddhhmm.ss").toAscii().data());
 #else
+	#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+	strcat(command, date.toString("MMddhhmmyyyy.ss").toLatin1().data());
+	#else
 	strcat(command, date.toString("MMddhhmmyyyy.ss").toAscii().data());
+	#endif
 #endif
 	qDebug() << command;
 	fp = popen(command, "r");
