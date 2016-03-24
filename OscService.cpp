@@ -409,58 +409,72 @@ void TOscService::AddOscRecord(TOscDataWithIndic &data, bool print)
 			}
 		}
 
+
+
 	if(print)
 		{
 		//Обновление содержимого таблицы
-		Packet[0].Items[0][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Ustat_1V, 0, 'f', 0));
-		Packet[0].Items[1][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Istat_0_1A/10, 0, 'f', 1));
-		Packet[0].Items[2][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Uvozb_0_1V/10, 0, 'f', 1));
-		Packet[0].Items[3][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Ivozb_0_1A/10, 0, 'f', 1));
-		Packet[0].Items[4][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Istat_react_0_1A/10, 0, 'f', 1));
-		Packet[0].Items[5][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Istat_act_0_1A/10, 0, 'f', 1));
-		Packet[0].Items[6][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.OscData.Packet0.OutCode));
-		Packet[0].Items[7][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.OscData.Packet0.ModeFlags1, 4, 16, QLatin1Char('0')).toUpper());
-		BitsStateFillToModel(ModeFlags1, data.OscData.Packet0.ModeFlags1);
-		Packet[0].Items[8][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.OscData.Packet0.ModeFlags2, 4, 16, QLatin1Char('0')).toUpper());
-		BitsStateFillToModel(ModeFlags2, data.OscData.Packet0.ModeFlags2);
-		Packet[0].Items[9][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Freq_0_01Hz/100, 0, 'f', 2));
-
-		Packet[2].Items[0][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.Uip1_0_01V/100, 0, 'f', 2));
-		Packet[2].Items[1][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.Uip2_0_01V/100, 0, 'f', 2));
-		Packet[2].Items[2][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.Unakopit_0_01V/100, 0, 'f', 2));
-		Packet[2].Items[3][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.U5V_0_01V/100, 0, 'f', 2));
-		Packet[2].Items[4][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.U24V_0_01V/100, 0, 'f', 2));
-		Packet[2].Items[5][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.I24V_0_001A/1000, 0, 'f', 3));
-		Packet[2].Items[6][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.T_0_1C/10, 0, 'f', 1));
-		Packet[2].Items[7][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet2.Config, 4, 16, QLatin1Char('0')).toUpper());
-		BitsStateFillToModel(Config, data.Packet2.Config);
-
-		Packet[3].Items[0][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet3.KeysState, 4, 16, QLatin1Char('0')).toUpper());
-		BitsStateFillToModel(KeysState, data.Packet3.KeysState);
-		Packet[3].Items[1][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.U24V1_0_01V/100, 0, 'f', 2));
-		Packet[3].Items[2][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.U24V2_0_01V/100, 0, 'f', 2));
-		Packet[3].Items[3][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.U5V_0_01V/100, 0, 'f', 2));
-		Packet[3].Items[4][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.Ublokv_0_01V/100, 0, 'f', 2));
-		Packet[3].Items[5][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.Iip_0_001A/1000, 0, 'f', 3));
-		Packet[3].Items[6][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.Iblokv_0_001A/1000, 0, 'f', 3));
-
-		Packet[4].Items[0][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Ustat_code));
-		Packet[4].Items[1][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Istat_code));
-		Packet[4].Items[2][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Uvozb_code));
-		Packet[4].Items[3][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Ivozb_code));
-		Packet[4].Items[4][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Istat_react_code));
-		Packet[4].Items[5][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Istat_act_code));
-		Packet[4].Items[6][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Freq));
-		Packet[4].Items[7][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Irot_f150_300));
-		Packet[4].Items[8][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Urot_f50));
-
-		for(int i=0;i<16;i++)
+		switch(ParametersView_TabWidget->currentIndex())
 			{
-			QString txt=QString("0x%1, %L2, %L3").arg(data.Packet14.vals[i].uint16, 4, 16, QLatin1Char('0')).arg((float)data.Packet14.vals[i].uint16, 0, 'f', 0).arg((float)data.Packet14.vals[i].int16, 0, 'f', 0);
-			Packet[14].Items[i][PARAMETERSVIEWTAB_VAL_COL]->setText(txt);
+			case 0:
+				Packet[0].Items[0][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Ustat_1V, 0, 'f', 0));
+				Packet[0].Items[1][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Istat_0_1A/10, 0, 'f', 1));
+				Packet[0].Items[2][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Uvozb_0_1V/10, 0, 'f', 1));
+				Packet[0].Items[3][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Ivozb_0_1A/10, 0, 'f', 1));
+				Packet[0].Items[4][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Istat_react_0_1A/10, 0, 'f', 1));
+				Packet[0].Items[5][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Istat_act_0_1A/10, 0, 'f', 1));
+				Packet[0].Items[6][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.OscData.Packet0.OutCode));
+				Packet[0].Items[7][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.OscData.Packet0.ModeFlags1, 4, 16, QLatin1Char('0')).toUpper());
+				BitsStateFillToModel(ModeFlags1, data.OscData.Packet0.ModeFlags1);
+				Packet[0].Items[8][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.OscData.Packet0.ModeFlags2, 4, 16, QLatin1Char('0')).toUpper());
+				BitsStateFillToModel(ModeFlags2, data.OscData.Packet0.ModeFlags2);
+				Packet[0].Items[9][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.OscData.Packet0.Freq_0_01Hz/100, 0, 'f', 2));
+				break;
+			case 1:
+				Packet[2].Items[0][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.Uip1_0_01V/100, 0, 'f', 2));
+				Packet[2].Items[1][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.Uip2_0_01V/100, 0, 'f', 2));
+				Packet[2].Items[2][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.Unakopit_0_01V/100, 0, 'f', 2));
+				Packet[2].Items[3][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.U5V_0_01V/100, 0, 'f', 2));
+				Packet[2].Items[4][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.U24V_0_01V/100, 0, 'f', 2));
+				Packet[2].Items[5][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.I24V_0_001A/1000, 0, 'f', 3));
+				Packet[2].Items[6][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet2.T_0_1C/10, 0, 'f', 1));
+				Packet[2].Items[7][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet2.Config, 4, 16, QLatin1Char('0')).toUpper());
+				BitsStateFillToModel(Config, data.Packet2.Config);
+				break;
+			case 2:
+				Packet[3].Items[0][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet3.KeysState, 4, 16, QLatin1Char('0')).toUpper());
+				BitsStateFillToModel(KeysState, data.Packet3.KeysState);
+				Packet[3].Items[1][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.U24V1_0_01V/100, 0, 'f', 2));
+				Packet[3].Items[2][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.U24V2_0_01V/100, 0, 'f', 2));
+				Packet[3].Items[3][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.U5V_0_01V/100, 0, 'f', 2));
+				Packet[3].Items[4][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.Ublokv_0_01V/100, 0, 'f', 2));
+				Packet[3].Items[5][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.Iip_0_001A/1000, 0, 'f', 3));
+				Packet[3].Items[6][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%L1").arg((float)data.Packet3.Iblokv_0_001A/1000, 0, 'f', 3));
+				break;
+			case 3:
+				Packet[4].Items[0][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Ustat_code));
+				Packet[4].Items[1][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Istat_code));
+				Packet[4].Items[2][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Uvozb_code));
+				Packet[4].Items[3][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Ivozb_code));
+				Packet[4].Items[4][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Istat_react_code));
+				Packet[4].Items[5][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Istat_act_code));
+				Packet[4].Items[6][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Freq));
+				Packet[4].Items[7][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Irot_f150_300));
+				Packet[4].Items[8][PARAMETERSVIEWTAB_VAL_COL]->setText(QString("%1").arg(data.Packet4.Urot_f50));
+				break;
+			case 4:
+				for(int i=0;i<16;i++)
+					{
+					QString txt=QString("0x%1, %L2, %L3").arg(data.Packet14.vals[i].uint16, 4, 16, QLatin1Char('0')).arg((float)data.Packet14.vals[i].uint16, 0, 'f', 0).arg((float)data.Packet14.vals[i].int16, 0, 'f', 0);
+					Packet[14].Items[i][PARAMETERSVIEWTAB_VAL_COL]->setText(txt);
+					}
+				break;
+			default:
+				break;
 			}
 
 		}
+
 	}
 
 void TOscService::BitsDescWriteToOscFile(QFile &OscFile, struct BitsDescStruct &bits)

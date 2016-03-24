@@ -38,7 +38,7 @@ class TOktServExt : public TOktServ
 		void GetDataOktServ(TOscDataWithIndic &od)
 			{
 			bool print=false;
-			if((++PktCntPrescale&0x0F)==0)
+			if((++PktCntPrescale&0x07)==0)
 				{
 				/*
 				if(ForceMaster)
