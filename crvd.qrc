@@ -26,5 +26,21 @@
         <file>images/stop_24.png</file>
         <file>images/warning_24.png</file>
         <file>images/memory.png</file>
+        <file>images/border_but0_disabled.png</file>
+        <file>images/border_but0_enabled.png</file>
+        <file>images/border_but0_hover.png</file>
+        <file>images/border_but0_pressed.png</file>
+        <file>images/border_but3_disabled.png</file>
+        <file>images/border_but3_enabled.png</file>
+        <file>images/border_but3_hover.png</file>
+        <file>images/border_but3_pressed.png</file>
+        <file>images/border_but1_disabled.png</file>
+        <file>images/border_but1_enabled.png</file>
+        <file>images/border_but1_hover.png</file>
+        <file>images/border_but1_pressed.png</file>
+        <file>images/border_but2_disabled.png</file>
+        <file>images/border_but2_enabled.png</file>
+        <file>images/border_but2_hover.png</file>
+        <file>images/border_but2_pressed.png</file>
     </qresource>
 </RCC>

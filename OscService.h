@@ -5,13 +5,10 @@
 #include <QDateTime>
 #include <QStyledItemDelegate>
 #include <QStandardItem>
-#include <QTableView>
 #include <QtGui>
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
-	#include <QtWidgets/QMainWindow>
-	#include <QtWidgets/QComboBox>
-	#include <QtWidgets/QApplication>
-#endif
+#include <QLabel>
+#include "xWidgets.h"
+
 
 class QModelIndex;
 class QPainter;
@@ -184,134 +181,6 @@ typedef struct
 	QStandardItem *pOscStateCell;
 	} TOscProcess;
 
-class xTabWidget : public QTabWidget
-	{
-	public:
-		xTabWidget(QWidget *parent=NULL) : QTabWidget(parent)
-			{
-			installEventFilter(this);
-			}
-
-		bool eventFilter(QObject *object, QEvent *e)
-			{
-			if(e->type() == QEvent::KeyPress)
-				{
-				QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
-				if(keyEvent->key()==Qt::Key_Escape)
-					{
-					QWidget *w=parentWidget();
-					while(w->inherits("QMainWindow")==false)
-						{
-						w=w->parentWidget();
-						}
-					w->close();
-					return true;
-					}
-				else if((object->inherits("QTableView")==false) && (object->inherits("QPushButton")==false) && (object->inherits("QComboBox")==false))
-					{
-
-					switch(keyEvent->key())
-						{
-						case Qt::Key_Up:
-							QApplication::postEvent(this,
-										new QKeyEvent(QEvent::KeyPress,
-										Qt::Key_Backtab,
-										Qt::NoModifier));
-							return true;
-						case Qt::Key_Down:
-							QApplication::postEvent(this,
-										new QKeyEvent(QEvent::KeyPress,
-										Qt::Key_Tab,
-										Qt::NoModifier));
-							return true;
-						case Qt::Key_Space:
-						default:
-							break;
-						}
-					}
-				}
-			return false;
-			}
-	};
-
-class xComboBox : public QComboBox
-	{
-	public:
-		xComboBox(QWidget *parent=NULL) : QComboBox(parent)
-			{
-			installEventFilter(this);
-			}
-
-		bool eventFilter(/*QObject *object, */QEvent *e)
-			{
-			//object;
-			if((e->type() == QEvent::KeyPress))
-				{
-				QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
-
-				switch(keyEvent->key())
-					{
-					case Qt::Key_Left:
-						QApplication::postEvent(this,
-									new QKeyEvent(QEvent::KeyPress,
-									Qt::Key_Backtab,
-									Qt::NoModifier));
-						return true;
-					case Qt::Key_Right:
-						QApplication::postEvent(this,
-									new QKeyEvent(QEvent::KeyPress,
-									Qt::Key_Tab,
-									Qt::NoModifier));
-						return true;
-
-					case Qt::Key_Space:
-						QApplication::postEvent(this,
-									new QKeyEvent(QEvent::KeyPress,
-									Qt::Key_Enter,
-									Qt::NoModifier));
-						return true;
-
-					default:
-						break;
-					}
-				}
-			return false;
-			}
-
-/*
-		void keyPressEvent(QKeyEvent *e)
-			{
-			switch(e->key())
-				{
-				case Qt::Key_Left:
-					QComboBox::keyPressEvent(
-						new QKeyEvent(QEvent::KeyPress,
-						Qt::Key_Tab,
-						Qt::NoModifier));
-					break;
-
-				case Qt::Key_Right:
-					QComboBox::keyPressEvent(
-						new QKeyEvent(QEvent::KeyPress,
-						Qt::Key_Backtab,
-						Qt::NoModifier));
-					break;
-
-				case Qt::Key_Up:
-					e->ignore();
-					previousInFocusChain();
-					break;
-
-				case Qt::Key_Right:
-					e->ignore();
-					nextInFocusChain();
-					break;
-				default:
-					QComboBox::keyPressEvent(e);
-				}
-			}
-*/
-	};
 
 class TOscService : public QWidget
 	{
@@ -328,6 +197,8 @@ class TOscService : public QWidget
 		QStandardItemModel OscList_Model;
 		QTableView *OscList_TableView;
 		xTabWidget *ParametersView_TabWidget;
+		xButton *OscList_CloseButton;
+		xButton *ParametersView_CloseButton;
 		QStringList TabNames_StringList;
 		struct BitsDescStruct {
 			QStringList StringList;
@@ -339,13 +210,12 @@ class TOscService : public QWidget
 			QWidget *Tab;
 			QTableView *TableView;
 			QStandardItemModel Model;
-			//QStandardItem *Items[16][2];
 			QList<QStandardItem *> Items[16];
 			} Packet[OKTSERV_PACKETS_NUM];
 		QTimer *tester_QTimer;
 		bool SaveOscillogram(TOscProcess &op);
 		void ResetOscProcess();
-
+		void Retranslate();
 
 	signals:
 

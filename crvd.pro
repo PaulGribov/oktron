@@ -1,8 +1,15 @@
 lessThan(QT_MAJOR_VERSION, 5) {
-QT += core gui
-CONFIG += serialport
+	QT += core gui
+	win32 {
+	CONFIG += serialport
+	}
 } else {
-QT += widgets serialport
+	win32 {
+	QT += widgets serialport
+	}
+	unix {
+	QT += widgets
+	}
 }
 
 
@@ -14,7 +21,9 @@ SOURCES += main.cpp mainwindow.cpp \
     xspinbox.cpp \
     tprogsettings.cpp \
     teventslog.cpp \
-    toktservext.cpp
+    toktservext.cpp \
+    tgeneralmeasview.cpp \
+    xWidgets.cpp
 HEADERS += mainwindow.h \
     work.h \
     OscService.h \
@@ -23,7 +32,9 @@ HEADERS += mainwindow.h \
     xspinbox.h \
     tprogsettings.h \
     teventslog.h \
-    toktservext.h
+    toktservext.h \
+    tgeneralmeasview.h \
+    xWidgets.h
 FORMS += mainwindow.ui
 
 RESOURCES += \

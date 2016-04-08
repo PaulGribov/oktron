@@ -2,14 +2,16 @@
 #define TPROGSETTINGS_H
 
 #include <QtCore/QCoreApplication>
-#include <QtSerialPort/QSerialPort>
-#include <QtSerialPort/QSerialPortInfo>
 #include <QMainWindow>
 #include <QFrame>
 #include <QLayout>
 #include "toktservext.h"
 #include <QDateTimeEdit>
 #include <QCheckBox>
+#ifndef __linux__
+	#include <QtSerialPort/QSerialPort>
+	#include <QtSerialPort/QSerialPortInfo>
+#endif
 
 class TProgSettings : public QMainWindow
 	{
@@ -22,7 +24,7 @@ class TProgSettings : public QMainWindow
 		TOktServ *OktServ[2];
 		xTabWidget *ProgSettings_tabWidget;
 		QWidget *PortSettings_Tab, *GeneralSettings_Tab;
-		QPushButton *PortsSettingsApply_Button;
+		xButton *PortsSettingsApply_Button;
 		QCheckBox *AutomaticStart_CheckBox;
 		struct {
 			bool AutomaticStart;
@@ -35,6 +37,9 @@ class TProgSettings : public QMainWindow
 			}
 		void show();
 		QDateTime PresetVal;
+		xButton *Save_Button;
+		xButton *Close_Button;
+		void Retranslate();
 
 	private:
 		void SaveCommSettings(QXmlStreamWriter &xml, int server_index);

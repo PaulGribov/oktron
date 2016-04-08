@@ -12,6 +12,7 @@
 #include <QLayout>
 #include <QLabel>
 #include "toktserv.h"
+#include "xWidgets.h"
 
 typedef enum
 	{
@@ -213,10 +214,6 @@ class RegSetupTableView : public QTableView
 		void *OSRS_parent;
 		void keyPressEvent(QKeyEvent *event);
 		void currentChanged(const QModelIndex &current, const QModelIndex &previous);
-		void Edit(QModelIndex &current)
-			{
-			edit(current);
-			}
 	};
 
 typedef struct
@@ -234,8 +231,8 @@ typedef struct
 		QFrame *Frame;
 		QHBoxLayout *Layout;
 		QSpacerItem *Spacer;
-		QPushButton *Reload_Button;
-		QPushButton *Close_Button;
+		xButton *Reload_Button;
+		xButton *Close_Button;
 		} ButtonsBar;
 	QWidget *Focused;
 	} TRegSetupWidgets;
@@ -248,8 +245,8 @@ class TOktServRegSetup : public QWidget
 		explicit TOktServRegSetup(QWidget *RegSetupParent=NULL, QWidget *GetBlocksIDParent=NULL, TOktServ *OktServ=NULL);
 
 
-		QPushButton *SettingsApply_Button;
-		QPushButton *SaveSettings_Button;
+		xButton *SettingsApply_Button;
+		xButton *SaveSettings_Button;
 
 #define	REQ_SEQ_LEN	300
 		struct {
@@ -314,6 +311,7 @@ class TOktServRegSetup : public QWidget
 		bool IsBusy();
 		void Start_Service();
 		void StopService();
+		void Retranslate();
 
 typedef enum	{errIOPacketReceiveTimeout=0,
 		errIOPacketDeliveredTimeout,

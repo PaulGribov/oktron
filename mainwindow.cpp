@@ -1,6 +1,4 @@
 #include <QtCore/QCoreApplication>
-#include <QtSerialPort/QSerialPort>
-#include <QtSerialPort/QSerialPortInfo>
 #include <QKeyEvent>
 
 #include "mainwindow.h"
@@ -8,10 +6,12 @@
 #include "work.h"
 #include "OscService.h"
 
+
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ui(new Ui::MainWindow)
 	{
 	ui->setupUi(this);
+	setStyleSheet("background-color: rgb(235,236,236);");
 
 #ifndef __i386__
 	showFullScreen();
@@ -25,11 +25,6 @@ MainWindow::MainWindow(QWidget *parent)
 	for(int i=0;i<2;i++)
 		{
 		connect(OktServExt[i], SIGNAL(DataProcessLocal(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)), this, SLOT(DataProcess(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)));
-		ui->statusBar->addWidget(OktServExt[i]->OktServIndic_Label);
-		ui->statusBar->addWidget(OktServExt[i]->OktServStatus0_Label);
-		ui->statusBar->addWidget(OktServExt[i]->OktServStatus1_Label);
-		ui->statusBar->addWidget(OktServExt[i]->PktCnt_Label);
-		ui->statusBar->addWidget(new QLabel(tr("")));
 		}
 
 	ProgSettings->GeneralSettings.AutomaticStart=true;
@@ -37,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 	//Таймер
 	SystemTime_Label=new QLabel();
-	ui->statusBar->addWidget(SystemTime_Label);
+	//ui->statusBar->addWidget(SystemTime_Label);
 	SystemTime_QTimer = new QTimer(this);
 	connect(SystemTime_QTimer, SIGNAL(timeout()), this, SLOT(SystemTimeTick()));
 	SystemTime_QTimer->start(1000);
@@ -49,92 +44,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 	DestDiskState_Label=new QLabel();
 	DestDiskState_Label->setText(tr("Диска нет"));
-	ui->statusBar->addWidget(DestDiskState_Label);
+	//ui->statusBar->addWidget(DestDiskState_Label);
 
 	//Журнал событий
-	EventsLog_MainWindow = new QMainWindow();
-	EventsLog_MainWindow->setWindowTitle(tr("Журнал событий"));
-	EventsLog_MainWindow->setWindowIcon(QIcon(":/images/clipboard_new.png"));
-	EventsLog = new TEventsLog(EventsLog_MainWindow);
-
-	//Текущие измерения
-	QVBoxLayout *LeftCol_Layout = new QVBoxLayout();
-	QVBoxLayout *RightCol_Layout = new QVBoxLayout();
-
-	QBrush brush(Qt::blue);
-	brush.setStyle(Qt::SolidPattern);
-	QPalette palette0;
-	palette0.setBrush(QPalette::Active, QPalette::WindowText, brush);
-	palette0.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
-	brush.setColor(QColor(230, 88, 42));
-	QPalette palette1;
-	palette1.setBrush(QPalette::Active, QPalette::WindowText, brush);
-	palette1.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
-
-	QFont font0;
-	font0.setPointSize(20);
-	font0.setBold(false);
-	QFont font1;
-	font1.setPointSize(58);
-	font1.setBold(true);
-	QFont font2;
-	font2.setPointSize(16);
-	font2.setBold(false);
-	QFont font3;
-	font3.setPointSize(28);
-	font3.setBold(true);
-	QFont font4;
-	font4.setPointSize(12);
-	font4.setBold(false);
-	//Ustat1_Label->setAlignment(Qt::AlignRight);
-
-#define CREATE_LABEL_PARAMETER(a, b, c, d, e, f, g)\
-		QHBoxLayout *a##_Layout = new QHBoxLayout();\
-		a##0_Label = new QLabel(tr(b));\
-		a##0_Label->setPalette(palette0);\
-		a##0_Label->setFont(font##d);\
-		a##_Layout->addWidget(a##0_Label, 0, Qt::AlignRight | Qt::AlignVCenter);\
-		a##1_Label = new QLabel();\
-		a##1_Label->setPalette(palette1);\
-		a##1_Label->setFont(font##e);\
-		a##1_Label->setFixedWidth(g);\
-		a##1_Label->setAlignment(Qt::AlignRight);\
-		a##_Layout->addWidget(a##1_Label, 0, Qt::AlignCenter | Qt::AlignVCenter);\
-		a##2_Label = new QLabel(tr(f));\
-		a##2_Label->setPalette(palette0);\
-		a##2_Label->setFont(font##d);\
-		a##_Layout->addWidget(a##2_Label, 0, Qt::AlignLeft | Qt::AlignVCenter);\
-		c##_Layout->addLayout(a##_Layout);
-
-
-#ifndef __i386__
-	#define W0 180
-	#define W1 105
-#else
-	#define W0 250
-	#define W1 120
-#endif
-	CREATE_LABEL_PARAMETER(Reg, "Регулятор:", LeftCol, 2, 3, "", W0+20)
-	CREATE_LABEL_PARAMETER(Ustat, "U стат:", LeftCol, 0, 1, "кВ", W0)
-	CREATE_LABEL_PARAMETER(Istat, "I стат:", LeftCol, 0, 1, "А", W0)
-	CREATE_LABEL_PARAMETER(Istat_react, "I стат.реакт:", LeftCol, 2, 3, "А.реакт.", W1)
-	CREATE_LABEL_PARAMETER(Mode, "Режим:", RightCol, 2, 3, "", W0+50)
-	CREATE_LABEL_PARAMETER(Uvozb, "U возб:", RightCol, 0, 1, "В", W0)
-	CREATE_LABEL_PARAMETER(Ivozb, "I возб:", RightCol, 0, 1, "А", W0)
-	CREATE_LABEL_PARAMETER(Istat_act, "I стат.акт:", RightCol, 2, 3, "А.реакт.", W1)
-
-	QHBoxLayout *Meas_Layout = new QHBoxLayout();
-	Meas_Layout->addLayout(LeftCol_Layout);
-	Meas_Layout->addLayout(RightCol_Layout);
-	ui->Meas_GroupBox->setLayout(Meas_Layout);
-
-	QVBoxLayout *LastEventExt_Layout = new QVBoxLayout();
-	CREATE_LABEL_PARAMETER(LastEvent, "", LastEventExt, 4, 4, "", 350)
-	ui->LastEvent_GroupBox->setLayout(LastEventExt_Layout);
-
-	PrintDataEnabled=false;
-	ui->ParsOfBase_Button->setEnabled(false);
-	ui->ParsOfReserv_Button->setEnabled(false);
+	EventsLog = new TEventsLog();
 
 	for(int i=0;i<OKT_KEYS_NUM;i++) KeyTimeCnt[i]=0;
 	KeysPoll_QTimer = new QTimer(this);
@@ -145,35 +58,89 @@ MainWindow::MainWindow(QWidget *parent)
 	Connect_Disconnect(ProgSettings->GeneralSettings.AutomaticStart);
 
 	PrintEvent(EventsLog->MakeEvent(tr("Старт программы"), false));
+
+	EventsLog->showNormal();
+
+	MenuCreate();
+	Retranslate();
 	}
+
+void MainWindow::MenuCreate()
+	{
+	QHBoxLayout *Line1_Layout = new QHBoxLayout();
+
+	ParsOfBase_Button = new xButton(QIcon(":/images/meter3.png"));
+	connect(ParsOfBase_Button, SIGNAL(clicked()), this, SLOT(ParsOfBase_Button_OnClick()));
+	Line1_Layout->addWidget(ParsOfBase_Button);
+
+	ParsOfReserv_Button = new xButton(QIcon(":/images/meter3.png"));
+	connect(ParsOfReserv_Button, SIGNAL(clicked()), this, SLOT(ParsOfReserv_Button_OnClick()));
+	Line1_Layout->addWidget(ParsOfReserv_Button);
+
+	RegsSetup_Button = new xButton(QIcon(":/images/advancedsettings.png"));
+	connect(RegsSetup_Button, SIGNAL(clicked()), this, SLOT(RegsSetup_Button_OnClick()));
+	Line1_Layout->addWidget(RegsSetup_Button);
+
+	QHBoxLayout *Line2_Layout = new QHBoxLayout();
+
+	GetBlocksID_Button = new xButton(QIcon(":/images/memory.png"));
+	connect(GetBlocksID_Button, SIGNAL(clicked()), this, SLOT(GetBlocksID_Button_OnClick()));
+	Line2_Layout->addWidget(GetBlocksID_Button);
+
+	EventsLog_Button = new xButton(QIcon(":/images/clipboard_new.png"));
+	connect(EventsLog_Button, SIGNAL(clicked()), this, SLOT(EventsLog_Button_OnClick()));
+	Line2_Layout->addWidget(EventsLog_Button);
+
+	ProgSettings_Button = new xButton(QIcon(":/images/applications_system.png"));
+	ProgSettings_Button->setIcon(QIcon(":/images/applications_system.png"));
+	connect(ProgSettings_Button, SIGNAL(clicked()), this, SLOT(ProgSettings_Button_OnClick()));
+	Line2_Layout->addWidget(ProgSettings_Button);
+
+	QWidget *Main_Widget=new QWidget();
+	QVBoxLayout *Col_Layout = new QVBoxLayout();
+	Col_Layout->addLayout(Line1_Layout);
+	Col_Layout->addLayout(Line2_Layout);
+	Main_Widget->setLayout(Col_Layout);
+	setCentralWidget(Main_Widget);
+	}
+
+void MainWindow::Retranslate()
+	{
+	ParsOfBase_Button->setText(tr("ПАРАМЕТРЫ\nОСНОВНОГО"));
+	ParsOfReserv_Button->setText(tr("ПАРАМЕТРЫ\nРЕЗЕРВНОГО"));
+	RegsSetup_Button->setText(tr("НАСТРОЙКИ\nРЕГУЛЯТОРА"));
+	GetBlocksID_Button->setText(tr("СПИСОК\nБЛОКОВ"));
+	EventsLog_Button->setText(tr("ЖУРНАЛ\nСОБЫТИЙ"));
+	ProgSettings_Button->setText(tr("НАСТРОЙКИ\nПРОГРАММЫ"));
+	}
+
 
 void MainWindow::Connect_Disconnect(bool state)
 	{
 	for(int i=0;i<2;i++)
 		{
-		if(state!=OktServExt[i]->StateOn) OktServExt[i]->StartStop(state);
+		if(i==0) { if(state!=OktServExt[i]->StateOn) OktServExt[i]->StartStop(state); }
+		else OktServExt[i]->StartStop(false);
 
-		OktServExt[i]->OktServStatus1_Label->setText(OktServExt[i]->StateOn?tr("включен"):tr("выключен"));
 		if(!OktServExt[i]->StateOn)
 			{
-			OktServExt[i]->OktServIndic_Label->setPixmap(QPixmap(":/images/stop_24.png"));
-			OktServExt[i]->PktCnt_Label->setText(tr(""));
+			//OktServExt[i]->OktServIndic_Label->setPixmap(QPixmap(":/images/stop_24.png"));
 			OktServExt[i]->ParametersView_MainWindow->close();
 			}
 		else
 			{
-			OktServExt[i]->PktCnt_Label->setText(tr("Нет данных"));
+			//OktServExt[i]->PktCnt_Label->setText(tr("Нет данных"));
 			}
 		}
 
 	state=(OktServExt[0]->StateOn||OktServExt[1]->StateOn);
 	QPixmap pixmap(state?":/images/red_switch_256.png":":/images/green_switch_256.png");
 	QIcon ButtonIcon(pixmap);
-	ui->OktServOnOff_Button->setIcon(ButtonIcon);
-	ui->OktServOnOff_Button->setText(state?tr("Выключить сервер"):tr("Включить сервер"));
+	//ui->OktServOnOff_Button->setIcon(ButtonIcon);
+	//ui->OktServOnOff_Button->setText(state?tr("Выключить сервер"):tr("Включить сервер"));
 	if(!state)
 		{
-		PrintDataDisabled();
+		//PrintDataDisabled();
 		ProgSettings->PortsSettingsApply_Button->setEnabled(true);
 		for(int i=0;i<2;i++)
 			{
@@ -197,8 +164,8 @@ void MainWindow::Connect_Disconnect(bool state)
 
 void MainWindow::DataSender()
 	{
-	OktServExt[0]->DataSender();
-	OktServExt[1]->DataSender();
+	if(OktServExt[0]->StateOn) OktServExt[0]->DataSender();
+	if(OktServExt[1]->StateOn) OktServExt[1]->DataSender();
 	}
 
 
@@ -238,6 +205,7 @@ void MainWindow::PrintEvent(TEventExt *e)
 	{
 	if(e)
 		{
+		/*
 		//Надпись на экране
 		LastEvent0_Label->setText(e->Event.DateTime.toString(tr("dd.MM.yyyy hh:mm:ss")));
 		LastEvent1_Label->setText(e->Event.Text);
@@ -252,6 +220,9 @@ void MainWindow::PrintEvent(TEventExt *e)
 			{
 			LastEvent2_Label->setText(tr(""));
 			}
+		*/
+		//Если присвоен номер осц., то выполнить осциллографиование
+		if(e->OscIndex>=0) for(int i=0;i<2;i++) if(OktServExt[i]->StateOn) OktServExt[i]->OscService->OscStart(e);
 
 		//Удаление события созданного в MakeEvent
 		delete e;
@@ -367,7 +338,7 @@ void MainWindow::DataProcess(TOscDataWithIndic &od, TOscDataWithIndic &previous_
 			//Вывод данных на форму
 			if(print)
 				{
-				PrintData(od, okt_serv->Name1);
+				//PrintData(od, okt_serv->Name1);
 				}
 			}
 
@@ -376,56 +347,11 @@ void MainWindow::DataProcess(TOscDataWithIndic &od, TOscDataWithIndic &previous_
 		}
 	else
 		{
-		if((okt_serv->Master)||(okt_serv->ForceMaster)) PrintDataDisabled();
+		//if((okt_serv->Master)||(okt_serv->ForceMaster)) PrintDataDisabled();
 		}
 	}
 
-//Печать данных на экран
-void MainWindow::PrintData(TOscDataWithIndic &od, QString name)
-	{
-	Reg1_Label->setText(name);
-	Mode1_Label->setText(((od.OscData.Packet0.ModeFlags1 & SW_ON_MODEFALGS1_BIT)?tr("В работе"):tr("Остановлен")));
-	Ustat1_Label->setText(tr("%L1").arg((float)od.OscData.Packet0.Ustat_1V/1000, 5, 'f', 2, ' '));
-	Istat1_Label->setText(tr("%L1").arg((float)od.OscData.Packet0.Istat_0_1A/10, 5, 'f', 0, ' '));
-	Uvozb1_Label->setText(tr("%L1").arg((float)od.OscData.Packet0.Uvozb_0_1V/10, 5, 'f', 1, ' '));
-	Ivozb1_Label->setText(tr("%L1").arg((float)od.OscData.Packet0.Ivozb_0_1A/10, 5, 'f', 1, ' '));
-	Istat_react1_Label->setText(tr("%L1").arg((float)od.OscData.Packet0.Istat_react_0_1A/10, 5, 'f', 0, ' '));
-	Istat_act1_Label->setText(tr("%L1").arg((float)od.OscData.Packet0.Istat_act_0_1A/10, 5, 'f', 0, ' '));
-	if(!PrintDataEnabled)
-		{
-		PrintDataEnabled=true;
-		ui->ParsOfBase_Button->setEnabled(OktServExt[0]->StateOn);
-		ui->ParsOfReserv_Button->setEnabled(OktServExt[1]->StateOn);
-		ui->RegsSetup_Button->setEnabled(true);
-		ui->GetBlocksID_Button->setEnabled(true);
-		}
-	}
 
-//Печать данных на экран
-void MainWindow::PrintDataDisabled()
-	{
-	Reg1_Label->setText(tr("---"));
-	Mode1_Label->setText(tr("---"));
-	Ustat1_Label->setText(tr("---"));
-	Istat1_Label->setText(tr("---"));
-	Uvozb1_Label->setText(tr("---"));
-	Ivozb1_Label->setText(tr("---"));
-	Istat_react1_Label->setText(tr("---"));
-	Istat_act1_Label->setText(tr("---"));
-
-	OktServExt[0]->ParametersView_MainWindow->close();
-	OktServExt[0]->OscService->ResetOscProcess();
-	ui->ParsOfBase_Button->setEnabled(false);
-	OktServExt[1]->ParametersView_MainWindow->close();
-	OktServExt[1]->OscService->ResetOscProcess();
-	ui->ParsOfReserv_Button->setEnabled(false);
-	OktServExt[0]->RegSetup_CloseSlotExternal();
-	ui->RegsSetup_Button->setEnabled(false);
-	ui->GetBlocksID_Button->setEnabled(false);
-	OktServExt[0]->GetBlocksID_CloseSlotExternal();
-
-	PrintDataEnabled=false;
-	}
 
 MainWindow::~MainWindow()
 	{
@@ -444,7 +370,7 @@ void MainWindow::showExpanded()
 }
 
 
-void MainWindow::on_ParsOfBase_Button_clicked()
+void MainWindow::ParsOfBase_Button_OnClick()
 	{
 #ifndef __i386__
 	OktServExt[0]->ParametersView_MainWindow->showFullScreen();
@@ -453,7 +379,7 @@ void MainWindow::on_ParsOfBase_Button_clicked()
 #endif
 	}
 
-void MainWindow::on_ParsOfReserv_Button_clicked()
+void MainWindow::ParsOfReserv_Button_OnClick()
 	{
 #ifndef __i386__
 	OktServExt[1]->ParametersView_MainWindow->showFullScreen();
@@ -463,16 +389,16 @@ void MainWindow::on_ParsOfReserv_Button_clicked()
 	}
 
 
-void MainWindow::on_EventsLog_Button_clicked()
+void MainWindow::EventsLog_Button_OnClick()
 	{
 #ifndef __i386__
-	EventsLog_MainWindow->showFullScreen();
+	EventsLog->showFullScreen();
 #else
-	EventsLog_MainWindow->showNormal();
+	EventsLog->showNormal();
 #endif
 	}
 
-void MainWindow::on_MakeOsc_Button_clicked()
+void MainWindow::MakeOsc_Button_OnClick()
 	{
 	//TEvent Event={QDateTime::currentDateTime(), tr("Старт")};
 	//OscService0->OscStart(Event);
@@ -486,7 +412,7 @@ void MainWindow::on_MakeOsc_Button_clicked()
 	*/
 	}
 
-void MainWindow::on_RegsSetup_Button_clicked()
+void MainWindow::RegsSetup_Button_OnClick()
 	{
 #ifndef __i386__
 	OktServExt[0]->RegSetup_MainWindow->showFullScreen();
@@ -496,7 +422,7 @@ void MainWindow::on_RegsSetup_Button_clicked()
 	OktServExt[0]->RegSetup_Tab->setFocus();
 	}
 
-void MainWindow::on_ProgSettings_Button_clicked()
+void MainWindow::ProgSettings_Button_OnClick()
 	{
 #ifndef __i386__
 	ProgSettings->showFullScreen();
@@ -505,7 +431,7 @@ void MainWindow::on_ProgSettings_Button_clicked()
 #endif
 	}
 
-void MainWindow::on_OscListOfBase_Button_clicked()
+void MainWindow::OscListOfBase_Button_OnClick()
 	{
 #ifndef __i386__
 	OktServExt[0]->OscList_MainWindow->showFullScreen();
@@ -514,7 +440,7 @@ void MainWindow::on_OscListOfBase_Button_clicked()
 #endif
 	}
 
-void MainWindow::on_OscListOfReserv_Button_clicked()
+void MainWindow::OscListOfReserv_Button_OnClick()
 	{
 #ifndef __i386__
 	OktServExt[1]->OscList_MainWindow->showFullScreen();
@@ -523,12 +449,12 @@ void MainWindow::on_OscListOfReserv_Button_clicked()
 #endif
 	}
 
-void MainWindow::on_OktServOnOff_Button_clicked()
+void MainWindow::OktServOnOff_Button_OnClick()
 	{
 	Connect_Disconnect(!(OktServExt[0]->StateOn|OktServExt[1]->StateOn));
 	}
 
-void MainWindow::on_GetBlocksID_Button_clicked()
+void MainWindow::GetBlocksID_Button_OnClick()
 	{
 #ifndef __i386__
 	OktServExt[0]->GetBlocksID_MainWindow->showFullScreen();

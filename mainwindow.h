@@ -7,8 +7,6 @@
 #else
 	#include <QtGui/QMainWindow>
 #endif
-
-#include <QtSerialPort/QSerialPort>
 #include <QStringListModel>
 #include <QStandardItemModel>
 
@@ -16,11 +14,14 @@
 #include "tregsetup.h"
 #include "teventslog.h"
 #include "toktservext.h"
+#include "xWidgets.h"
 
 
 namespace Ui {
     class MainWindow;
 }
+
+
 
 class MainWindow : public QMainWindow
 	{
@@ -34,7 +35,6 @@ class MainWindow : public QMainWindow
 		TOktServExt *OktServExt[2];
 		QLabel *SystemTime_Label;
 		TProgSettings *ProgSettings;
-		QMainWindow *EventsLog_MainWindow;
 		TEventsLog *EventsLog;
 		QTimer *SystemTime_QTimer;
 		QLabel *DestDiskState_Label;
@@ -58,42 +58,44 @@ class MainWindow : public QMainWindow
 
 
 
-	private slots:
+	public slots:
 		void DataProcess(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool);
-		void PrintData(TOscDataWithIndic &, QString);
-		void PrintDataDisabled();
+
 		void SystemTimeTick();
 		void KeysPoll();
 		void CheckGrowKeys(unsigned short mask);
 		void DataSender();
+		void MenuCreate();
+		void Retranslate();
 
-
-		void on_ParsOfReserv_Button_clicked();
-		void on_ParsOfBase_Button_clicked();
-		void on_EventsLog_Button_clicked();
-		void on_MakeOsc_Button_clicked();
-		void on_RegsSetup_Button_clicked();
-		void on_ProgSettings_Button_clicked();
-		void on_OscListOfBase_Button_clicked();
-		void on_OscListOfReserv_Button_clicked();
-		void on_OktServOnOff_Button_clicked();
-		void on_GetBlocksID_Button_clicked();
+		void ParsOfReserv_Button_OnClick();
+		void ParsOfBase_Button_OnClick();
+		void EventsLog_Button_OnClick();
+		void MakeOsc_Button_OnClick();
+		void RegsSetup_Button_OnClick();
+		void ProgSettings_Button_OnClick();
+		void OscListOfBase_Button_OnClick();
+		void OscListOfReserv_Button_OnClick();
+		void OktServOnOff_Button_OnClick();
+		void GetBlocksID_Button_OnClick();
 
 	private:
 		Ui::MainWindow *ui;
 
-#define MW_DECL_LABEL_PARAMETER(a)	QLabel *a##0_Label, *a##1_Label, *a##2_Label;
-		MW_DECL_LABEL_PARAMETER(Reg)
-		MW_DECL_LABEL_PARAMETER(Mode)
-		MW_DECL_LABEL_PARAMETER(Ustat)
-		MW_DECL_LABEL_PARAMETER(Istat)
-		MW_DECL_LABEL_PARAMETER(Uvozb)
-		MW_DECL_LABEL_PARAMETER(Ivozb)
-		MW_DECL_LABEL_PARAMETER(Istat_react)
-		MW_DECL_LABEL_PARAMETER(Istat_act)
-		MW_DECL_LABEL_PARAMETER(LastEvent)
+		xButton *ParsOfReserv_Button;
+		xButton *ParsOfBase_Button;
+		xButton *EventsLog_Button;
+		xButton *RegsSetup_Button;
+		xButton *GetBlocksID_Button;
+		xButton *MakeOsc_Button;
+		xButton *ProgSettings_Button;
+		/*
+		void OscListOfBase_Button_OnClick();
+		void OscListOfReserv_Button_OnClick();
+		void OktServOnOff_Button_OnClick();
+		*/
 
-		bool PrintDataEnabled;
+
 		unsigned short KeysState;
 #define OKT_KEYS_NUM	16
 		int KeyTimeCnt[OKT_KEYS_NUM];

@@ -5,8 +5,6 @@
 #else
 	#include <QApplication>
 #endif
-#include <QtSerialPort/QSerialPort>
-#include <QtSerialPort/QSerialPortInfo>
 #include "mainwindow.h"
 #include "work.h"
 #ifdef __linux__

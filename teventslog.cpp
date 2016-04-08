@@ -1,20 +1,24 @@
 #include "teventslog.h"
 #include "work.h"
+#include <QHeaderView>
 
-TEventsLog::TEventsLog(QWidget *parent) :
-	QWidget(parent)
+TEventsLog::TEventsLog(QWidget *parent) : QMainWindow(parent)
 	{
+	setWindowIcon(QIcon(":/images/clipboard_new.png"));
+
 	QWidget *EventsList_CentralWidget=new QWidget();
-	((QMainWindow *)parent)->setCentralWidget(EventsList_CentralWidget);
+	setCentralWidget(EventsList_CentralWidget);
 
 	QVBoxLayout *EventsList_ExtLayout = new QVBoxLayout();
 	EventsList_CentralWidget->setLayout(EventsList_ExtLayout);
 
-	xTabWidget *EventsList_TabWidget=new xTabWidget();
+	EventsList_TabWidget=new xTabWidget();
 	EventsList_ExtLayout->addWidget(EventsList_TabWidget);
+	EventsList_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(170).arg(36));
+	EventsList_TabWidget->setUsesScrollButtons(false);
 
 	QWidget *EventsList_Tab=new QWidget();
-	EventsList_TabWidget->addTab(EventsList_Tab, QIcon(":/images/clipboard_new.png"), ((QMainWindow *)parent)->windowTitle());
+	EventsList_TabWidget->addTab(EventsList_Tab, QIcon(":/images/clipboard_new.png"), "");
 
 	QVBoxLayout *EventsList_IntLayout = new QVBoxLayout();
 	EventsList_Tab->setLayout(EventsList_IntLayout);
@@ -26,30 +30,44 @@ TEventsLog::TEventsLog(QWidget *parent) :
 #endif
 	EventsList_IntLayout->addWidget(EventsList_TableView);
 	EventsList_TableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	EventsList_TableView->setStyleSheet(xTableViewStyleSheet);
+	EventsList_TableView->verticalHeader()->setVisible(false);
+	EventsList_TableView->setShowGrid(false);
 
-	QPushButton *EventsList_CloseButton = new QPushButton(QIcon(":/images/button_cancel.png"), tr("Закрыть"), parent);
+
+	EventsList_CloseButton = new xButton(QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
 	EventsList_ExtLayout->addWidget(EventsList_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
 	connect(EventsList_CloseButton, SIGNAL(clicked()), this, SLOT(Close()));
 
 	EventsList_TableView->setModel(&EventsList_Model);
-	EventsList_TableView->setItemDelegate(new EventsList_ItemDelegate(this));
+	EventsList_TableView->setItemDelegate(new EventsList_ItemDelegate());
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
 	EventsList_TableView->verticalHeader()->setDefaultAlignment(Qt::AlignVCenter|Qt::AlignRight);
 #endif
-	EventsList_Model.setHorizontalHeaderLabels(QStringList() << tr("Дата и время") << tr("Событие") << tr("Индекс осц.") );
 
-	//Инициализация элементов граф.интерфейса MainWindow для сервиса осциллограмм
-	EventsList_TableView->setColumnWidth(EVLOG_DATETIME_COL, 160);
-	EventsList_TableView->setColumnWidth(EVLOG_TEXT_COL, 300);
-	EventsList_TableView->setColumnWidth(EVLOG_OSCINDEX_COL, 80);
-
+	Retranslate();
 	OscIndex=0;
 	Load();
 	}
 
+
+void TEventsLog::Retranslate()
+	{
+	setWindowTitle(tr("ЖУРНАЛ СОБЫТИЙ"));
+	EventsList_TabWidget->setTabText(0, windowTitle());
+	EventsList_CloseButton->setText(tr("ЗАКРЫТЬ"));
+
+	EventsList_Model.clear();
+	EventsList_Model.setHorizontalHeaderLabels(QStringList() << tr("Дата и время") << tr("Событие") << tr("Индекс осц.") );
+
+	EventsList_TableView->setColumnWidth(EVLOG_DATETIME_COL, 160);
+	EventsList_TableView->setColumnWidth(EVLOG_TEXT_COL, 300);
+	EventsList_TableView->setColumnWidth(EVLOG_OSCINDEX_COL, 80);
+	}
+
 void TEventsLog::Close()
 	{
-	TEventsLog::parentWidget()->close();
+	close();
 	}
 
 void TEventsLog::AddNewEvent(TEventExt *e)

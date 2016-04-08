@@ -22,11 +22,15 @@ void TGetBlocksIDPar::ButClick()
 	}
 
 
-
 void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget *NextFocusChain, TRegSetupPar **pRegSetupPars, TGetBlocksIDPar **pGetBlocksIDPars)
 	{
 	Widgets.LoadPars.Label = new QLabel(tr(""));
 	Widgets.LoadPars.Label->setVisible(false);
+	Widgets.LoadPars.Label->setStyleSheet("\
+		color: rgb(5,116,174);\
+		font: 12pt;\
+		");
+
 	Widgets.LoadPars.ProgressBar = new QProgressBar();
 	Widgets.LoadPars.ProgressBar->setTextVisible(false);
 	Widgets.LoadPars.ProgressBar->setVisible(false);
@@ -35,9 +39,10 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 	Widgets.ButtonsBar.Spacer = new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Minimum);
 	Widgets.ButtonsBar.Layout->addSpacerItem(Widgets.ButtonsBar.Spacer);
 
-	Widgets.ButtonsBar.Reload_Button = new QPushButton(QIcon(":/images/refresh.png"), tr("Перечитать настройки"));
+	Widgets.ButtonsBar.Reload_Button = new xButton(QIcon(":/images/refresh.png"), 32, Qt::ToolButtonTextBesideIcon);
 	Widgets.ButtonsBar.Layout->addWidget(Widgets.ButtonsBar.Reload_Button, 0, Qt::AlignRight | Qt::AlignBottom);
-	Widgets.ButtonsBar.Close_Button = new QPushButton(QIcon(":/images/button_cancel.png"), tr("Закрыть"));
+	Widgets.ButtonsBar.Close_Button = new xButton(QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
+
 	Widgets.ButtonsBar.Layout->addWidget(Widgets.ButtonsBar.Close_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 	Widgets.ButtonsBar.Frame = new QFrame();
 	Widgets.ButtonsBar.Frame->setLayout(Widgets.ButtonsBar.Layout);
@@ -71,7 +76,6 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksIDParent, TOktServ *OktServ) : QWidget(RegSetupParent)
 	{
 	this->OktServ=OktServ;
-	if(YESNO_sl.isEmpty()) YESNO_sl << tr("НЕТ") << tr("ДА");
 
 	//Создание элементов списка параметров
 	pRegSetupPars = new TRegSetupPar *[REG_SETUP_PARS_NUM];
@@ -81,8 +85,8 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 		}
 	Wait4Parameter=false;
 
-	SettingsApply_Button = new QPushButton(QIcon(":/images/apply.png"), tr("Применить настройки"));
-	SaveSettings_Button = new QPushButton(QIcon(":/images/document_save.png"), tr("Сохранить настройки"));
+	SettingsApply_Button = new xButton(QIcon(":/images/apply.png"), 32, Qt::ToolButtonTextBesideIcon);
+	SaveSettings_Button = new xButton(QIcon(":/images/document_save.png"), 32, Qt::ToolButtonTextBesideIcon);
 	SettingsApply_Button->setEnabled(false);
 	SaveSettings_Button->setEnabled(false);
 
@@ -113,6 +117,37 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 	connect(RegSetup_QTimer, SIGNAL(timeout()), this, SLOT(RegSetupReq()));
 	StopService();
 
+	pGetBlocksIDPars = new TGetBlocksIDPar *[GETBLOCKSID_PARS_NUM];
+	for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
+		{
+		pGetBlocksIDPars[i] = new TGetBlocksIDPar(this, i);
+		}
+
+	//Создание виджетов списка блоков, аналогичных настройкам регулятора
+	RegSetupWidgetsCreate(GetBlocksID, NULL, NULL, pGetBlocksIDPars);
+
+	GetBlocksIDList_ItemDelegate = new TGetBlocksIDList_ItemDelegate(this);
+	GetBlocksID.TableView->setItemDelegate(GetBlocksIDList_ItemDelegate);
+
+	connect(GetBlocksID.ButtonsBar.Reload_Button, SIGNAL(clicked()), this, SLOT(GetBlocksIDSlot()));
+	connect(GetBlocksID.ButtonsBar.Close_Button, SIGNAL(clicked()), this, SLOT(GetBlocksID_CloseSlot()));
+
+	GetBlocksIDParent->setLayout(GetBlocksID.Layout);
+
+	Retranslate();
+	}
+
+void TOktServRegSetup::Retranslate()
+	{
+	YESNO_sl.clear();
+	YESNO_sl << tr("НЕТ") << tr("ДА");
+	RegSetup.ButtonsBar.Reload_Button->setText(tr("ПЕРЕЧИТАТЬ"));
+	RegSetup.ButtonsBar.Close_Button->setText(tr("ЗАКРЫТЬ"));
+	SettingsApply_Button->setText(tr("ПРИМЕНИТЬ"));
+	SaveSettings_Button->setText(tr("СОХРАНИТЬ"));
+	GetBlocksID.ButtonsBar.Reload_Button->setText(tr("ПЕРЕЧИТАТЬ"));
+	GetBlocksID.ButtonsBar.Close_Button->setText(tr("ЗАКРЫТЬ"));
+	RegSetupErrors_StringList.clear();
 	RegSetupErrors_StringList  \
 		<< tr("Таймаут при получении пакета от блока связи")\
 		<< tr("Таймаут при получении пакета от ведущего блока")\
@@ -122,7 +157,7 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 		<< tr("Передача блока кода: Таймаут, устройство не отвечает")\
 		<< tr("Процесс остановлен")\
 		<< tr("Ошибка при чтении HEX-файла");
-
+	GetBlocksID_StringList.clear();
 	GetBlocksID_StringList  \
 		<< tr("0") << tr("Блок регулирования") << tr("T8R-") \
 		<< tr("1") << tr("Блок измерения аналоговых параметров") << tr("T8A-")\
@@ -140,24 +175,6 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 		<< tr("11") << tr("Блок связи Ethernet") << tr("T8E-")\
 		<< tr("12") << tr("Блок дисплейный (большая индикация)") << tr("T8V-")\
 		<< tr("12") << tr("Блок связи с дисплейным процессором") << tr("T8W-");
-
-	pGetBlocksIDPars = new TGetBlocksIDPar *[GETBLOCKSID_PARS_NUM];
-	for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
-		{
-		pGetBlocksIDPars[i] = new TGetBlocksIDPar(this, i);
-		}
-
-	//Создание виджетов списка блоков, аналогичных настройкам регулятора
-	RegSetupWidgetsCreate(GetBlocksID, NULL, NULL, pGetBlocksIDPars);
-	GetBlocksID.ButtonsBar.Reload_Button->setText(tr("Перечитать список"));
-
-	GetBlocksIDList_ItemDelegate = new TGetBlocksIDList_ItemDelegate(this);
-	GetBlocksID.TableView->setItemDelegate(GetBlocksIDList_ItemDelegate);
-
-	connect(GetBlocksID.ButtonsBar.Reload_Button, SIGNAL(clicked()), this, SLOT(GetBlocksIDSlot()));
-	connect(GetBlocksID.ButtonsBar.Close_Button, SIGNAL(clicked()), this, SLOT(GetBlocksID_CloseSlot()));
-
-	GetBlocksIDParent->setLayout(GetBlocksID.Layout);
 	}
 
 
@@ -708,7 +725,7 @@ void TOktServRegSetup::RegSetupReq()
 				default:
 					break;
 				}
-#ifdef __i386__
+#ifdef __i3_86__
 			RegSetup_QTimer->stop();
 			QMessageBox::critical(0, QObject::tr("Ошибка"), ErrMsg);
 			RegSetup_QTimer->start(10);

@@ -2,8 +2,6 @@
 #define TOKTSERV_H
 
 #include <QtCore/QCoreApplication>
-#include <QtSerialPort/QSerialPort>
-#include <QtSerialPort/QSerialPortInfo>
 #include <QWidget>
 #include <QGroupBox>
 #include <QComboBox>
@@ -12,6 +10,10 @@
 #include <QLabel>
 #include <QTimer>
 #include "OscService.h"
+#ifndef __linux__
+	#include <QtSerialPort/QSerialPort>
+	#include <QtSerialPort/QSerialPortInfo>
+#endif
 #ifdef __linux__
 	#include <string.h>
 	#include <stdlib.h>
@@ -47,12 +49,16 @@ class TOktServ : public QWidget
 	{
 		Q_OBJECT
 	public:
-		explicit TOktServ(QGroupBox *PortSettings_GroupBox = 0, QString name0=tr("основного"));
+		explicit TOktServ(QGroupBox *PortSettings_GroupBox = 0);
 		unsigned char Crc8Calc(unsigned char *, int);
 		int PktCnt;
 		bool StartStop(bool);
+#ifndef __linux__
 		void PortSettingsApply();
 		void PrintPortsParameters();
+		TCommPortSettings Settings;
+		static TCommPortSettingsTexts CommPortSettingsTexts;
+#endif
 		bool StateOn;
 		TOktServNativeData ReceivedData;
 		int PacketUpdatedFlags;
@@ -64,8 +70,6 @@ class TOktServ : public QWidget
 		int ErrorFlags;
 #define OKTSERVERR_TIMEOUT_FLAG			0x01
 #define OKTSERVERR_NO_REGULATOR_FLAG		0x02
-		TCommPortSettings Settings;
-		static TCommPortSettingsTexts CommPortSettingsTexts;
 		void DataSender();
 
 	Q_SIGNALS:
@@ -76,7 +80,9 @@ class TOktServ : public QWidget
 	signals:
 
 	public slots:
+#ifndef __linux__
 		void ErrorHandler(QSerialPort::SerialPortError error);
+#endif
 
 	private:
 		xComboBox *CommPort_ComboBox;
@@ -85,7 +91,7 @@ class TOktServ : public QWidget
 		xComboBox *Parity_ComboBox;
 		xComboBox *StopBits_ComboBox;
 		xComboBox *FlowControl_ComboBox;
-
+		QString *PortName;
 		int PutPacket(int);
 
 		unsigned char DataBuf[DATA_BUF_SIZE];

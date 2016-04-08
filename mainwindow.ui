@@ -30,144 +30,7 @@
     <normaloff>:/images/utilities_system_monitor_128.png</normaloff>:/images/utilities_system_monitor_128.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QGroupBox" name="Meas_GroupBox">
-      <property name="title">
-       <string>Текущие измерения</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QGroupBox" name="LastEvent_GroupBox">
-      <property name="title">
-       <string>Последнее событие</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
-       <widget class="QPushButton" name="ParsOfBase_Button">
-	<property name="text">
-	 <string>Параметры основного</string>
-	</property>
-	<property name="icon">
-	 <iconset resource="crvd.qrc">
-	  <normaloff>:/images/meter3.png</normaloff>:/images/meter3.png</iconset>
-	</property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="ParsOfReserv_Button">
-	<property name="text">
-	 <string>Параметры резервного</string>
-	</property>
-	<property name="icon">
-	 <iconset resource="crvd.qrc">
-	  <normaloff>:/images/meter3.png</normaloff>:/images/meter3.png</iconset>
-	</property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
-      <item>
-       <widget class="QPushButton" name="EventsLog_Button">
-	<property name="text">
-	 <string>Журнал событий</string>
-	</property>
-	<property name="icon">
-	 <iconset resource="crvd.qrc">
-	  <normaloff>:/images/clipboard_new.png</normaloff>:/images/clipboard_new.png</iconset>
-	</property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="RegsSetup_Button">
-	<property name="text">
-	 <string>Настройки регуляторов</string>
-	</property>
-	<property name="icon">
-	 <iconset resource="crvd.qrc">
-	  <normaloff>:/images/advancedsettings.png</normaloff>:/images/advancedsettings.png</iconset>
-	</property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="GetBlocksID_Button">
-	<property name="text">
-	 <string>Список блоков</string>
-	</property>
-	<property name="icon">
-	 <iconset resource="crvd.qrc">
-	  <normaloff>:/images/memory.png</normaloff>:/images/memory.png</iconset>
-	</property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QPushButton" name="OscListOfBase_Button">
-	<property name="text">
-	 <string>Осц. основного</string>
-	</property>
-	<property name="icon">
-	 <iconset resource="crvd.qrc">
-	  <normaloff>:/images/stocks.png</normaloff>:/images/stocks.png</iconset>
-	</property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="OscListOfReserv_Button">
-	<property name="text">
-	 <string>Осц.резервного</string>
-	</property>
-	<property name="icon">
-	 <iconset resource="crvd.qrc">
-	  <normaloff>:/images/stocks.png</normaloff>:/images/stocks.png</iconset>
-	</property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="MakeOsc_Button">
-	<property name="text">
-	 <string>Создать осц.</string>
-	</property>
-	<property name="icon">
-	 <iconset>
-	  <normaloff>:/images/loading.gif</normaloff>:/images/loading.gif</iconset>
-	</property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
-       <widget class="QPushButton" name="OktServOnOff_Button">
-	<property name="text">
-	 <string>Включить/Выключить серевер</string>
-	</property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="ProgSettings_Button">
-	<property name="text">
-	 <string>Настройки программы</string>
-	</property>
-	<property name="icon">
-	 <iconset resource="crvd.qrc">
-	  <normaloff>:/images/applications_system.png</normaloff>:/images/applications_system.png</iconset>
-	</property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-   </layout>
+   <layout class="QVBoxLayout" name="verticalLayout"/>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -175,7 +38,7 @@
      <x>0</x>
      <y>0</y>
      <width>415</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

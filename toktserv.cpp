@@ -5,7 +5,11 @@
 TCommPortSettingsTexts TOktServ::CommPortSettingsTexts;
 static const char SYNC_DATA[] = {0x34, 0x12, 0x00};
 
-TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox, QString name0) : QWidget(PortSettings_GroupBox)
+TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox
+#ifdef __linux__
+		, const char *port_name
+#endif
+		) : QWidget(PortSettings_GroupBox)
 	{
 	TimeoutCnt=0;
 	ErrorFlags=0;
@@ -16,7 +20,6 @@ TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox, QString name0) : QWidget(Po
 #ifndef __linux__
 	CommPort = new QSerialPort();
 	QWidget::connect(CommPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(ErrorHandler(QSerialPort::SerialPortError)));
-#endif
 
 	//Создание списков настроек порта
 	if(CommPortSettingsTexts.CommPort.isEmpty())
@@ -52,9 +55,9 @@ TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox, QString name0) : QWidget(Po
 
 		CommPortSettingsTexts.StopBits.clear();
 		CommPortSettingsTexts.StopBits.append(QObject::tr("1"));
-#ifdef Q_OS_WIN
+	#ifdef Q_OS_WIN
 		CommPortSettingsTexts.StopBits.append(QObject::tr("1.5"));
-#endif
+	#endif
 		CommPortSettingsTexts.StopBits.append(QObject::tr("2"));
 
 		CommPortSettingsTexts.FlowControl.clear();
@@ -65,7 +68,7 @@ TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox, QString name0) : QWidget(Po
 
 	//Настройки по-умолчанию
 	Settings.CommPort_index=0;
-#ifndef __i386__
+	#ifndef __i386__
 	foreach(const QString text, CommPortSettingsTexts.CommPort)
 		{
 		if(text.indexOf(tr("ttySP0"))!=-1) goto quitchkport_loc;
@@ -73,7 +76,7 @@ TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox, QString name0) : QWidget(Po
 		}
 	Settings.CommPort_index--;
 quitchkport_loc:
-#endif
+	#endif
 	Settings.BaudRate_index=7;
 	Settings.DataBits_index=3;
 	Settings.Parity_index=0;
@@ -90,11 +93,10 @@ quitchkport_loc:
 		a##_Layout->addWidget(a##_ComboBox);\
 		c##_Layout->addLayout(a##_Layout);}
 
-	PortSettings_GroupBox->setTitle(tr("Параметры порта ")+name0);
+	PortSettings_GroupBox->setTitle(tr("Параметры порта "));
 	QVBoxLayout *PortSettings_Layout = new QVBoxLayout();
 	PortSettings_GroupBox->setLayout(PortSettings_Layout);
 	CREATE_COMBOBOX_PARAMETER(CommPort, "Порт:", PortSettings)
-#ifndef __linux__
 	QGroupBox *Settings_GroupBox=new QGroupBox();
 	Settings_GroupBox->setTitle(tr("Параметры"));
 	QVBoxLayout *Settings_Layout = new QVBoxLayout();
@@ -111,27 +113,28 @@ quitchkport_loc:
 	PortSettings_GroupBox->parentWidget()->setTabOrder(DataBits_ComboBox, Parity_ComboBox);
 	PortSettings_GroupBox->parentWidget()->setTabOrder(Parity_ComboBox, StopBits_ComboBox);
 	PortSettings_GroupBox->parentWidget()->setTabOrder(StopBits_ComboBox, FlowControl_ComboBox);
-#endif
+
 	//Заполнить списки и вывод текущих настроек
 	PrintPortsParameters();
-
+#else
+	PortName=port_name;
+#endif
 	PacketToSendQuicklyFlags=0;
 	PacketToSendIndex=0;
 	}
 
+#ifndef __linux__
 //===========================================================================
 //Применение установленных пользователем насртроек
 //===========================================================================
 void TOktServ::PortSettingsApply()
 	{
 	Settings.CommPort_index=CommPort_ComboBox->currentIndex();
-#ifndef __linux__
 	Settings.BaudRate_index=BaudRate_ComboBox->currentIndex();
 	Settings.DataBits_index=DataBits_ComboBox->currentIndex();
 	Settings.Parity_index=Parity_ComboBox->currentIndex();
 	Settings.StopBits_index=StopBits_ComboBox->currentIndex();
 	Settings.FlowControl_index=FlowControl_ComboBox->currentIndex();
-#endif
 	}
 
 //===========================================================================
@@ -139,7 +142,6 @@ void TOktServ::PortSettingsApply()
 //===========================================================================
 void TOktServ::PrintPortsParameters()
 	{
-#ifndef __linux__
 	BaudRate_ComboBox->clear();
 	BaudRate_ComboBox->addItems(CommPortSettingsTexts.BaudRate);
 	BaudRate_ComboBox->setCurrentIndex(Settings.BaudRate_index);
@@ -155,7 +157,6 @@ void TOktServ::PrintPortsParameters()
 	FlowControl_ComboBox->clear();
 	FlowControl_ComboBox->addItems(CommPortSettingsTexts.FlowControl);
 	FlowControl_ComboBox->setCurrentIndex(Settings.FlowControl_index);
-#endif
 	CommPort_ComboBox->clear();
 	if(CommPortSettingsTexts.CommPort.count())
 		{
@@ -171,6 +172,16 @@ void TOktServ::PrintPortsParameters()
 		}
 	}
 
+void TOktServ::ErrorHandler(QSerialPort::SerialPortError error)
+	{
+	if(error == QSerialPort::ResourceError)
+		{
+		QMessageBox::critical(this, tr("Ошибка"), CommPort->errorString());
+		StartStop(false);
+		}
+	}
+
+#endif
 
 //===========================================================================
 //CRC8
@@ -228,7 +239,14 @@ void TOktServ::DataSender()
 #ifdef __linux__
 	BytesRead=read(CommPortFD, (char *)&DataBuf[DataBufIndex], DATA_BUF_SIZE-DataBufIndex);
 #else
-	BytesRead=CommPort->read((char *)&DataBuf[DataBufIndex], DATA_BUF_SIZE-DataBufIndex);
+	if(CommPort->bytesAvailable())
+		{
+		BytesRead=CommPort->read((char *)&DataBuf[DataBufIndex], DATA_BUF_SIZE-DataBufIndex);
+		}
+	else
+		{
+		BytesRead=0;
+		}
 #endif
 
 	//Обработка полученных данных
@@ -308,7 +326,7 @@ DataSender_loc:
 	//Отсылка срочных пакетов
 	int m;
 	for(i=0;i<16;i++)
-		{		
+		{
 		m=1<<i;
 		if(PacketToSendQuicklyFlags&m)
 			{
@@ -371,18 +389,6 @@ int TOktServ::PutPacket(int PacketIndex)
 	}
 
 
-void TOktServ::ErrorHandler(QSerialPort::SerialPortError error)
-	{
-	if(error == QSerialPort::ResourceError)
-		{
-#ifndef __linux__
-		QMessageBox::critical(this, tr("Ошибка"), CommPort->errorString());
-		StartStop(false);
-#endif
-		}
-	}
-
-
 //===========================================================================
 //Старт-стоп сервера
 //===========================================================================
@@ -404,7 +410,7 @@ bool TOktServ::StartStop(bool StateOnIn)
 		tio.c_cc[VMIN]=1;
 		tio.c_cc[VTIME]=5;
 
-		QString p="/dev/"+CommPortSettingsTexts.CommPort.at(Settings.CommPort_index);
+		QString p="/dev/"+PortName;
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 		CommPortFD=::open(p.toLatin1(), O_RDWR | O_NONBLOCK);
 #else
@@ -431,7 +437,7 @@ bool TOktServ::StartStop(bool StateOnIn)
 		CommPort->setFlowControl(static_cast<QSerialPort::FlowControl>(CommPortSettingsTexts.FlowControl.at(Settings.FlowControl_index).toInt()));
 		if(!CommPort->open(QIODevice::ReadWrite))
 			{
-			QMessageBox::critical(this, QObject::tr("Ошибка при открытии порта"), CommPort->errorString());
+			//QMessageBox::critical(this, QObject::tr("Ошибка при открытии порта"), CommPort->errorString());
 			StateOnIn=false;
 			}
 #endif
@@ -443,7 +449,6 @@ bool TOktServ::StartStop(bool StateOnIn)
 #else
 		CommPort->close();
 #endif
-
 		}
 
 	return StateOn=StateOnIn;

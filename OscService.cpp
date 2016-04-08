@@ -3,6 +3,8 @@
 #include "OscService.h"
 #include <QFile>
 #include <QTextStream>
+#include "xWidgets.h"
+#include <QHeaderView>
 
 /*
 #include <QComboBox>
@@ -52,9 +54,9 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 	this->Base_Reserv=Base_Reserv;
 	OscHalfSize=1000;
 
-
 	QWidget *OscList_CentralWidget=new QWidget();
 	((QMainWindow *)OscList_parent)->setCentralWidget(OscList_CentralWidget);
+	((QMainWindow *)OscList_parent)->setStyleSheet("background-color: rgb(235,236,236);");
 
 	QVBoxLayout *OscList_ExtLayout = new QVBoxLayout();
 	OscList_CentralWidget->setLayout(OscList_ExtLayout);
@@ -71,8 +73,11 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 	OscList_TableView=new QTableView();
 	OscList_IntLayout->addWidget(OscList_TableView);
 	OscList_TableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	OscList_TableView->setStyleSheet(xTableViewStyleSheet);
+	OscList_TableView->verticalHeader()->setVisible(false);
+	OscList_TableView->setShowGrid(false);
 
-	QPushButton *OscList_CloseButton = new QPushButton(QIcon(":/images/button_cancel.png"), tr("Закрыть"), OscList_parent);
+	OscList_CloseButton = new xButton(QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon, OscList_parent);
 	OscList_ExtLayout->addWidget(OscList_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
 	connect(OscList_CloseButton, SIGNAL(clicked()), this, SLOT(OscList_CloseWindow()));
 
@@ -85,6 +90,58 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 	OscList_TableView->setMinimumHeight(300);
 	OscList_TableView->setMinimumWidth(600);
 #endif
+
+	QWidget *ParametersView_CentralWidget=new QWidget();
+	((QMainWindow *)ParametersView_parent)->setCentralWidget(ParametersView_CentralWidget);
+	((QMainWindow *)ParametersView_parent)->setStyleSheet("background-color: rgb(235,236,236);");
+
+	QVBoxLayout *ParametersView_Layout = new QVBoxLayout();
+	ParametersView_CentralWidget->setLayout(ParametersView_Layout);
+
+	ParametersView_TabWidget=new xTabWidget();
+	ParametersView_Layout->addWidget(ParametersView_TabWidget);
+	ParametersView_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(100).arg(36));
+	ParametersView_TabWidget->setUsesScrollButtons(false);
+	//ParametersView_TabWidget->setIconSize(QSize(48,48));
+
+	//Создание закладок "Параметры регулятора"
+	int k=0;
+	for(int i=0;i<OKTSERV_PACKETS_NUM;i++)
+		{
+		Packet[i].Tab = new QWidget();
+		Packet[i].Tab->setStyleSheet(xTabStyleSheet);
+
+		if(((i!=1)&&(i<5))||(i==14))
+			{
+			ParametersView_TabWidget->addTab(Packet[i].Tab/*, QIcon(":/images/meter3.png")*/, "");
+			}
+		Packet[i].TableView = new QTableView(Packet[i].Tab);
+#ifdef __i386__
+		Packet[i].TableView->setMinimumHeight(300);
+		Packet[i].TableView->setMinimumWidth(600);
+#endif
+		QVBoxLayout *vbl = new QVBoxLayout();
+		vbl->addWidget(Packet[i].TableView);
+		Packet[i].Tab->setLayout(vbl);
+		Packet[i].TableView->setModel(&Packet[i].Model);
+		Packet[i].TableView->setStyleSheet(xTableViewStyleSheet);
+		Packet[i].TableView->verticalHeader()->setVisible(false);
+		Packet[i].TableView->setShowGrid(false);
+		}
+
+	ParametersView_CloseButton = new xButton(QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon, ParametersView_parent);
+	ParametersView_Layout->addWidget(ParametersView_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
+	connect(ParametersView_CloseButton, SIGNAL(clicked()), this, SLOT(ParametersView_CloseWindow()));
+
+	Retranslate();
+	}
+
+void TOscService::Retranslate()
+	{
+	OscList_CloseButton->setText(tr("ЗАКРЫТЬ"));
+	ParametersView_CloseButton->setText(tr("ЗАКРЫТЬ"));
+
+	OscList_Model.clear();
 	OscList_Model.setHorizontalHeaderLabels(QStringList() << tr("Номер осц.") << tr("Дата и время") << tr("Событие") << tr("Состояние"));
 
 	//Инициализация элементов граф.интерфейса MainWindow для сервиса осциллограмм
@@ -93,21 +150,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 	OscList_TableView->setColumnWidth(OSC_EVENT_COL, 250);
 	OscList_TableView->setColumnWidth(OSC_STATE_COL, 100);
 
-	QWidget *ParametersView_CentralWidget=new QWidget();
-	((QMainWindow *)ParametersView_parent)->setCentralWidget(ParametersView_CentralWidget);
-
-	QVBoxLayout *ParametersView_Layout = new QVBoxLayout();
-	ParametersView_CentralWidget->setLayout(ParametersView_Layout);
-
-	ParametersView_TabWidget=new xTabWidget();
-	ParametersView_Layout->addWidget(ParametersView_TabWidget);
-
-	QPushButton *ParametersView_CloseButton = new QPushButton(QIcon(":/images/button_cancel.png"), tr("Закрыть"), ParametersView_parent);
-	ParametersView_Layout->addWidget(ParametersView_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
-	connect(ParametersView_CloseButton, SIGNAL(clicked()), this, SLOT(ParametersView_CloseWindow()));
-
-	TabNames_StringList  << tr("Данные с регулятора") << tr("Не используется") << tr("Данные с блока питания") << tr("Данные с индикаторов") << tr("Аналоговые параметры");
-
+	Packet[0].StringList.clear();
 	Packet[0].StringList\
 		<< tr("Действующее напряжение статора")	<< tr("Uстат")\
 		<< tr("Действующий ток статора")	<< tr("Iстат")\
@@ -120,6 +163,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 		<< tr("Флаги режима работы #2")		<< tr("ModeFlags2")\
 		<< tr("Частота сети электродвигателя")	<< tr("Fсети_эл.дв.");
 
+	Packet[2].StringList.clear();
 	Packet[2].StringList\
 		<< tr("Напряжение первого источника")	<< tr("Uип1")\
 		<< tr("Напряжение второго источника")	<< tr("Uип2")\
@@ -130,6 +174,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 		<< tr("Температура блока")		<< tr("T")\
 		<< tr("Слово конфигурации")		<< tr("Config");
 
+	Packet[3].StringList.clear();
 	Packet[3].StringList\
 		<< tr("Состояние кнопок и переключателей")	<< tr("KeysState")\
 		<< tr("Напряжение 24В, входное #1")		<< tr("U24V1")\
@@ -139,6 +184,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 		<< tr("Ток потребления от ИП")			<< tr("Iип")\
 		<< tr("Ток потребления блока V")		<< tr("IблокV");
 
+	Packet[4].StringList.clear();
 	Packet[4].StringList\
 		<< tr("Код действующего напряжения статора")		<< tr("Ustat_code")\
 		<< tr("Код действующего тока статора")			<< tr("Istat_code")\
@@ -150,6 +196,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 		<< tr("Переменная 150-300Гц составляющая тока ротора")	<< tr("Iрот.f_150-300")\
 		<< tr("Переменная 50Гц составляющая напряжения ротора")	<< tr("Uрот.f_50");
 
+	ModeFlags1.StringList.clear();
 	ModeFlags1.StringList\
 		<< tr("Двигатель включен")\
 		<< tr("Блок в работе")\
@@ -168,6 +215,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 		<< tr("Форсировка")\
 		<< tr("Работа ОМВ");
 
+	ModeFlags2.StringList.clear();
 	ModeFlags2.StringList\
 		<< tr("Защита \"Затянувшийся пуск\"")\
 		<< tr("Защита \"Потеря возбуждения\"")\
@@ -186,6 +234,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 		<< tr("Реле готовности (1-готов)")\
 		<< tr("Реле защит (срабатывание отключающей защиты)");
 
+	Config.StringList.clear();
 	Config.StringList\
 		<< tr("Блок исправен")\
 		<< tr("Тест 1-го ИП")\
@@ -200,6 +249,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 		<< tr("КЗ +24В внешних цепей")\
 		<< tr("Исправность источника +48В");
 
+	KeysState.StringList.clear();
 	KeysState.StringList\
 		<< tr("Кнопка \"Вверх\"")\
 		<< tr("Кнопка \"Ввод\"")\
@@ -213,6 +263,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 		<< tr("Кнопка \"СТОП\"")\
 		<< tr("Кнопка \"Опробование\"");
 
+	Packet[14].StringList.clear();
 	Packet[14].StringList\
 		<< tr("") << tr("int16")\
 		<< tr("") << tr("int16")\
@@ -231,18 +282,13 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 		<< tr("") << tr("int16")\
 		<< tr("") << tr("int16");
 
+	TabNames_StringList.clear();
+	TabNames_StringList  << tr("РЕГУЛЯТОР") << tr("Не используется") << tr("БЛОК\nПИТАНИЯ") << tr("ИНДИКАЦИЯ") << tr("АНАЛОГ.");
 	for(int i=5;i<OKTSERV_PACKETS_NUM;i++)
 		{
 		if(i==14)
 			{
-			TabNames_StringList.append(tr("Диагностика"));
-			/*
-			for(int j=0;j<16;j++)
-				{
-				Packet[i].StringList.append(tr("int16"));
-				Packet[i].StringList.append(tr("int16"));
-				}
-			*/
+			TabNames_StringList.append(tr("ОТЛАДКА"));
 			}
 		else
 			{
@@ -250,26 +296,19 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 			}
 		}
 
-	//Создание закладок "Параметры регулятора"
-	int pi_cnt=0;
+	int pi_cnt=0, k=0;
 	for(int i=0;i<OKTSERV_PACKETS_NUM;i++)
 		{
-		Packet[i].Tab = new QWidget();
-		if(((i!=1)&&(i<5))||(i==14)) ParametersView_TabWidget->addTab(Packet[i].Tab, QIcon(":/images/meter3.png"), TabNames_StringList.at(i));
-		Packet[i].TableView = new QTableView(Packet[i].Tab);
-#ifdef __i386__
-		Packet[i].TableView->setMinimumHeight(300);
-		Packet[i].TableView->setMinimumWidth(600);
-#endif
-		QVBoxLayout *vbl = new QVBoxLayout();
-		vbl->addWidget(Packet[i].TableView);
-		Packet[i].Tab->setLayout(vbl);
-		Packet[i].TableView->setModel(&Packet[i].Model);
+		if(((i!=1)&&(i<5))||(i==14))
+			{
+			ParametersView_TabWidget->tabBar()->setTabText(k++, TabNames_StringList.at(i));
+			}
+		Packet[i].Model.clear();
 		Packet[i].Model.setHorizontalHeaderLabels(QStringList() << tr("Адрес") << tr("Параметр") << tr("Значение"));
 
 		for(int j=0;j<Packet[i].StringList.count();j+=2)
 			{
-
+			Packet[i].Items[j>>1].clear();
 			Packet[i].Items[j>>1] << new QStandardItem(QString("%1h").arg(i*0x10+j/2, 4, 16, QLatin1Char('0'))) << new QStandardItem(Packet[i].StringList[j]) << new QStandardItem("text");
 			Packet[i].Items[j>>1][0]->setEditable(false);
 			Packet[i].Items[j>>1][1]->setEditable(false);
@@ -299,15 +338,11 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 				}
 			}
 
-		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_ADDR_COL, 50);
+		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_ADDR_COL, 70);
 		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_NAME_COL, 300);
 		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_VAL_COL, 100);
-		//Packet[i].TableView->resizeColumnsToContents();
-		//Packet[i].TableView->resizeRowsToContents();
-
 		pi_cnt+=Packet[i].StringList.count()>>1;
 		}
-
 	}
 
 void TOscService::ParametersView_CloseWindow()
