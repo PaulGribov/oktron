@@ -25,12 +25,14 @@ int main(int argc, char *argv[])
 
 	app.setApplicationName(QObject::tr("ОКТРОН"));
 
+#if !defined(__linux__)
 	if(QSerialPortInfo::availablePorts().count()==0)
 		{
 		qDebug() << "FATAL ERROR: Serial ports not found!\r\n";
 		QMessageBox::critical(0, QObject::tr("Ошибка"), QObject::tr("Нет последовательных портов"));
 		return 1;
 		}
+#endif
 
 #if defined(__linux__) && (!defined(__i386__))
 	if(QDir::setCurrent("/mnt/localdisk"))

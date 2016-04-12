@@ -14,7 +14,7 @@ TEventsLog::TEventsLog(QWidget *parent) : QMainWindow(parent)
 
 	EventsList_TabWidget=new xTabWidget();
 	EventsList_ExtLayout->addWidget(EventsList_TabWidget);
-	EventsList_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(170).arg(36));
+	EventsList_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(280).arg(36));
 	EventsList_TabWidget->setUsesScrollButtons(false);
 
 	QWidget *EventsList_Tab=new QWidget();

@@ -2,7 +2,9 @@
 #include "mainwindow.h"
 
 
+#ifndef __linux__
 TCommPortSettingsTexts TOktServ::CommPortSettingsTexts;
+#endif
 static const char SYNC_DATA[] = {0x34, 0x12, 0x00};
 
 TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox

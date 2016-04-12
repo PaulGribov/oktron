@@ -100,7 +100,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 
 	ParametersView_TabWidget=new xTabWidget();
 	ParametersView_Layout->addWidget(ParametersView_TabWidget);
-	ParametersView_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(100).arg(36));
+	ParametersView_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(170).arg(50));
 	ParametersView_TabWidget->setUsesScrollButtons(false);
 	//ParametersView_TabWidget->setIconSize(QSize(48,48));
 
@@ -301,7 +301,8 @@ void TOscService::Retranslate()
 		{
 		if(((i!=1)&&(i<5))||(i==14))
 			{
-			ParametersView_TabWidget->tabBar()->setTabText(k++, TabNames_StringList.at(i));
+			//ParametersView_TabWidget->tabBar()->setTabText(k++, TabNames_StringList.at(i));
+			ParametersView_TabWidget->setTabText(k++, TabNames_StringList.at(i));
 			}
 		Packet[i].Model.clear();
 		Packet[i].Model.setHorizontalHeaderLabels(QStringList() << tr("Адрес") << tr("Параметр") << tr("Значение"));

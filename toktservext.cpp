@@ -9,7 +9,7 @@ xTabWidget *TOktServExt::GetBlocksID_tabWidget=NULL;;
 
 TOktServExt::TOktServExt(QGroupBox *PortSettings_GroupBox
 #ifdef __linux__
-		, const char *port_name="ttySP1") : TOktServ(PortSettings_GroupBox)
+		, const char *port_name) : TOktServ(PortSettings_GroupBox)
 #else
 		) : TOktServ(PortSettings_GroupBox)
 #endif
@@ -40,7 +40,7 @@ TOktServExt::TOktServExt(QGroupBox *PortSettings_GroupBox
 	if(RegSetup_tabWidget==NULL)
 		{
 		RegSetup_tabWidget = new xTabWidget(RegSetup_MainWindow);
-		RegSetup_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(100).arg(36));
+		RegSetup_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(150).arg(36));
 		RegSetup_MainWindow->setCentralWidget(RegSetup_tabWidget);
 		RegSetup_tabWidget->setVisible(true);
 		}
@@ -58,7 +58,7 @@ TOktServExt::TOktServExt(QGroupBox *PortSettings_GroupBox
 	if(GetBlocksID_tabWidget==NULL)
 		{
 		GetBlocksID_tabWidget = new xTabWidget(GetBlocksID_MainWindow);
-		GetBlocksID_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(100).arg(36));
+		GetBlocksID_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(150).arg(36));
 		GetBlocksID_MainWindow->setCentralWidget(GetBlocksID_tabWidget);
 		}
 	GetBlocksID_Tab = new QWidget(GetBlocksID_MainWindow); //Закладка

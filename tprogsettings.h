@@ -50,7 +50,9 @@ class TProgSettings : public QMainWindow
 	signals:
 
 	public slots:
-		void PortsSettingsApply();
+#ifndef __linux__
+		//void PortsSettingsApply();
+#endif
 		void Close();
 		void Save();
 		void Load();

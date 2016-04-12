@@ -228,7 +228,6 @@ typedef struct
 		} LoadPars;
 	struct
 		{
-		QFrame *Frame;
 		QHBoxLayout *Layout;
 		QSpacerItem *Spacer;
 		xButton *Reload_Button;

@@ -49,7 +49,11 @@ class TOktServ : public QWidget
 	{
 		Q_OBJECT
 	public:
-		explicit TOktServ(QGroupBox *PortSettings_GroupBox = 0);
+		explicit TOktServ(QGroupBox *PortSettings_GroupBox = 0
+		#ifdef __linux__
+			, const char *port_name="ttySP1"
+		#endif
+			);
 		unsigned char Crc8Calc(unsigned char *, int);
 		int PktCnt;
 		bool StartStop(bool);
@@ -81,7 +85,7 @@ class TOktServ : public QWidget
 
 	public slots:
 #ifndef __linux__
-		void ErrorHandler(QSerialPort::SerialPortError error);
+		//void ErrorHandler(QSerialPort::SerialPortError error);
 #endif
 
 	private:
@@ -91,7 +95,7 @@ class TOktServ : public QWidget
 		xComboBox *Parity_ComboBox;
 		xComboBox *StopBits_ComboBox;
 		xComboBox *FlowControl_ComboBox;
-		QString *PortName;
+		QString PortName;
 		int PutPacket(int);
 
 		unsigned char DataBuf[DATA_BUF_SIZE];

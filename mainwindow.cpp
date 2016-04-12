@@ -59,10 +59,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 	PrintEvent(EventsLog->MakeEvent(tr("Старт программы"), false));
 
-	EventsLog->showNormal();
-
 	MenuCreate();
 	Retranslate();
+
+	EventsLog_Button_OnClick();
 	}
 
 void MainWindow::MenuCreate()
@@ -141,7 +141,9 @@ void MainWindow::Connect_Disconnect(bool state)
 	if(!state)
 		{
 		//PrintDataDisabled();
+#ifndef __linux__
 		ProgSettings->PortsSettingsApply_Button->setEnabled(true);
+#endif
 		for(int i=0;i<2;i++)
 			{
 			OktServExt[i]->RegSetup_GetBlocksID->Stop();
@@ -150,8 +152,9 @@ void MainWindow::Connect_Disconnect(bool state)
 		}
 	else
 		{
+#ifndef __linux__
 		ProgSettings->PortsSettingsApply_Button->setEnabled(false);
-
+#endif
 		for(int i=0;i<2;i++)
 			{
 			OktServExt[i]->RegSetup_GetBlocksID->ReadSettingsDesc();

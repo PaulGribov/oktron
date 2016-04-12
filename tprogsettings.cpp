@@ -16,7 +16,7 @@ TProgSettings::TProgSettings(QWidget *parent, TOktServExt **pOktServExt0, TOktSe
 	//Закладки настроек программы
 	ProgSettings_tabWidget=new xTabWidget();
 	ProgSettings_Layout->addWidget(ProgSettings_tabWidget);
-	ProgSettings_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(150).arg(36));
+	ProgSettings_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(280).arg(36));
 	ProgSettings_tabWidget->setIconSize(QSize(36,36));
 	ProgSettings_tabWidget->setUsesScrollButtons(false);
 
@@ -54,6 +54,9 @@ TProgSettings::TProgSettings(QWidget *parent, TOktServExt **pOktServExt0, TOktSe
 	PortSettings_Layout->addWidget(PortSettings_GroupBox[0], 0, Qt::AlignLeft);
 	PortSettings_GroupBox[1]=new QGroupBox();
 	PortSettings_Layout->addWidget(PortSettings_GroupBox[1], 0, Qt::AlignRight);
+#else
+	PortSettings_GroupBox[0]=NULL;
+	PortSettings_GroupBox[1]=NULL;
 #endif
 
 	*pOktServExt0=new TOktServExt(PortSettings_GroupBox[0]
@@ -111,9 +114,11 @@ TProgSettings::TProgSettings(QWidget *parent, TOktServExt **pOktServExt0, TOktSe
 void TProgSettings::Retranslate()
 	{
 	setWindowTitle("НАСТРОЙКИ ПРОГРАММЫ");
-	ProgSettings_tabWidget->setTabText(0, tr("ОБЩИЕ\nНАСТРОЙКИ"));
-	ProgSettings_tabWidget->setTabText(1, tr("НАСТРОЙКИ\nПОРТОВ"));
+	ProgSettings_tabWidget->setTabText(0, tr("ОБЩИЕ НАСТРОЙКИ"));
+#ifndef __linux__
+	ProgSettings_tabWidget->setTabText(1, tr("НАСТРОЙКИ ПОРТОВ"));
 	PortsSettingsApply_Button->setText(tr("ПРИМЕНИТЬ"));
+#endif
 	AutomaticStart_CheckBox->setText(tr("ВКЛЮЧИТЬ СЕРВЕР ПРИ СТАРТЕ"));
 	SetDateTime_GroupBox->setTitle(tr("УСТАНОВКА ВРЕМЕНИ"));
 	Save_Button->setText(tr("СОХРАНИТЬ"));
@@ -126,13 +131,13 @@ void TProgSettings::show()
 	SetDateTime->setDateTime(PresetVal);
 	QMainWindow::show();
 	}
-
+#ifndef __linux__
 void TProgSettings::PortsSettingsApply()
 	{
 	OktServ[0]->PortSettingsApply();
 	OktServ[1]->PortSettingsApply();
 	}
-
+#endif
 void TProgSettings::DateTimeUpdated(QTime &date)
 	{
 	SetDateTime_GroupBox->setTitle(date.toString(tr("dd.MM.yyyy hh:mm:ss")));
@@ -162,6 +167,7 @@ void TProgSettings::Load()
 			if(token == QXmlStreamReader::StartElement)
 				{
 				if(xml.name() == tr("Settings")) continue;
+#ifndef __linux__
 				for(int i=0;i<2;i++)
 					{
 					if(xml.name() == tr("OktServ%1").arg(i))
@@ -169,6 +175,7 @@ void TProgSettings::Load()
 						LoadCommSettings(xml, i);
 						}
 					}
+#endif
 				if(xml.name() == tr("GeneralSettings"))
 					{
 					LoadGeneralSettings(xml);
@@ -178,8 +185,9 @@ void TProgSettings::Load()
 
 		IniFile.close();
 		}
-
+#ifndef __linux__
 	for(int i=0;i<2;i++) OktServ[i]->PrintPortsParameters();
+#endif
 	AutomaticStart_CheckBox->setChecked(GeneralSettings.AutomaticStart);
 	}
 
@@ -199,7 +207,9 @@ void TProgSettings::Save()
 		//xml.setCodec("Windows-1251");
 
 		xml.writeStartElement(tr("Settings"));
+#ifndef __linux__
 		for(int i=0;i<2;i++) SaveCommSettings(xml, i);
+#endif
 		SaveGeneralSettings(xml);
 		xml.writeEndElement();
 

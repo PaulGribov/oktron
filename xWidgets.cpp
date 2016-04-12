@@ -5,22 +5,22 @@ QString xButtonSelectedStyleSheet="\
 	border-image: url(:/images/border_but0_enabled.png) 10;\
 	border-width: 10px;\
 	color: white;\
-	font: 12pt; }\
+	font: 24pt; }\
 	:disabled {\
 	border-image: url(:/images/border_but0_disabled.png) 10;\
 	border-width: 10px;\
 	color: white;\
-	font: 12pt; }\
+	font: 24pt; }\
 	:hover {\
 	border-image: url(:/images/border_but0_hover.png) 10;\
 	border-width: 10px;\
 	color: white;\
-	font: 12pt; }\
+	font: 24pt; }\
 	:pressed {\
 	border-image: url(:/images/border_but0_pressed.png) 10;\
 	border-width: 10px;\
 	color: white;\
-	font: 12pt; }\
+	font: 24pt; }\
 	";
 
 QString xButtonNormalStyleSheet="\
@@ -28,22 +28,22 @@ QString xButtonNormalStyleSheet="\
 	border-image: url(:/images/border_but3_enabled.png) 10;\
 	border-width: 10px;\
 	color: rgb(5,116,174);\
-	font: 12pt; }\
+	font: 24pt; }\
 	:disabled {\
 	border-image: url(:/images/border_but3_disabled.png) 10;\
 	border-width: 10px;\
 	color: rgb(154,154,154);\
-	font: 12pt; }\
+	font: 24pt; }\
 	:hover {\
 	border-image: url(:/images/border_but3_hover.png) 10;\
 	border-width: 10px;\
 	color: rgb(5,116,174);\
-	font: 12pt; }\
+	font: 24pt; }\
 	:pressed {\
 	border-image: url(:/images/border_but3_pressed.png) 10;\
 	border-width: 10px;\
 	color: rgb(5,116,174);\
-	font: 12pt; }\
+	font: 24pt; }\
 	";
 
 QString xTabWidgetStyleSheet="\
@@ -51,7 +51,7 @@ QString xTabWidgetStyleSheet="\
 		border-width: 10px;\
 		min-width: %1px;\
 		min-height: %2px;\
-		font: 12pt; }\
+		font: 24pt; }\
 	QTabBar::tab:selected, QTabBar::tab:enabled {\
 		border-image: url(:/images/border_but3_enabled.png) 10;\
 		color: rgb(154,154,154);\
@@ -74,7 +74,7 @@ QString xTableViewStyleSheet="\
 	:enabled {\
 		gridline-color: rgb(235,236,236);\
 		background: rgb(235,236,236);\
-		font: 12pt; }\
+		font: 18pt; }\
 	::item:focus {\
 		border-image: url(:/images/border_but0_enabled.png) 10;\
 		border-width: 2px;\

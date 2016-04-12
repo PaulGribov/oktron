@@ -24,13 +24,13 @@ void TGetBlocksIDPar::ButClick()
 
 void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget *NextFocusChain, TRegSetupPar **pRegSetupPars, TGetBlocksIDPar **pGetBlocksIDPars)
 	{
-	Widgets.LoadPars.Label = new QLabel(tr(""));
+	Widgets.LoadPars.Label = new QLabel();
 	Widgets.LoadPars.Label->setVisible(false);
 	Widgets.LoadPars.Label->setStyleSheet("\
 		color: rgb(5,116,174);\
-		font: 12pt;\
+		font: 18pt;\
 		");
-
+	Widgets.LoadPars.Label->setFixedHeight(200);
 	Widgets.LoadPars.ProgressBar = new QProgressBar();
 	Widgets.LoadPars.ProgressBar->setTextVisible(false);
 	Widgets.LoadPars.ProgressBar->setVisible(false);
@@ -44,8 +44,7 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 	Widgets.ButtonsBar.Close_Button = new xButton(QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
 
 	Widgets.ButtonsBar.Layout->addWidget(Widgets.ButtonsBar.Close_Button, 0, Qt::AlignRight | Qt::AlignBottom);
-	Widgets.ButtonsBar.Frame = new QFrame();
-	Widgets.ButtonsBar.Frame->setLayout(Widgets.ButtonsBar.Layout);
+
 
 	if((pRegSetupPars)||(pGetBlocksIDPars))
 		{
@@ -53,21 +52,25 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 		Widgets.TableView->setModel(&Widgets.Model);
 		Widgets.TableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 #ifdef __i386__
-		Widgets.TableView->setMinimumHeight(300);
+		//Widgets.TableView->setMinimumHeight(300);
 		Widgets.TableView->setMinimumWidth(600);
 #endif
 		Widgets.TableView->setSelectionMode(QAbstractItemView::SingleSelection);
 		//Widgets.TableView->setSelectionBehavior(QAbstractItemView::SelectItems);
 		}
 
-	Widgets.Layout = new QVBoxLayout();
+	Widgets.Layout=new QVBoxLayout();
+
+
 	Widgets.Layout->addWidget(Widgets.LoadPars.Label, 0, Qt::AlignHCenter | Qt::AlignBottom);
 	Widgets.Layout->addWidget(Widgets.LoadPars.ProgressBar, 0, Qt::AlignHCenter | Qt::AlignTop);
 	if((pRegSetupPars)||(pGetBlocksIDPars))
 		{
 		Widgets.Layout->addWidget(Widgets.TableView);
 		}
-	Widgets.Layout->addWidget(Widgets.ButtonsBar.Frame);
+
+	//Widgets.Layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+	Widgets.Layout->addLayout(Widgets.ButtonsBar.Layout);
 
 	Widgets.Focused=NULL;
 	}
@@ -85,12 +88,23 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 		}
 	Wait4Parameter=false;
 
+	QHBoxLayout *ButtonsBar0_Layout = new QHBoxLayout();
 	SettingsApply_Button = new xButton(QIcon(":/images/apply.png"), 32, Qt::ToolButtonTextBesideIcon);
 	SaveSettings_Button = new xButton(QIcon(":/images/document_save.png"), 32, Qt::ToolButtonTextBesideIcon);
 	SettingsApply_Button->setEnabled(false);
 	SaveSettings_Button->setEnabled(false);
+	ButtonsBar0_Layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+	ButtonsBar0_Layout->addWidget(SettingsApply_Button, 0, Qt::AlignRight | Qt::AlignBottom);
+	ButtonsBar0_Layout->addWidget(SaveSettings_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 
 	RegSetupWidgetsCreate(RegSetup, SettingsApply_Button, pRegSetupPars, NULL);
+
+	//QVBoxLayout *ButtonsBar_Layout = new QVBoxLayout();
+	//ButtonsBar_Layout->addLayout(ButtonsBar0_Layout);
+	//ButtonsBar_Layout->addLayout(RegSetup.ButtonsBar.Layout);
+	RegSetup.Layout->insertSpacerItem(3, new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+	RegSetup.Layout->insertLayout(4, ButtonsBar0_Layout);
+	//RegSetup.Layout->addLayout(ButtonsBar_Layout);
 
 	RegSetupList_ItemDelegate = new TRegSetupList_ItemDelegate(this);
 	RegSetup.TableView->setItemDelegate(RegSetupList_ItemDelegate);
@@ -99,10 +113,10 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 	connect(RegSetup.ButtonsBar.Close_Button, SIGNAL(clicked()), this, SLOT(RegSetup_CloseSlotInternal()));
 
 	connect(SaveSettings_Button, SIGNAL(clicked()), this, SLOT(SaveSettings()));
-	RegSetup.ButtonsBar.Layout->insertWidget(1, SaveSettings_Button, 0, Qt::AlignRight | Qt::AlignBottom);
+	//RegSetup.ButtonsBar.Layout->insertWidget(1, SaveSettings_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 
 	connect(SettingsApply_Button, SIGNAL(clicked()), this, SLOT(SettingsApply()));
-	RegSetup.ButtonsBar.Layout->insertWidget(1, SettingsApply_Button, 0, Qt::AlignRight | Qt::AlignBottom);
+	//RegSetup.ButtonsBar.Layout->insertWidget(1, SettingsApply_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 
 	RegSetupParent->setLayout(RegSetup.Layout);
 
