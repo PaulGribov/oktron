@@ -77,7 +77,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 	OscList_TableView->verticalHeader()->setVisible(false);
 	OscList_TableView->setShowGrid(false);
 
-	OscList_CloseButton = new xButton(QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon, OscList_parent);
+	OscList_CloseButton = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon, OscList_parent);
 	OscList_ExtLayout->addWidget(OscList_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
 	connect(OscList_CloseButton, SIGNAL(clicked()), this, SLOT(OscList_CloseWindow()));
 
@@ -100,7 +100,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 
 	ParametersView_TabWidget=new xTabWidget();
 	ParametersView_Layout->addWidget(ParametersView_TabWidget);
-	ParametersView_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(170).arg(50));
+	ParametersView_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(150).arg(50));
 	ParametersView_TabWidget->setUsesScrollButtons(false);
 	//ParametersView_TabWidget->setIconSize(QSize(48,48));
 
@@ -126,10 +126,10 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 		Packet[i].TableView->setModel(&Packet[i].Model);
 		Packet[i].TableView->setStyleSheet(xTableViewStyleSheet);
 		Packet[i].TableView->verticalHeader()->setVisible(false);
-		Packet[i].TableView->setShowGrid(false);
+		//Packet[i].TableView->setShowGrid(false);
 		}
 
-	ParametersView_CloseButton = new xButton(QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon, ParametersView_parent);
+	ParametersView_CloseButton = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon, ParametersView_parent);
 	ParametersView_Layout->addWidget(ParametersView_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
 	connect(ParametersView_CloseButton, SIGNAL(clicked()), this, SLOT(ParametersView_CloseWindow()));
 

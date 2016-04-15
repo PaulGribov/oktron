@@ -173,7 +173,7 @@ void TOktServ::PrintPortsParameters()
 		CommPort_ComboBox->addItem(tr("нет доступных портов"));
 		}
 	}
-
+/*
 void TOktServ::ErrorHandler(QSerialPort::SerialPortError error)
 	{
 	if(error == QSerialPort::ResourceError)
@@ -182,7 +182,7 @@ void TOktServ::ErrorHandler(QSerialPort::SerialPortError error)
 		StartStop(false);
 		}
 	}
-
+*/
 #endif
 
 //===========================================================================

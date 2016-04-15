@@ -11,6 +11,7 @@
 #include <QItemDelegate>
 #include <QLayout>
 #include <QLabel>
+#include <QHeaderView>
 #include "toktserv.h"
 #include "xWidgets.h"
 
@@ -166,7 +167,7 @@ class TGetBlocksIDPar : public QWidget
 		QString HexId;
 		bool Updatable;
 		int Addr;
-		QPushButton *UpdBut;
+		xButton *UpdBut;
 		QStandardItem *pCell[GETBLOCKSID_COLS_NUM];	//Указатель на ячейку
 
 
@@ -206,14 +207,20 @@ class RegSetupTableView : public QTableView
 			this->pRegSetupPars=pRegSetupPars;
 			this->pGetBlocksIDPars=pGetBlocksIDPars;
 			OSRS_parent=parent;
+			setStyleSheet(xTableViewStyleSheet);
+			verticalHeader()->setVisible(false);
+			installEventFilter(this);
 			}
 
 		QWidget *NextFocusChain;
 		TRegSetupPar **pRegSetupPars;
 		TGetBlocksIDPar **pGetBlocksIDPars;
 		void *OSRS_parent;
+		void OpenEditor4Index(QModelIndex current);
+		void CloseEditor4Index(QModelIndex previous);
 		void keyPressEvent(QKeyEvent *event);
 		void currentChanged(const QModelIndex &current, const QModelIndex &previous);
+		bool eventFilter(QObject *object, QEvent *e);
 	};
 
 typedef struct
@@ -223,6 +230,8 @@ typedef struct
 	QVBoxLayout *Layout;
 	struct
 		{
+		QFrame *Frame;
+		QVBoxLayout *Layout;
 		QLabel *Label;
 		QProgressBar *ProgressBar;
 		} LoadPars;
@@ -363,6 +372,6 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 
 	};
 
-//#define REGSETUPDBG
+#define REGSETUPDBG
 
 #endif // TOKTSERVREGSETUP_H

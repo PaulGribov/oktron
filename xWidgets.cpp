@@ -2,7 +2,7 @@
 
 QString xButtonSelectedStyleSheet="\
 	:enabled {\
-	border-image: url(:/images/border_but0_enabled.png) 10;\
+	border-image: url(:/images/border_but0_enabled.png)10;\
 	border-width: 10px;\
 	color: white;\
 	font: 24pt; }\
@@ -46,12 +46,58 @@ QString xButtonNormalStyleSheet="\
 	font: 24pt; }\
 	";
 
+QString xTableButtonSelectedStyleSheet="\
+	:enabled {\
+	background: rgb(105,169,216);\
+	border-width: 5px;\
+	color: white;\
+	font: 24pt; }\
+	:disabled {\
+	background: rgb(235,236,236);\
+	border-width: 5px;\
+	color: white;\
+	font: 24pt; }\
+	:hover {\
+	background: rgb(144,215,253);\
+	border-width: 5px;\
+	color: white;\
+	font: 24pt; }\
+	:pressed {\
+	background: rgb(83,147,195);\
+	border-width: 5px;\
+	color: white;\
+	font: 24pt; }\
+	";
+
+QString xTableButtonNormalStyleSheet="\
+	:enabled {\
+	background: rgb(243,243,243);\
+	border-width: 1px;\
+	color: rgb(5,116,174);\
+	font: 24pt; }\
+	:disabled {\
+	background: rgb(239,239,239);\
+	border-width: 1px;\
+	color: rgb(154,154,154);\
+	font: 24pt; }\
+	:hover {\
+	background: rgb(255,255,255);\
+	border-width: 1px;\
+	color: rgb(5,116,174);\
+	font: 24pt; }\
+	:pressed {\
+	background: rgb(217,217,217);\
+	border-width: 1px;\
+	color: rgb(5,116,174);\
+	font: 24pt; }\
+	";
+
 QString xTabWidgetStyleSheet="\
 	QTabBar::tab {\
 		border-width: 10px;\
 		min-width: %1px;\
 		min-height: %2px;\
-		font: 24pt; }\
+		font: 21pt; }\
 	QTabBar::tab:selected, QTabBar::tab:enabled {\
 		border-image: url(:/images/border_but3_enabled.png) 10;\
 		color: rgb(154,154,154);\
@@ -69,7 +115,7 @@ QString xTabWidgetStyleSheet="\
 		color: white;\
 		}\
 	";
-
+/*
 QString xTableViewStyleSheet="\
 	:enabled {\
 		gridline-color: rgb(235,236,236);\
@@ -77,15 +123,15 @@ QString xTableViewStyleSheet="\
 		font: 18pt; }\
 	::item:focus {\
 		border-image: url(:/images/border_but0_enabled.png) 10;\
-		border-width: 2px;\
+		border-width: 10px;\
 		color: rgb(5,116,174); }\
 	::item:!focus {\
 		border-image: url(:/images/border_but1_enabled.png) 10;\
-		border-width: 2px;\
+		border-width: 10px;\
 		color: rgb(5,116,174); }\
 	::item:disabled {\
 		border-image: url(:/images/border_but1_disabled.png) 10;\
-		border-width: 2px;\
+		border-width: 10px;\
 		color: rgb(154,154,154);}\
 	QHeaderView {\
 		background-color: rgb(235,236,236);\
@@ -94,13 +140,44 @@ QString xTableViewStyleSheet="\
 		background-color: rgb(235,236,236);\
 		color: rgb(154,154,154);\
 		border-image: url(:/images/border_but1_hover.png) 10;\
-		border-width: 2px;\
+		border-width: 10px;\
 		}\
 	QTableView QTableCornerButton::section {\
 		background: rgb(235,236,236);\
 		border: 0px outset rgb(235,236,236);\
 		}\
 	";
+*/
+QString xTableViewStyleSheet="\
+	:enabled {\
+		gridline-color: rgb(154,154,154);\
+		background: rgb(235,236,236);\
+		font: 18pt; }\
+	::item:focus {\
+		border-image: url(:/images/border_but0_enabled.png) 10;\
+		border-width: 1px;\
+		color: rgb(5,116,174); }\
+	::item:!focus {\
+		background: rgb(235,236,236);\
+		border-width: 1px;\
+		color: rgb(5,116,174); }\
+	::item:disabled {\
+		background: rgb(235,236,236);\
+		border-width: 1px;\
+		color: rgb(154,154,154);}\
+	QHeaderView {\
+		background-color: rgb(235,236,236);\
+		}\
+	QHeaderView::section  {\
+		background-color: rgb(235,236,236);\
+		color: rgb(154,154,154);\
+		}\
+	QTableView QTableCornerButton::section {\
+		background: rgb(235,236,236);\
+		border: 0px outset rgb(235,236,236);\
+		}\
+	";
+
 
 QString xTabStyleSheet="\
 		";
@@ -124,13 +201,22 @@ QString xTabStyleSheet="\
 			}\
 		";
 
-xButton::xButton(const QIcon &icon, int icon_size, Qt::ToolButtonStyle style, QWidget *parent) : QToolButton(parent)
+xButton::xButton(int v, const QIcon &icon, int icon_size, Qt::ToolButtonStyle style, QWidget *parent) : QToolButton(parent)
 	{
+	this->v=v;
 	setIcon(icon);
 	setIconSize(QSize(icon_size,icon_size));
 	setToolButtonStyle(style);
 	setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-	setStyleSheet(xButtonNormalStyleSheet);
+	if(v==TableBut)
+		{
+		//setMinimumSize(QSize(icon_size,icon_size));
+		setStyleSheet(xTableButtonNormalStyleSheet);
+		}
+	else
+		{
+		setStyleSheet(xButtonNormalStyleSheet);
+		}
 	installEventFilter(this);
 	}
 
@@ -140,10 +226,24 @@ bool xButton::eventFilter(QObject *object, QEvent *e)
 	switch(e->type())
 		{
 		case QEvent::FocusIn:
-			setStyleSheet(xButtonSelectedStyleSheet);
+			if(v==TableBut)
+				{
+				setStyleSheet(xTableButtonSelectedStyleSheet);
+				}
+			else
+				{
+				setStyleSheet(xButtonSelectedStyleSheet);
+				}
 			break;
 		case QEvent::FocusOut:
-			setStyleSheet(xButtonNormalStyleSheet);
+			if(v==TableBut)
+				{
+				setStyleSheet(xTableButtonNormalStyleSheet);
+				}
+			else
+				{
+				setStyleSheet(xButtonNormalStyleSheet);
+				}
 			break;
 		default:
 			break;

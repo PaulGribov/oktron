@@ -24,24 +24,33 @@ void TGetBlocksIDPar::ButClick()
 
 void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget *NextFocusChain, TRegSetupPar **pRegSetupPars, TGetBlocksIDPar **pGetBlocksIDPars)
 	{
+	Widgets.LoadPars.Frame=new QFrame();
+	Widgets.LoadPars.Frame->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	Widgets.LoadPars.Frame->setVisible(false);
+
+	Widgets.LoadPars.Layout=new QVBoxLayout();
+	Widgets.LoadPars.Frame->setLayout(Widgets.LoadPars.Layout);
+
 	Widgets.LoadPars.Label = new QLabel();
-	Widgets.LoadPars.Label->setVisible(false);
 	Widgets.LoadPars.Label->setStyleSheet("\
 		color: rgb(5,116,174);\
 		font: 18pt;\
 		");
-	Widgets.LoadPars.Label->setFixedHeight(200);
+	Widgets.LoadPars.Label->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	Widgets.LoadPars.Layout->addWidget(Widgets.LoadPars.Label);
+
 	Widgets.LoadPars.ProgressBar = new QProgressBar();
 	Widgets.LoadPars.ProgressBar->setTextVisible(false);
 	Widgets.LoadPars.ProgressBar->setVisible(false);
+	Widgets.LoadPars.Layout->addWidget(Widgets.LoadPars.ProgressBar);
 
 	Widgets.ButtonsBar.Layout = new QHBoxLayout();
 	Widgets.ButtonsBar.Spacer = new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Minimum);
 	Widgets.ButtonsBar.Layout->addSpacerItem(Widgets.ButtonsBar.Spacer);
 
-	Widgets.ButtonsBar.Reload_Button = new xButton(QIcon(":/images/refresh.png"), 32, Qt::ToolButtonTextBesideIcon);
+	Widgets.ButtonsBar.Reload_Button = new xButton(GenBut, QIcon(":/images/refresh.png"), 32, Qt::ToolButtonTextBesideIcon);
 	Widgets.ButtonsBar.Layout->addWidget(Widgets.ButtonsBar.Reload_Button, 0, Qt::AlignRight | Qt::AlignBottom);
-	Widgets.ButtonsBar.Close_Button = new xButton(QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
+	Widgets.ButtonsBar.Close_Button = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
 
 	Widgets.ButtonsBar.Layout->addWidget(Widgets.ButtonsBar.Close_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 
@@ -61,15 +70,14 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 
 	Widgets.Layout=new QVBoxLayout();
 
-
-	Widgets.Layout->addWidget(Widgets.LoadPars.Label, 0, Qt::AlignHCenter | Qt::AlignBottom);
-	Widgets.Layout->addWidget(Widgets.LoadPars.ProgressBar, 0, Qt::AlignHCenter | Qt::AlignTop);
+	Widgets.Layout->addWidget(Widgets.LoadPars.Frame);
+	//Widgets.Layout->addWidget(Widgets.LoadPars.Label, 0, Qt::AlignHCenter | Qt::AlignBottom);
+	//Widgets.Layout->addWidget(Widgets.LoadPars.ProgressBar, 0, Qt::AlignHCenter | Qt::AlignTop);
 	if((pRegSetupPars)||(pGetBlocksIDPars))
 		{
 		Widgets.Layout->addWidget(Widgets.TableView);
 		}
 
-	//Widgets.Layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Expanding));
 	Widgets.Layout->addLayout(Widgets.ButtonsBar.Layout);
 
 	Widgets.Focused=NULL;
@@ -89,8 +97,8 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 	Wait4Parameter=false;
 
 	QHBoxLayout *ButtonsBar0_Layout = new QHBoxLayout();
-	SettingsApply_Button = new xButton(QIcon(":/images/apply.png"), 32, Qt::ToolButtonTextBesideIcon);
-	SaveSettings_Button = new xButton(QIcon(":/images/document_save.png"), 32, Qt::ToolButtonTextBesideIcon);
+	SettingsApply_Button = new xButton(GenBut, QIcon(":/images/apply.png"), 32, Qt::ToolButtonTextBesideIcon);
+	SaveSettings_Button = new xButton(GenBut, QIcon(":/images/document_save.png"), 32, Qt::ToolButtonTextBesideIcon);
 	SettingsApply_Button->setEnabled(false);
 	SaveSettings_Button->setEnabled(false);
 	ButtonsBar0_Layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Minimum));
@@ -99,12 +107,7 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 
 	RegSetupWidgetsCreate(RegSetup, SettingsApply_Button, pRegSetupPars, NULL);
 
-	//QVBoxLayout *ButtonsBar_Layout = new QVBoxLayout();
-	//ButtonsBar_Layout->addLayout(ButtonsBar0_Layout);
-	//ButtonsBar_Layout->addLayout(RegSetup.ButtonsBar.Layout);
-	RegSetup.Layout->insertSpacerItem(3, new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Expanding));
-	RegSetup.Layout->insertLayout(4, ButtonsBar0_Layout);
-	//RegSetup.Layout->addLayout(ButtonsBar_Layout);
+	RegSetup.Layout->insertLayout(2, ButtonsBar0_Layout);
 
 	RegSetupList_ItemDelegate = new TRegSetupList_ItemDelegate(this);
 	RegSetup.TableView->setItemDelegate(RegSetupList_ItemDelegate);
@@ -597,7 +600,7 @@ void TOktServRegSetup::RegSetupReq()
 		case CMD_GET_BLOCK_ID:
 			if(prevCmd==Cmd) break;
 			GetBlocksID.LoadPars.Label->setText(tr("Загрузка параметров ..."));
-			GetBlocksID.LoadPars.Label->setVisible(true);
+			GetBlocksID.LoadPars.Frame->setVisible(true);
 			GetBlocksID.LoadPars.ProgressBar->setVisible(true);
 			GetBlocksID.LoadPars.ProgressBar->setRange(1,100);
 			GetBlocksID.LoadPars.ProgressBar->setValue(1);
@@ -607,7 +610,7 @@ void TOktServRegSetup::RegSetupReq()
 		case CMD_READ_SETTINGS_DESC:
 			if(prevCmd==Cmd) break;
 			RegSetup.LoadPars.Label->setText(tr("Загрузка параметров ..."));
-			RegSetup.LoadPars.Label->setVisible(true);
+			RegSetup.LoadPars.Frame->setVisible(true);
 			RegSetup.LoadPars.ProgressBar->setVisible(true);
 			RegSetup.LoadPars.ProgressBar->setRange(1,100);
 			RegSetup.LoadPars.ProgressBar->setValue(1);
@@ -625,7 +628,7 @@ void TOktServRegSetup::RegSetupReq()
 				{
 				//Параметры прочтены - показать список
 				case CMD_GET_BLOCK_ID:
-					GetBlocksID.LoadPars.Label->setVisible(false);
+					GetBlocksID.LoadPars.Frame->setVisible(false);
 					GetBlocksID.LoadPars.ProgressBar->setVisible(false);
 					GetBlocksID.TableView->setVisible(true);
 					FindHEXs_GetBlocksID();
@@ -633,7 +636,7 @@ void TOktServRegSetup::RegSetupReq()
 
 				//Параметры прочтены - показать список
 				case CMD_READ_SETTINGS_DESC:
-					RegSetup.LoadPars.Label->setVisible(false);
+					RegSetup.LoadPars.Frame->setVisible(false);
 					RegSetup.LoadPars.ProgressBar->setVisible(false);
 					RegSetup.TableView->setVisible(true);
 					RegSetup.TableView->setEnabled(true);
@@ -688,14 +691,14 @@ void TOktServRegSetup::RegSetupReq()
 					//Если загружен ID-регулятора, то показать список несмотря на ошибку (режим загрузчика)
 					if(ParameterIndex)
 						{
-						GetBlocksID.LoadPars.Label->setVisible(false);
+						GetBlocksID.LoadPars.Frame->setVisible(false);
 						GetBlocksID.TableView->setVisible(true);
 						FindHEXs_GetBlocksID();
 						}
 					else
 						{
 						GetBlocksID.LoadPars.Label->setText(ErrMsg);
-						GetBlocksID.LoadPars.Label->setVisible(true);
+						GetBlocksID.LoadPars.Frame->setVisible(true);
 						GetBlocksID.TableView->setVisible(false);
 						GetBlocksID.ButtonsBar.Close_Button->setFocus();
 						}
@@ -703,7 +706,7 @@ void TOktServRegSetup::RegSetupReq()
 
 				case CMD_READ_SETTINGS_DESC:
 					RegSetup.LoadPars.Label->setText(ErrMsg);
-					RegSetup.LoadPars.Label->setVisible(true);
+					RegSetup.LoadPars.Frame->setVisible(true);
 					RegSetup.LoadPars.ProgressBar->setVisible(false);
 					RegSetup.TableView->setVisible(false);
 					RegSetup.TableView->setEnabled(false);
@@ -1050,7 +1053,7 @@ ErrorCmd_loc:
 					pRegSetupPars[ParameterIndex]->Writable=1;//ParameterIndex&1;
 					pRegSetupPars[ParameterIndex]->Affect=(TRegSetupParAffect)0;
 					pRegSetupPars[ParameterIndex]->TakenImmediately=0;
-					pRegSetupPars[ParameterIndex]->ParType=(TRegSetupParType)(ParameterIndex&1);
+					pRegSetupPars[ParameterIndex]->ParType=(TRegSetupParType)(1-(ParameterIndex&1));
 					float DivBy[]={1.0, 1.28, 2.56, 5.12};
 					pRegSetupPars[ParameterIndex]->DivBy=DivBy[0];
 					pRegSetupPars[ParameterIndex]->Order=0;
@@ -1295,7 +1298,11 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 		pGetBlocksIDPars[i]->Updatable=false;
 		pGetBlocksIDPars[i]->HexId=tr("");
 		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_HEXFILE_COL]) pGetBlocksIDPars[i]->pCell[GETBLOCKSID_HEXFILE_COL]->setText(tr(""));
-		if(pGetBlocksIDPars[i]->UpdBut) pGetBlocksIDPars[i]->UpdBut->setEnabled(false);
+		if(pGetBlocksIDPars[i]->UpdBut)
+			{
+			pGetBlocksIDPars[i]->UpdBut->setEnabled(false);
+			pGetBlocksIDPars[i]->UpdBut->setText(tr("Загрузить"));
+			}
 		}
 
 	foreach(QFileInfo file, listFiles)
@@ -1521,57 +1528,84 @@ void TRegSetupPar::WriteButClick()
 	((TOktServRegSetup *)OSRS_parent)->PostReqWithStatusClear(CMD_SET_VAL, Index);
 	}
 
-void RegSetupTableView::currentChanged(const QModelIndex &current, const QModelIndex &previous)
+bool RegSetupTableView::eventFilter(QObject *object, QEvent *e)
 	{
-	if(pRegSetupPars)
+	(void)object;
+	QModelIndex current=currentIndex();
+	switch(e->type())
 		{
-		if(((current.column()>=REGSETUPLIST_VAL_COL)&&(current.column()<=REGSETUPLIST_WRITEBUT_COL)&&
-			(pRegSetupPars[current.row()]->ParType!=tyButton)&&
-			(pRegSetupPars[current.row()]->ParType!=tyTitle)&&
-			pRegSetupPars[current.row()]->Writable)||
-		   ((current.column()==REGSETUPLIST_NAME_COL)&&(pRegSetupPars[current.row()]->ParType==tyButton)))
+		case QEvent::FocusIn:
+			OpenEditor4Index(current);
+			break;
+		case QEvent::FocusOut:
+			CloseEditor4Index(current);
+			break;
+		default:
+			break;
+		}
+	return false;
+	}
+
+
+void RegSetupTableView::OpenEditor4Index(QModelIndex current)
+	{
+	if((pRegSetupPars)&&
+	  (((current.column()>=REGSETUPLIST_VAL_COL)&&(current.column()<=REGSETUPLIST_WRITEBUT_COL)&&
+		(pRegSetupPars[current.row()]->ParType!=tyButton)&&
+		(pRegSetupPars[current.row()]->ParType!=tyTitle)&&
+		pRegSetupPars[current.row()]->Writable)||
+	   ((current.column()==REGSETUPLIST_NAME_COL)&&(pRegSetupPars[current.row()]->ParType==tyButton))))
+		{
+		if(!((TOktServRegSetup *)OSRS_parent)->IsBusy())
 			{
-			if(!((TOktServRegSetup *)OSRS_parent)->IsBusy())
-				{
-				pRegSetupPars[current.row()]->pCell[current.column()]->setIcon(QIcon());
-				edit(current);
-				}
-			}
-
-		if(((previous.column()>=REGSETUPLIST_VAL_COL)&&(previous.column()<=REGSETUPLIST_WRITEBUT_COL)&&
-			(pRegSetupPars[previous.row()]->ParType!=tyButton)&&
-			(pRegSetupPars[previous.row()]->ParType!=tyTitle)&&
-			pRegSetupPars[previous.row()]->Writable)||
-		   ((previous.column()==REGSETUPLIST_NAME_COL)&&(pRegSetupPars[previous.row()]->ParType==tyButton)))
-			{
-			switch(previous.column())
-				{
-				case REGSETUPLIST_PLUSBUT_COL:
-					pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/plus.png"));
-					break;
-
-				case REGSETUPLIST_MINUSBUT_COL:
-					pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/minus.png"));
-					break;
-
-				case REGSETUPLIST_READBUT_COL:
-					pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/refresh.png"));
-					break;
-
-				case REGSETUPLIST_WRITEBUT_COL:
-					pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/document_save.png"));
-					break;
-
-				case REGSETUPLIST_NAME_COL:
-					pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/advancedsettings.png"));
-					break;
-
-				default:
-					break;
-				}
+			pRegSetupPars[current.row()]->pCell[current.column()]->setIcon(QIcon());
+			edit(current);
 			}
 		}
+	}
 
+void RegSetupTableView::CloseEditor4Index(QModelIndex previous)
+	{
+	if((pRegSetupPars)&&
+	  (((previous.column()>=REGSETUPLIST_VAL_COL)&&(previous.column()<=REGSETUPLIST_WRITEBUT_COL)&&
+		(pRegSetupPars[previous.row()]->ParType!=tyButton)&&
+		(pRegSetupPars[previous.row()]->ParType!=tyTitle)&&
+		pRegSetupPars[previous.row()]->Writable)||
+	   ((previous.column()==REGSETUPLIST_NAME_COL)&&(pRegSetupPars[previous.row()]->ParType==tyButton))))
+		{
+		switch(previous.column())
+			{
+			case REGSETUPLIST_PLUSBUT_COL:
+				pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/plus.png"));
+				break;
+
+			case REGSETUPLIST_MINUSBUT_COL:
+				pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/minus.png"));
+				break;
+
+			case REGSETUPLIST_READBUT_COL:
+				pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/refresh.png"));
+				break;
+
+			case REGSETUPLIST_WRITEBUT_COL:
+				pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/document_save.png"));
+				break;
+
+			case REGSETUPLIST_NAME_COL:
+				pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/advancedsettings.png"));
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
+
+
+void RegSetupTableView::currentChanged(const QModelIndex &current, const QModelIndex &previous)
+	{
+	OpenEditor4Index(current);
+	CloseEditor4Index(previous);
 	QTableView::currentChanged(current, previous);
 	}
 
@@ -1665,10 +1699,10 @@ void TRegSetupList_ItemDelegate::paint(QPainter *painter, const QStyleOptionView
 				QStyledItemDelegate::paint(painter, opt, index);
 				return;
 				}
-
+			break;
+		case tyButton:
 			break;
 
-		case tyButton:
 		case tyHexChar:
 		case tyHexShort:
 		case tyUnsigned:
@@ -1692,28 +1726,28 @@ QWidget *TRegSetupList_ItemDelegate::createEditor(QWidget *parent, const QStyleO
 			{
 			case REGSETUPLIST_PLUSBUT_COL:
 				{
-				QPushButton *editor = new QPushButton(QIcon(":/images/plus.png"), tr(""), parent);
+				xButton *editor = new xButton(TableBut, QIcon(":/images/plus.png"), 16, Qt::ToolButtonIconOnly, parent);
 				connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()], SLOT(PlusButClick()));
 				return editor;
 				}
 
 			case REGSETUPLIST_MINUSBUT_COL:
 				{
-				QPushButton *editor = new QPushButton(QIcon(":/images/minus.png"), tr(""), parent);
+				xButton *editor = new xButton(TableBut, QIcon(":/images/minus.png"), 16, Qt::ToolButtonIconOnly, parent);
 				connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()], SLOT(MinusButClick()));
 				return editor;
 				}
 
 			case REGSETUPLIST_READBUT_COL:
 				{
-				QPushButton *editor = new QPushButton(QIcon(":/images/refresh.png"), tr(""), parent);
+				xButton *editor = new xButton(TableBut, QIcon(":/images/refresh.png"), 16, Qt::ToolButtonIconOnly, parent);
 				connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()], SLOT(ReadButClick()));
 				return editor;
 				}
 
 			case REGSETUPLIST_WRITEBUT_COL:
 				{
-				QPushButton *editor = new QPushButton(QIcon(":/images/document_save.png"), tr(""), parent);
+				xButton *editor = new xButton(TableBut, QIcon(":/images/document_save.png"), 16, Qt::ToolButtonIconOnly, parent);
 				connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()], SLOT(WriteButClick()));
 				return editor;
 				}
@@ -1737,7 +1771,8 @@ QWidget *TRegSetupList_ItemDelegate::createEditor(QWidget *parent, const QStyleO
 		case tyButton:
 			if(index.column() == REGSETUPLIST_NAME_COL)
 				{
-				QPushButton *editor = new QPushButton(QIcon(":/images/advancedsettings.png"), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Name, parent);
+				xButton *editor = new xButton(TableBut, QIcon(":/images/advancedsettings.png"), 16, Qt::ToolButtonTextBesideIcon, parent);
+				editor->setText(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Name);
 				connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()], SLOT(ButClick()));
 				editor->setEnabled(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Writable);
 				return editor;
@@ -1936,7 +1971,7 @@ QWidget *TGetBlocksIDList_ItemDelegate::createEditor(QWidget *parent, const QSty
 		{
 		case GETBLOCKSID_UPDATE_COL:
 			{
-			QPushButton *editor = new QPushButton(QIcon(":/images/advancedsettings.png"), tr("Загрузить"), parent);
+			xButton *editor = new xButton(TableBut, QIcon(":/images/advancedsettings.png"), 16, Qt::ToolButtonTextBesideIcon, parent);
 			connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pGetBlocksIDPars[index.row()], SLOT(ButClick()));
 			((TOktServRegSetup *)OSRS_parent)->pGetBlocksIDPars[index.row()]->UpdBut=editor;
 			editor->setEnabled(false);

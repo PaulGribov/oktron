@@ -14,11 +14,11 @@ TEventsLog::TEventsLog(QWidget *parent) : QMainWindow(parent)
 
 	EventsList_TabWidget=new xTabWidget();
 	EventsList_ExtLayout->addWidget(EventsList_TabWidget);
-	EventsList_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(280).arg(36));
+	EventsList_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(300).arg(36));
 	EventsList_TabWidget->setUsesScrollButtons(false);
 
 	QWidget *EventsList_Tab=new QWidget();
-	EventsList_TabWidget->addTab(EventsList_Tab, QIcon(":/images/clipboard_new.png"), "");
+	EventsList_TabWidget->addTab(EventsList_Tab/*, QIcon(":/images/clipboard_new.png")*/, "");
 
 	QVBoxLayout *EventsList_IntLayout = new QVBoxLayout();
 	EventsList_Tab->setLayout(EventsList_IntLayout);
@@ -32,10 +32,10 @@ TEventsLog::TEventsLog(QWidget *parent) : QMainWindow(parent)
 	EventsList_TableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	EventsList_TableView->setStyleSheet(xTableViewStyleSheet);
 	EventsList_TableView->verticalHeader()->setVisible(false);
-	EventsList_TableView->setShowGrid(false);
+	//EventsList_TableView->setShowGrid(false);
 
 
-	EventsList_CloseButton = new xButton(QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
+	EventsList_CloseButton = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
 	EventsList_ExtLayout->addWidget(EventsList_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
 	connect(EventsList_CloseButton, SIGNAL(clicked()), this, SLOT(Close()));
 

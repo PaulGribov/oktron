@@ -69,29 +69,29 @@ void MainWindow::MenuCreate()
 	{
 	QHBoxLayout *Line1_Layout = new QHBoxLayout();
 
-	ParsOfBase_Button = new xButton(QIcon(":/images/meter3.png"));
+	ParsOfBase_Button = new xButton(GenBut, QIcon(":/images/meter3.png"));
 	connect(ParsOfBase_Button, SIGNAL(clicked()), this, SLOT(ParsOfBase_Button_OnClick()));
 	Line1_Layout->addWidget(ParsOfBase_Button);
 
-	ParsOfReserv_Button = new xButton(QIcon(":/images/meter3.png"));
+	ParsOfReserv_Button = new xButton(GenBut, QIcon(":/images/meter3.png"));
 	connect(ParsOfReserv_Button, SIGNAL(clicked()), this, SLOT(ParsOfReserv_Button_OnClick()));
 	Line1_Layout->addWidget(ParsOfReserv_Button);
 
-	RegsSetup_Button = new xButton(QIcon(":/images/advancedsettings.png"));
+	RegsSetup_Button = new xButton(GenBut, QIcon(":/images/advancedsettings.png"));
 	connect(RegsSetup_Button, SIGNAL(clicked()), this, SLOT(RegsSetup_Button_OnClick()));
 	Line1_Layout->addWidget(RegsSetup_Button);
 
 	QHBoxLayout *Line2_Layout = new QHBoxLayout();
 
-	GetBlocksID_Button = new xButton(QIcon(":/images/memory.png"));
+	GetBlocksID_Button = new xButton(GenBut, QIcon(":/images/memory.png"));
 	connect(GetBlocksID_Button, SIGNAL(clicked()), this, SLOT(GetBlocksID_Button_OnClick()));
 	Line2_Layout->addWidget(GetBlocksID_Button);
 
-	EventsLog_Button = new xButton(QIcon(":/images/clipboard_new.png"));
+	EventsLog_Button = new xButton(GenBut, QIcon(":/images/clipboard_new.png"));
 	connect(EventsLog_Button, SIGNAL(clicked()), this, SLOT(EventsLog_Button_OnClick()));
 	Line2_Layout->addWidget(EventsLog_Button);
 
-	ProgSettings_Button = new xButton(QIcon(":/images/applications_system.png"));
+	ProgSettings_Button = new xButton(GenBut, QIcon(":/images/applications_system.png"));
 	ProgSettings_Button->setIcon(QIcon(":/images/applications_system.png"));
 	connect(ProgSettings_Button, SIGNAL(clicked()), this, SLOT(ProgSettings_Button_OnClick()));
 	Line2_Layout->addWidget(ProgSettings_Button);

@@ -23,12 +23,19 @@ extern QString xButtonSelectedStyleSheet;
 extern QString xTabStyleSheet;
 extern QString xTabWidgetStyleSheet;
 
+enum xButType {
+	GenBut,
+	TableBut,
+	};
+
 class xButton : public QToolButton
 	{
 		Q_OBJECT
 	public:
-		explicit xButton(const QIcon &icon, int icon_size=48, Qt::ToolButtonStyle style=Qt::ToolButtonTextUnderIcon, QWidget *parent=0);
+		explicit xButton(int v, const QIcon &icon, int icon_size=48, Qt::ToolButtonStyle style=Qt::ToolButtonTextUnderIcon, QWidget *parent=0);
 		bool eventFilter(QObject *object, QEvent *e);
+	private:
+		int v;
 	};
 
 class xTabWidget : public QTabWidget

@@ -86,7 +86,7 @@ TProgSettings::TProgSettings(QWidget *parent, TOktServExt **pOktServExt0, TOktSe
 	//Кнопка "применить"
 	QHBoxLayout *PortSettingsButtons_Layout = new QHBoxLayout();
 	PortSettingsButtons_Layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-	PortsSettingsApply_Button = new xButton(QIcon(":/images/apply.png"), 32, Qt::ToolButtonTextBesideIcon);
+	PortsSettingsApply_Button = new xButton(GenBut, QIcon(":/images/apply.png"), 32, Qt::ToolButtonTextBesideIcon);
 	PortSettingsButtons_Layout->addWidget(PortsSettingsApply_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 	connect(PortsSettingsApply_Button, SIGNAL(clicked()), this, SLOT(PortsSettingsApply()));
 
@@ -101,10 +101,10 @@ TProgSettings::TProgSettings(QWidget *parent, TOktServExt **pOktServExt0, TOktSe
 	//Кнопка "закрыть настройки программы"
 	QHBoxLayout *ProgSettingsButtons_Layout = new QHBoxLayout();
 	ProgSettingsButtons_Layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-	Save_Button = new xButton(QIcon(":/images/document_save.png"), 32, Qt::ToolButtonTextBesideIcon);
+	Save_Button = new xButton(GenBut, QIcon(":/images/document_save.png"), 32, Qt::ToolButtonTextBesideIcon);
 	ProgSettingsButtons_Layout->addWidget(Save_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 	connect(Save_Button, SIGNAL(clicked()), this, SLOT(Save()));
-	Close_Button = new xButton(QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
+	Close_Button = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
 	ProgSettingsButtons_Layout->addWidget(Close_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 	connect(Close_Button, SIGNAL(clicked()), this, SLOT(Close()));
 	ProgSettings_Layout->addLayout(ProgSettingsButtons_Layout);
