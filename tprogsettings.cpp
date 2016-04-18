@@ -16,7 +16,7 @@ TProgSettings::TProgSettings(QWidget *parent, TOktServExt **pOktServExt0, TOktSe
 	//Закладки настроек программы
 	ProgSettings_tabWidget=new xTabWidget();
 	ProgSettings_Layout->addWidget(ProgSettings_tabWidget);
-	ProgSettings_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(280).arg(36));
+	ProgSettings_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(24).arg(280).arg(36));
 	ProgSettings_tabWidget->setIconSize(QSize(36,36));
 	ProgSettings_tabWidget->setUsesScrollButtons(false);
 

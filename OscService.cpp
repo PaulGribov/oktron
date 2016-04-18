@@ -100,7 +100,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 
 	ParametersView_TabWidget=new xTabWidget();
 	ParametersView_Layout->addWidget(ParametersView_TabWidget);
-	ParametersView_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(150).arg(50));
+	ParametersView_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(18).arg(110).arg(50));
 	ParametersView_TabWidget->setUsesScrollButtons(false);
 	//ParametersView_TabWidget->setIconSize(QSize(48,48));
 

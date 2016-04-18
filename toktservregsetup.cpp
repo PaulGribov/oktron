@@ -9,10 +9,10 @@
 #include <QSpinBox>
 #include <xspinbox.h>
 #include <work.h>
-#include <QTableView>
 #include <QStandardItem>
-QStringList TOktServRegSetup::YESNO_sl;
+#include <QTableView>
 
+QStringList TOktServRegSetup::YESNO_sl;
 
 
 void TGetBlocksIDPar::ButClick()
@@ -61,11 +61,19 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 		Widgets.TableView->setModel(&Widgets.Model);
 		Widgets.TableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 #ifdef __i386__
-		//Widgets.TableView->setMinimumHeight(300);
+		Widgets.TableView->setMinimumHeight(300);
 		Widgets.TableView->setMinimumWidth(600);
 #endif
 		Widgets.TableView->setSelectionMode(QAbstractItemView::SingleSelection);
-		//Widgets.TableView->setSelectionBehavior(QAbstractItemView::SelectItems);
+		Widgets.TableView->setIconSize(QSize(28,28));
+
+		QHeaderView *verticalHeader = Widgets.TableView->verticalHeader();
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+		verticalHeader->sectionResizeMode(QHeaderView::Fixed);
+#else
+		verticalHeader->setResizeMode(QHeaderView::Fixed);
+#endif
+		verticalHeader->setDefaultSectionSize(42);
 		}
 
 	Widgets.Layout=new QVBoxLayout();
@@ -808,10 +816,10 @@ FormattingReq_loc:
 							RegSetup.Model.setHorizontalHeaderLabels(QStringList() << tr("Параметр") << tr("Значение") << tr("") << tr("") << tr("") << tr("") << tr("Статус"));
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_NAME_COL, 260);
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_VAL_COL, 80);
-							RegSetup.TableView->setColumnWidth(REGSETUPLIST_PLUSBUT_COL, 30);
-							RegSetup.TableView->setColumnWidth(REGSETUPLIST_MINUSBUT_COL, 30);
-							RegSetup.TableView->setColumnWidth(REGSETUPLIST_READBUT_COL, 30);
-							RegSetup.TableView->setColumnWidth(REGSETUPLIST_WRITEBUT_COL, 30);
+							RegSetup.TableView->setColumnWidth(REGSETUPLIST_PLUSBUT_COL, 42);
+							RegSetup.TableView->setColumnWidth(REGSETUPLIST_MINUSBUT_COL, 42);
+							RegSetup.TableView->setColumnWidth(REGSETUPLIST_READBUT_COL, 42);
+							RegSetup.TableView->setColumnWidth(REGSETUPLIST_WRITEBUT_COL, 42);
 							break;
 						//Инициирование: чтение ID блоков
 						case CMD_GET_BLOCK_ID:
@@ -1613,45 +1621,25 @@ void RegSetupTableView::keyPressEvent(QKeyEvent *e)
 	{
 	switch (e->key())
 		{
-		/*
-		case Qt::Key_Tab:
-			QTableView::keyPressEvent(
-				new QKeyEvent(QEvent::KeyPress,
-				Qt::Key_Left,
-				Qt::NoModifier));
+		case Qt::Key_Escape:
+			{
+			QWidget *w=parentWidget();
+			while(w->inherits("QMainWindow")==false)
+				{
+				w=w->parentWidget();
+				}
+			w->close();
+			}
 			break;
 
-		case Qt::Key_Backtab:
-			QTableView::keyPressEvent(
-				new QKeyEvent(QEvent::KeyPress,
-				Qt::Key_Right,
-				Qt::NoModifier));
-			break;
-		*/
 		case Qt::Key_Space:
 			e->ignore();
 			NextFocusChain->setFocus();
 			break;
 
-/*
-		case Qt::Key_Up:
-			e->ignore();
-			previousInFocusChain();
-			break;
-
-		case Qt::Key_Right:
-			e->ignore();
-			nextInFocusChain();
-			break;
-		case Qt::Key_Escape:
-			parentWidget()->close();
-			break;
-*/
 		default:
 			QTableView::keyPressEvent(e);
 		}
-	//QTableView::keyPressEvent(e);
-	//QWidget* tmp = focusProxy();
 	}
 
 void TRegSetupList_ItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -1726,28 +1714,28 @@ QWidget *TRegSetupList_ItemDelegate::createEditor(QWidget *parent, const QStyleO
 			{
 			case REGSETUPLIST_PLUSBUT_COL:
 				{
-				xButton *editor = new xButton(TableBut, QIcon(":/images/plus.png"), 16, Qt::ToolButtonIconOnly, parent);
+				xButton *editor = new xButton(TableBut, QIcon(":/images/plus.png"), 28, Qt::ToolButtonIconOnly, parent);
 				connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()], SLOT(PlusButClick()));
 				return editor;
 				}
 
 			case REGSETUPLIST_MINUSBUT_COL:
 				{
-				xButton *editor = new xButton(TableBut, QIcon(":/images/minus.png"), 16, Qt::ToolButtonIconOnly, parent);
+				xButton *editor = new xButton(TableBut, QIcon(":/images/minus.png"), 28, Qt::ToolButtonIconOnly, parent);
 				connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()], SLOT(MinusButClick()));
 				return editor;
 				}
 
 			case REGSETUPLIST_READBUT_COL:
 				{
-				xButton *editor = new xButton(TableBut, QIcon(":/images/refresh.png"), 16, Qt::ToolButtonIconOnly, parent);
+				xButton *editor = new xButton(TableBut, QIcon(":/images/refresh.png"), 28, Qt::ToolButtonIconOnly, parent);
 				connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()], SLOT(ReadButClick()));
 				return editor;
 				}
 
 			case REGSETUPLIST_WRITEBUT_COL:
 				{
-				xButton *editor = new xButton(TableBut, QIcon(":/images/document_save.png"), 16, Qt::ToolButtonIconOnly, parent);
+				xButton *editor = new xButton(TableBut, QIcon(":/images/document_save.png"), 28, Qt::ToolButtonIconOnly, parent);
 				connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()], SLOT(WriteButClick()));
 				return editor;
 				}
@@ -1771,7 +1759,7 @@ QWidget *TRegSetupList_ItemDelegate::createEditor(QWidget *parent, const QStyleO
 		case tyButton:
 			if(index.column() == REGSETUPLIST_NAME_COL)
 				{
-				xButton *editor = new xButton(TableBut, QIcon(":/images/advancedsettings.png"), 16, Qt::ToolButtonTextBesideIcon, parent);
+				xButton *editor = new xButton(TableBut, QIcon(":/images/advancedsettings.png"), 28, Qt::ToolButtonTextBesideIcon, parent);
 				editor->setText(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Name);
 				connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()], SLOT(ButClick()));
 				editor->setEnabled(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Writable);
@@ -1971,7 +1959,7 @@ QWidget *TGetBlocksIDList_ItemDelegate::createEditor(QWidget *parent, const QSty
 		{
 		case GETBLOCKSID_UPDATE_COL:
 			{
-			xButton *editor = new xButton(TableBut, QIcon(":/images/advancedsettings.png"), 16, Qt::ToolButtonTextBesideIcon, parent);
+			xButton *editor = new xButton(TableBut, QIcon(":/images/advancedsettings.png"), 28, Qt::ToolButtonTextBesideIcon, parent);
 			connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pGetBlocksIDPars[index.row()], SLOT(ButClick()));
 			((TOktServRegSetup *)OSRS_parent)->pGetBlocksIDPars[index.row()]->UpdBut=editor;
 			editor->setEnabled(false);

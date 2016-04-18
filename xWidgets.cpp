@@ -95,9 +95,9 @@ QString xTableButtonNormalStyleSheet="\
 QString xTabWidgetStyleSheet="\
 	QTabBar::tab {\
 		border-width: 10px;\
-		min-width: %1px;\
-		min-height: %2px;\
-		font: 21pt; }\
+		min-width: %2px;\
+		min-height: %3px;\
+		font: %1pt; }\
 	QTabBar::tab:selected, QTabBar::tab:enabled {\
 		border-image: url(:/images/border_but3_enabled.png) 10;\
 		color: rgb(154,154,154);\
@@ -152,7 +152,7 @@ QString xTableViewStyleSheet="\
 	:enabled {\
 		gridline-color: rgb(154,154,154);\
 		background: rgb(235,236,236);\
-		font: 18pt; }\
+		font: 24pt; }\
 	::item:focus {\
 		border-image: url(:/images/border_but0_enabled.png) 10;\
 		border-width: 1px;\
@@ -245,6 +245,22 @@ bool xButton::eventFilter(QObject *object, QEvent *e)
 				setStyleSheet(xButtonNormalStyleSheet);
 				}
 			break;
+		case QEvent::KeyPress:
+			{
+			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
+			if(keyEvent->key()==Qt::Key_Escape)
+				{
+				QWidget *w=parentWidget();
+				while(w->inherits("QMainWindow")==false)
+					{
+					w=w->parentWidget();
+					}
+				w->close();
+				return true;
+				}
+			}
+			break;
+
 		default:
 			break;
 		}
@@ -273,7 +289,6 @@ bool xTabWidget::eventFilter(QObject *object, QEvent *e)
 			}
 		else if(object->inherits("QTabWidget")==true)
 			{
-
 			switch(keyEvent->key())
 				{
 				case Qt::Key_Up:
