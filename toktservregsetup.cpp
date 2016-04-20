@@ -66,6 +66,8 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 #endif
 		Widgets.TableView->setSelectionMode(QAbstractItemView::SingleSelection);
 		Widgets.TableView->setIconSize(QSize(28,28));
+		Widgets.TableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+		Widgets.TableView->horizontalHeader()->setVisible(false);
 
 		QHeaderView *verticalHeader = Widgets.TableView->verticalHeader();
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
@@ -424,6 +426,7 @@ void TOktServRegSetup::AddRow2Table_RegSetup()
 				   pRegSetupPars[ParameterIndex]->Writable)
 					{
 					item->setEditable(true);
+#ifndef  REGSETUPLIST_PERSISTENT_EDITORS
 					item->setTextAlignment(Qt::AlignVCenter|Qt::AlignHCenter);
 					switch(col)
 						{
@@ -450,6 +453,7 @@ void TOktServRegSetup::AddRow2Table_RegSetup()
 						default:
 							break;
 						}
+#endif
 					}
 				break;
 
@@ -465,6 +469,20 @@ void TOktServRegSetup::AddRow2Table_RegSetup()
 	for(int i=0;i<REGSETUPLIST_COLS_NUM;i++)
 		{
 		pRegSetupPars[ParameterIndex]->IsEditable[i]=items[i]->isEditable();
+#ifdef  REGSETUPLIST_PERSISTENT_EDITORS
+		switch(i)
+			{
+			case REGSETUPLIST_PLUSBUT_COL:
+			case REGSETUPLIST_MINUSBUT_COL:
+			case REGSETUPLIST_READBUT_COL:
+			case REGSETUPLIST_WRITEBUT_COL:
+			case REGSETUPLIST_VAL_COL:
+				RegSetup.TableView->openPersistentEditor(RegSetup.Model.index(ParameterIndex, i, QModelIndex()));
+				break;
+			default:
+				break;
+			}
+#endif
 		}
 
 	//Скрыть строку, если её нет
@@ -1536,28 +1554,12 @@ void TRegSetupPar::WriteButClick()
 	((TOktServRegSetup *)OSRS_parent)->PostReqWithStatusClear(CMD_SET_VAL, Index);
 	}
 
-bool RegSetupTableView::eventFilter(QObject *object, QEvent *e)
-	{
-	(void)object;
-	QModelIndex current=currentIndex();
-	switch(e->type())
-		{
-		case QEvent::FocusIn:
-			OpenEditor4Index(current);
-			break;
-		case QEvent::FocusOut:
-			CloseEditor4Index(current);
-			break;
-		default:
-			break;
-		}
-	return false;
-	}
 
+#ifndef  REGSETUPLIST_PERSISTENT_EDITORS
 
 void RegSetupTableView::OpenEditor4Index(QModelIndex current)
 	{
-	if((pRegSetupPars)&&
+	if((pRegSetupPars)&&(current.isValid())&&(!pRegSetupPars[current.row()]->EditorIsOpened[current.column()])&&
 	  (((current.column()>=REGSETUPLIST_VAL_COL)&&(current.column()<=REGSETUPLIST_WRITEBUT_COL)&&
 		(pRegSetupPars[current.row()]->ParType!=tyButton)&&
 		(pRegSetupPars[current.row()]->ParType!=tyTitle)&&
@@ -1568,19 +1570,21 @@ void RegSetupTableView::OpenEditor4Index(QModelIndex current)
 			{
 			pRegSetupPars[current.row()]->pCell[current.column()]->setIcon(QIcon());
 			edit(current);
+			pRegSetupPars[current.row()]->EditorIsOpened[current.column()]=true;
 			}
 		}
 	}
 
 void RegSetupTableView::CloseEditor4Index(QModelIndex previous)
 	{
-	if((pRegSetupPars)&&
+	if((pRegSetupPars)&&(previous.isValid())&&(pRegSetupPars[previous.row()]->EditorIsOpened[previous.column()])&&
 	  (((previous.column()>=REGSETUPLIST_VAL_COL)&&(previous.column()<=REGSETUPLIST_WRITEBUT_COL)&&
 		(pRegSetupPars[previous.row()]->ParType!=tyButton)&&
 		(pRegSetupPars[previous.row()]->ParType!=tyTitle)&&
 		pRegSetupPars[previous.row()]->Writable)||
 	   ((previous.column()==REGSETUPLIST_NAME_COL)&&(pRegSetupPars[previous.row()]->ParType==tyButton))))
 		{
+		pRegSetupPars[previous.row()]->EditorIsOpened[previous.column()]=false;
 		switch(previous.column())
 			{
 			case REGSETUPLIST_PLUSBUT_COL:
@@ -1617,36 +1621,90 @@ void RegSetupTableView::currentChanged(const QModelIndex &current, const QModelI
 	QTableView::currentChanged(current, previous);
 	}
 
-void RegSetupTableView::keyPressEvent(QKeyEvent *e)
+bool RegSetupTableView::eventFilter(QObject *obj, QEvent *e)
 	{
-	switch (e->key())
+
+	QModelIndex current=currentIndex();
+	switch(e->type())
 		{
-		case Qt::Key_Escape:
+		case QEvent::FocusIn:
+			OpenEditor4Index(current);
+			break;
+		case QEvent::FocusOut:
+			CloseEditor4Index(current);
+			break;
+		case QEvent::KeyPress:
 			{
-			QWidget *w=parentWidget();
-			while(w->inherits("QMainWindow")==false)
+			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
+			switch(keyEvent->key())
 				{
-				w=w->parentWidget();
+				case Qt::Key_Escape:
+					{
+					QWidget *w=this;
+					while(w->inherits("QMainWindow")==false)
+						{
+						w=w->parentWidget();
+						}
+					w->close();
+					return true;
+					}
+				case Qt::Key_Space:
+					e->ignore();
+					NextFocusChain->setFocus();
+					return true;
+				default:
+					break;
 				}
-			w->close();
+			}
+			break;
+		default:
+			break;
+		}
+	return QObject::eventFilter(obj, e);
+	}
+#else
+bool TRegSetupList_ItemDelegate::eventFilter(QObject *obj, QEvent *e)
+	{
+	//QModelIndex current=((TOktServRegSetup *)OSRS_parent)->RegSetup.TableView->currentIndex();
+	switch(e->type())
+		{
+		case QEvent::FocusIn:
+			//((TOktServRegSetup *)OSRS_parent)->RegSetup.TableView->OpenEditor4Index(current);
+			break;
+		case QEvent::FocusOut:
+			//((TOktServRegSetup *)OSRS_parent)->RegSetup.TableView->CloseEditor4Index(current);
+			break;
+		case QEvent::KeyPress:
+			{
+			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
+			if(keyEvent->key()==Qt::Key_Escape)
+				{
+				QWidget *w=this->OSRS_parent;
+				while(w->inherits("QMainWindow")==false)
+					{
+					w=w->parentWidget();
+					}
+				w->close();
+				return true;
+				}
 			}
 			break;
 
-		case Qt::Key_Space:
-			e->ignore();
-			NextFocusChain->setFocus();
-			break;
-
 		default:
-			QTableView::keyPressEvent(e);
+			break;
 		}
+	return QObject::eventFilter(obj, e);
 	}
+#endif
+
 
 void TRegSetupList_ItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 	{
-	if(((((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->ParType!=tyButton)&&
+	if((index.isValid())&&
+	   (((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->ParType!=tyButton)&&
 	   (((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->ParType!=tyTitle)&&
-	   (((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Writable))
+	   (((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Writable)&&
+	   (!((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->EditorIsOpened[index.column()])
 	   ) switch(index.column())
 		{
 		case REGSETUPLIST_PLUSBUT_COL:

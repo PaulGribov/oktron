@@ -33,7 +33,13 @@ TEventsLog::TEventsLog(QWidget *parent) : QMainWindow(parent)
 	EventsList_TableView->setStyleSheet(xTableViewStyleSheet);
 	EventsList_TableView->verticalHeader()->setVisible(false);
 	//EventsList_TableView->setShowGrid(false);
-
+	QHeaderView *verticalHeader = EventsList_TableView->verticalHeader();
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+	verticalHeader->sectionResizeMode(QHeaderView::Fixed);
+#else
+	verticalHeader->setResizeMode(QHeaderView::Fixed);
+#endif
+	verticalHeader->setDefaultSectionSize(42);
 
 	EventsList_CloseButton = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
 	EventsList_ExtLayout->addWidget(EventsList_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
@@ -165,7 +171,18 @@ void TEventsLog::Load()
 						}
 					for(int column=0; column<EventsList_Model.columnCount(); column++)
 						{
-						QStandardItem *item = new QStandardItem(fields[column]);
+						QString text=fields[column];
+						/*
+						//Дата и время на разных строках...
+						if(column==0)
+							{
+							QStringList datetime = QString(text).split(" ");
+							if(datetime.count()>1)
+								{
+								text=datetime[0]+"\n"+datetime[1];
+								}
+							}*/
+						QStandardItem *item = new QStandardItem(text);
 						item->setEditable(false);
 						EventsList_Model.setItem(row, column, item);
 						}

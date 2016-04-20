@@ -3,6 +3,7 @@
 
 #include "toktservregsetup.h"
 
+
 class TOktServExt : public TOktServ
 	{
 		Q_OBJECT
@@ -27,6 +28,7 @@ class TOktServExt : public TOktServ
 		QWidget *GetBlocksID_Tab;
 
 		TOktServRegSetup *RegSetup_GetBlocksID;
+
 		bool Master;//Ведущий
 		bool ForceMaster;
 		void StartStop(bool);

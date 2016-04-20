@@ -12,6 +12,7 @@
 #include <QLayout>
 #include <QLabel>
 #include <QHeaderView>
+#include <QShortcut>
 #include "toktserv.h"
 #include "xWidgets.h"
 
@@ -87,6 +88,7 @@ class TRegSetupPar : public QWidget
 			for(int i=0;i<REGSETUPLIST_COLS_NUM;i++)
 				{
 				pCell[i]=NULL;
+				EditorIsOpened[i]=false;
 				}
 			Enabled=false;
 			}
@@ -104,6 +106,7 @@ class TRegSetupPar : public QWidget
 		int Order;
 		bool OnlyDecInc;		//Параметр меняется только инкрементно.
 		QStandardItem *pCell[REGSETUPLIST_COLS_NUM];	//Указатель на ячейку
+		bool EditorIsOpened[REGSETUPLIST_COLS_NUM];
 
 		bool IsEditable[REGSETUPLIST_COLS_NUM]; //Для хранения знаачения из поля StandartItem
 
@@ -135,12 +138,17 @@ class TRegSetupList_ItemDelegate : public QStyledItemDelegate
 		explicit TRegSetupList_ItemDelegate(QWidget *OSRS_parent=NULL) : QStyledItemDelegate(OSRS_parent)
 			{
 			this->OSRS_parent=OSRS_parent;
+#ifdef  REGSETUPLIST_PERSISTENT_EDITORS
+			installEventFilter(this);
+#endif
 			}
 		void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 		QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 		void setEditorData(QWidget *editor, const QModelIndex &index) const;
 		void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
-
+#ifdef  REGSETUPLIST_PERSISTENT_EDITORS
+		bool eventFilter(QObject *obj, QEvent *e);
+#endif
 	};
 
 
@@ -209,18 +217,21 @@ class RegSetupTableView : public QTableView
 			OSRS_parent=parent;
 			setStyleSheet(xTableViewStyleSheet);
 			verticalHeader()->setVisible(false);
+#ifndef REGSETUPLIST_PERSISTENT_EDITORS
 			installEventFilter(this);
+#endif
 			}
 
 		QWidget *NextFocusChain;
 		TRegSetupPar **pRegSetupPars;
 		TGetBlocksIDPar **pGetBlocksIDPars;
 		void *OSRS_parent;
+#ifndef  REGSETUPLIST_PERSISTENT_EDITORS
 		void OpenEditor4Index(QModelIndex current);
 		void CloseEditor4Index(QModelIndex previous);
-		void keyPressEvent(QKeyEvent *event);
 		void currentChanged(const QModelIndex &current, const QModelIndex &previous);
-		bool eventFilter(QObject *object, QEvent *e);
+		bool eventFilter(QObject *obj, QEvent *e);
+#endif
 	};
 
 typedef struct

@@ -288,10 +288,18 @@ void MainWindow::KeysPoll()
 					}
 				else if(mask==OKT_KEY_ESC_MASK)
 					{
+					/*
 					QApplication::postEvent(QApplication::focusWidget(),
 						new QKeyEvent(QEvent::KeyPress,
 						Qt::Key_Escape,
 						Qt::NoModifier));
+					*/
+					QWidget *w=QApplication::focusWidget();
+					while((w)&&(w->inherits("QMainWindow")==false))
+						{
+						w=w->parentWidget();
+						}
+					if((w)&&(w!=this)) w->close();
 					}
 				else
 					CheckGrowKeys(mask);

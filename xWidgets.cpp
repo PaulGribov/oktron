@@ -152,7 +152,7 @@ QString xTableViewStyleSheet="\
 	:enabled {\
 		gridline-color: rgb(154,154,154);\
 		background: rgb(235,236,236);\
-		font: 24pt; }\
+		font: 16pt; }\
 	::item:focus {\
 		border-image: url(:/images/border_but0_enabled.png) 10;\
 		border-width: 1px;\
@@ -176,6 +176,25 @@ QString xTableViewStyleSheet="\
 		background: rgb(235,236,236);\
 		border: 0px outset rgb(235,236,236);\
 		}\
+	QScrollBar:vertical {\
+		border: 2px solid grey;\
+		background: rgb(235,236,236);\
+		width: 45px;\
+		}\
+	QScrollBar:up-arrow:vertical {\
+		image: url(:/images/spin_up_enabled.png);\
+		border: 0px;\
+		background: rgb(235,236,236);\
+		}\
+	QScrollBar::down-arrow:vertical {\
+		image: url(:/images/spin_down_enabled.png);\
+		border: 0px;\
+		background: rgb(235,236,236);\
+		}\
+	/*QScrollBar::handle:vertical {\
+		background: rgb(5,116,174);\
+		min-width: 45px;\
+		}*/\
 	";
 
 
@@ -220,9 +239,8 @@ xButton::xButton(int v, const QIcon &icon, int icon_size, Qt::ToolButtonStyle st
 	installEventFilter(this);
 	}
 
-bool xButton::eventFilter(QObject *object, QEvent *e)
+bool xButton::eventFilter(QObject *obj, QEvent *e)
 	{
-	(void)object;
 	switch(e->type())
 		{
 		case QEvent::FocusIn:
@@ -264,7 +282,7 @@ bool xButton::eventFilter(QObject *object, QEvent *e)
 		default:
 			break;
 		}
-	return false;
+	return QObject::eventFilter(obj, e);
 	}
 
 xTabWidget::xTabWidget(QWidget *parent) : QTabWidget(parent)
@@ -272,7 +290,7 @@ xTabWidget::xTabWidget(QWidget *parent) : QTabWidget(parent)
 	installEventFilter(this);
 	}
 
-bool xTabWidget::eventFilter(QObject *object, QEvent *e)
+bool xTabWidget::eventFilter(QObject *obj, QEvent *e)
 	{
 	if(e->type() == QEvent::KeyPress)
 		{
@@ -287,7 +305,7 @@ bool xTabWidget::eventFilter(QObject *object, QEvent *e)
 			w->close();
 			return true;
 			}
-		else if(object->inherits("QTabWidget")==true)
+		else if(obj->inherits("QTabWidget")==true)
 			{
 			switch(keyEvent->key())
 				{
@@ -309,5 +327,53 @@ bool xTabWidget::eventFilter(QObject *object, QEvent *e)
 				}
 			}
 		}
-	return false;
+	return QObject::eventFilter(obj, e);
 	}
+
+
+bool xComboBox::eventFilter(QObject *obj, QEvent *e)
+	{
+	if((e->type() == QEvent::KeyPress))
+		{
+		QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
+
+		switch(keyEvent->key())
+			{
+			case Qt::Key_Escape:
+				{
+				QWidget *w=parentWidget();
+				while(w->inherits("QMainWindow")==false)
+					{
+					w=w->parentWidget();
+					}
+				w->close();
+				return true;
+				}
+
+			case Qt::Key_Left:
+				QApplication::postEvent(this,
+							new QKeyEvent(QEvent::KeyPress,
+							Qt::Key_Backtab,
+							Qt::NoModifier));
+				return true;
+			case Qt::Key_Right:
+				QApplication::postEvent(this,
+							new QKeyEvent(QEvent::KeyPress,
+							Qt::Key_Tab,
+							Qt::NoModifier));
+				return true;
+
+			case Qt::Key_Space:
+				QApplication::postEvent(this,
+							new QKeyEvent(QEvent::KeyPress,
+							Qt::Key_Enter,
+							Qt::NoModifier));
+				return true;
+
+			default:
+				break;
+			}
+		}
+	return QObject::eventFilter(obj, e);
+	}
+
