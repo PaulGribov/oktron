@@ -100,7 +100,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 
 	ParametersView_TabWidget=new xTabWidget();
 	ParametersView_Layout->addWidget(ParametersView_TabWidget);
-	ParametersView_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(18).arg(110).arg(50));
+	ParametersView_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(18).arg(100).arg(50));
 	ParametersView_TabWidget->setUsesScrollButtons(false);
 	//ParametersView_TabWidget->setIconSize(QSize(48,48));
 
@@ -283,7 +283,7 @@ void TOscService::Retranslate()
 		<< tr("") << tr("int16");
 
 	TabNames_StringList.clear();
-	TabNames_StringList  << tr("РЕГУЛЯТОР") << tr("Не используется") << tr("БЛОК\nПИТАНИЯ") << tr("ИНДИКАЦИЯ") << tr("АНАЛОГ.");
+	TabNames_StringList  << tr("РЕГУЛЯТ.") << tr("Не используется") << tr("БЛОК\nПИТАНИЯ") << tr("ИНДИКАЦ.") << tr("АНАЛОГ.");
 	for(int i=5;i<OKTSERV_PACKETS_NUM;i++)
 		{
 		if(i==14)
@@ -339,8 +339,8 @@ void TOscService::Retranslate()
 				}
 			}
 
-		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_ADDR_COL, 70);
-		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_NAME_COL, 300);
+		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_ADDR_COL, 100);
+		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_NAME_COL, 340);
 		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_VAL_COL, 100);
 		pi_cnt+=Packet[i].StringList.count()>>1;
 		}

@@ -383,6 +383,6 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 
 	};
 
-#define REGSETUPDBG
+//#define REGSETUPDBG
 
 #endif // TOKTSERVREGSETUP_H

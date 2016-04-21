@@ -681,7 +681,7 @@ void TOktServRegSetup::RegSetupReq()
 					QPixmap pixmap(":/images/apply.png");
 					QIcon icon(pixmap);
 					pRegSetupPars[ParameterIndex]->pCell[REGSETUPLIST_STATUS_COL]->setIcon(icon);
-					pRegSetupPars[ParameterIndex]->pCell[REGSETUPLIST_STATUS_COL]->setText(tr("Успешно"));
+					//pRegSetupPars[ParameterIndex]->pCell[REGSETUPLIST_STATUS_COL]->setText(tr("Успешно"));
 					}
 					break;
 				case CMD_PUT_CODE_BLOCK:
@@ -750,7 +750,7 @@ void TOktServRegSetup::RegSetupReq()
 					QPixmap pixmap(":/images/block_24.png");
 					QIcon icon(pixmap);
 					pRegSetupPars[ParameterIndex]->pCell[REGSETUPLIST_STATUS_COL]->setIcon(icon);
-					pRegSetupPars[ParameterIndex]->pCell[REGSETUPLIST_STATUS_COL]->setText(tr("Ошибка"));
+					//pRegSetupPars[ParameterIndex]->pCell[REGSETUPLIST_STATUS_COL]->setText(tr("Ошибка"));
 					}
 					break;
 
@@ -838,6 +838,7 @@ FormattingReq_loc:
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_MINUSBUT_COL, 42);
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_READBUT_COL, 42);
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_WRITEBUT_COL, 42);
+							RegSetup.TableView->setColumnWidth(REGSETUPLIST_STATUS_COL, 42);
 							break;
 						//Инициирование: чтение ID блоков
 						case CMD_GET_BLOCK_ID:
@@ -847,12 +848,12 @@ FormattingReq_loc:
 								}
 							GetBlocksID.Model.clear();
 							GetBlocksID.Model.setHorizontalHeaderLabels(QStringList() << tr("Блок") << tr("№") << tr("ПО блока") << tr("Доступ.ПО") << tr("Обновлние") << tr("Состояние"));
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_NAME_COL, 200);
+							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_NAME_COL, 180);
 							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_N_COL, 25);
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_ID_COL, 130);
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_HEXFILE_COL, 80);
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_UPDATE_COL, 90);
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_STATUS_COL, 50);
+							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_ID_COL, 100);
+							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_HEXFILE_COL, 100);
+							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_UPDATE_COL, 45);
+							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_STATUS_COL, 80);
 							break;
 						//Инициирование: передача HEX-файла
 						case CMD_PUT_CODE_BLOCK:
@@ -1327,7 +1328,7 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 		if(pGetBlocksIDPars[i]->UpdBut)
 			{
 			pGetBlocksIDPars[i]->UpdBut->setEnabled(false);
-			pGetBlocksIDPars[i]->UpdBut->setText(tr("Загрузить"));
+			//pGetBlocksIDPars[i]->UpdBut->setText(tr("Загрузить"));
 			}
 		}
 
@@ -2017,7 +2018,7 @@ QWidget *TGetBlocksIDList_ItemDelegate::createEditor(QWidget *parent, const QSty
 		{
 		case GETBLOCKSID_UPDATE_COL:
 			{
-			xButton *editor = new xButton(TableBut, QIcon(":/images/advancedsettings.png"), 28, Qt::ToolButtonTextBesideIcon, parent);
+			xButton *editor = new xButton(TableBut, QIcon(":/images/advancedsettings.png"), 28, Qt::ToolButtonIconOnly, parent);
 			connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pGetBlocksIDPars[index.row()], SLOT(ButClick()));
 			((TOktServRegSetup *)OSRS_parent)->pGetBlocksIDPars[index.row()]->UpdBut=editor;
 			editor->setEnabled(false);
