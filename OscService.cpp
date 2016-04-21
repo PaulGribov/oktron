@@ -35,7 +35,7 @@ void TOscService::BitsDescFillToModel(struct PacketDescStruct &packet, struct Bi
 	{
 	for(int k=0;k<bits.StringList.count();k++)
 		{
-		bits.Items[k] << new QStandardItem() << new QStandardItem(bits.StringList[k]) << new QStandardItem("text");
+		bits.Items[k] << new QStandardItem() << new QStandardItem(bits.StringList[k]) << new QStandardItem();
 		bits.Items[k][0]->setEditable(false);
 		bits.Items[k][1]->setEditable(false);
 		bits.Items[k][2]->setEditable(false);
@@ -310,7 +310,7 @@ void TOscService::Retranslate()
 		for(int j=0;j<Packet[i].StringList.count();j+=2)
 			{
 			Packet[i].Items[j>>1].clear();
-			Packet[i].Items[j>>1] << new QStandardItem(QString("%1h").arg(i*0x10+j/2, 4, 16, QLatin1Char('0'))) << new QStandardItem(Packet[i].StringList[j]) << new QStandardItem("text");
+			Packet[i].Items[j>>1] << new QStandardItem(QString("%1h").arg(i*0x10+j/2, 4, 16, QLatin1Char('0'))) << new QStandardItem(Packet[i].StringList[j]) << new QStandardItem();
 			Packet[i].Items[j>>1][0]->setEditable(false);
 			Packet[i].Items[j>>1][1]->setEditable(false);
 			Packet[i].Items[j>>1][2]->setEditable(false);
@@ -339,9 +339,9 @@ void TOscService::Retranslate()
 				}
 			}
 
-		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_ADDR_COL, 100);
+		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_ADDR_COL, 90);
 		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_NAME_COL, 340);
-		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_VAL_COL, 100);
+		Packet[i].TableView->setColumnWidth(PARAMETERSVIEWTAB_VAL_COL, 115);
 		pi_cnt+=Packet[i].StringList.count()>>1;
 		}
 	}

@@ -39,7 +39,7 @@ TEventsLog::TEventsLog(QWidget *parent) : QMainWindow(parent)
 #else
 	verticalHeader->setResizeMode(QHeaderView::Fixed);
 #endif
-	verticalHeader->setDefaultSectionSize(42);
+	verticalHeader->setDefaultSectionSize(60);
 
 	EventsList_CloseButton = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
 	EventsList_ExtLayout->addWidget(EventsList_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
@@ -64,7 +64,7 @@ void TEventsLog::Retranslate()
 	EventsList_CloseButton->setText(tr("ЗАКРЫТЬ"));
 
 	EventsList_Model.clear();
-	EventsList_Model.setHorizontalHeaderLabels(QStringList() << tr("Дата и время") << tr("Событие") << tr("Индекс осц.") );
+	EventsList_Model.setHorizontalHeaderLabels(QStringList() << tr("Время") << tr("Событие") << tr("Осц.") );
 
 	EventsList_TableView->setColumnWidth(EVLOG_DATETIME_COL, 160);
 	EventsList_TableView->setColumnWidth(EVLOG_TEXT_COL, 300);

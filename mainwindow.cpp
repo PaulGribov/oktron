@@ -119,8 +119,8 @@ void MainWindow::Connect_Disconnect(bool state)
 	{
 	for(int i=0;i<2;i++)
 		{
-		if(i==0) { if(state!=OktServExt[i]->StateOn) OktServExt[i]->StartStop(state); }
-		else OktServExt[i]->StartStop(false);
+		/*if(i==0) { */if(state!=OktServExt[i]->StateOn) OktServExt[i]->StartStop(state); /*}
+		else OktServExt[i]->StartStop(false);*/
 
 		if(!OktServExt[i]->StateOn)
 			{

@@ -75,7 +75,7 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 #else
 		verticalHeader->setResizeMode(QHeaderView::Fixed);
 #endif
-		verticalHeader->setDefaultSectionSize(42);
+		verticalHeader->setDefaultSectionSize((pGetBlocksIDPars)?80:42);
 		}
 
 	Widgets.Layout=new QVBoxLayout();
@@ -832,7 +832,7 @@ FormattingReq_loc:
 						case CMD_READ_SETTINGS_DESC:
 							RegSetup.Model.clear();
 							RegSetup.Model.setHorizontalHeaderLabels(QStringList() << tr("Параметр") << tr("Значение") << tr("") << tr("") << tr("") << tr("") << tr("Статус"));
-							RegSetup.TableView->setColumnWidth(REGSETUPLIST_NAME_COL, 260);
+							RegSetup.TableView->setColumnWidth(REGSETUPLIST_NAME_COL, 270);
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_VAL_COL, 80);
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_PLUSBUT_COL, 42);
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_MINUSBUT_COL, 42);
@@ -850,10 +850,10 @@ FormattingReq_loc:
 							GetBlocksID.Model.setHorizontalHeaderLabels(QStringList() << tr("Блок") << tr("№") << tr("ПО блока") << tr("Доступ.ПО") << tr("Обновлние") << tr("Состояние"));
 							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_NAME_COL, 180);
 							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_N_COL, 25);
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_ID_COL, 100);
+							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_ID_COL, 150);
 							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_HEXFILE_COL, 100);
 							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_UPDATE_COL, 45);
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_STATUS_COL, 80);
+							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_STATUS_COL, 70);
 							break;
 						//Инициирование: передача HEX-файла
 						case CMD_PUT_CODE_BLOCK:
@@ -1725,11 +1725,27 @@ void TRegSetupList_ItemDelegate::paint(QPainter *painter, const QStyleOptionView
 
 	switch(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->ParType)
 		{
+		case tyButton:
+		case tyHexChar:
+		case tyHexShort:
+		case tyUnsigned:
+		case tySigned:
+		case tyYesNo:
 		case tyName:
 			if(index.column() == REGSETUPLIST_NAME_COL)
 				{
 				QStyleOptionViewItemV4 opt(option);
 				initStyleOption(&opt, index);
+				//opt.font.setPointSize(opt.font.pointSize()+5);
+				opt.rect.adjusted(1,0,-1,0);
+				QStyledItemDelegate::paint(painter, opt, index);
+				return;
+				}
+			else if(index.column() == REGSETUPLIST_VAL_COL)
+				{
+				QStyleOptionViewItemV4 opt(option);
+				initStyleOption(&opt, index);
+				opt.font.setPointSize(opt.font.pointSize()+2);
 				opt.rect.adjusted(1,0,-1,0);
 				QStyledItemDelegate::paint(painter, opt, index);
 				return;
@@ -1741,20 +1757,13 @@ void TRegSetupList_ItemDelegate::paint(QPainter *painter, const QStyleOptionView
 				QStyleOptionViewItemV4 opt(option);
 				initStyleOption(&opt, index);
 				opt.font.setBold(true);
-				opt.font.setPointSize(opt.font.pointSize()+6);
+				opt.font.setPointSize(opt.font.pointSize()+2);
 				opt.rect.adjusted(1, 0, -1, 0);
 				QStyledItemDelegate::paint(painter, opt, index);
 				return;
 				}
 			break;
-		case tyButton:
-			break;
 
-		case tyHexChar:
-		case tyHexShort:
-		case tyUnsigned:
-		case tySigned:
-		case tyYesNo:
 		default:
 			break;
 		}
@@ -1830,6 +1839,7 @@ QWidget *TRegSetupList_ItemDelegate::createEditor(QWidget *parent, const QStyleO
 			if(index.column() == REGSETUPLIST_VAL_COL)
 				{
 				HexSpinBox *editor = new HexSpinBox(parent, true);
+				editor->setStyleSheet("font: 20pt;");
 				editor->setEnabled(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Writable);
 				return editor;
 				}
@@ -1839,6 +1849,7 @@ QWidget *TRegSetupList_ItemDelegate::createEditor(QWidget *parent, const QStyleO
 			if(index.column() == REGSETUPLIST_VAL_COL)
 				{
 				HexSpinBox *editor = new HexSpinBox(parent, false);
+				editor->setStyleSheet("font: 20pt;");
 				editor->setEnabled(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Writable);
 				return editor;
 				}
@@ -1849,6 +1860,7 @@ QWidget *TRegSetupList_ItemDelegate::createEditor(QWidget *parent, const QStyleO
 				{
 				DoubleSpinBox *editor = new DoubleSpinBox(parent, ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Order);
 				float coef = Order[((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Order]/((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->DivBy;
+				editor->setStyleSheet("font: 20pt;");
 				editor->setMinimum(0);
 				editor->setMaximum(65535*coef);
 				editor->setSingleStep(coef);
@@ -1863,6 +1875,7 @@ QWidget *TRegSetupList_ItemDelegate::createEditor(QWidget *parent, const QStyleO
 				{
 				DoubleSpinBox *editor = new DoubleSpinBox(parent, ((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Order);
 				float coef = Order[((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Order]/((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->DivBy;
+				editor->setStyleSheet("font: 20pt;");
 				editor->setMinimum(-32767*coef);
 				editor->setMaximum(32767*coef);
 				editor->setSingleStep(coef);

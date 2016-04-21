@@ -9,7 +9,7 @@ xTabWidget *TOktServExt::GetBlocksID_tabWidget=NULL;;
 
 TOktServExt::TOktServExt(QGroupBox *PortSettings_GroupBox
 #ifdef __linux__
-		, const char *port_name) : TOktServ(PortSettings_GroupBox)
+		, const char *port_name) : TOktServ(PortSettings_GroupBox, port_name)
 #else
 		) : TOktServ(PortSettings_GroupBox)
 #endif
