@@ -57,12 +57,6 @@ class TOktServ : public QWidget
 		unsigned char Crc8Calc(unsigned char *, int);
 		int PktCnt;
 		bool StartStop(bool);
-#ifndef __linux__
-		void PortSettingsApply();
-		void PrintPortsParameters();
-		TCommPortSettings Settings;
-		static TCommPortSettingsTexts CommPortSettingsTexts;
-#endif
 		bool StateOn;
 		TOktServNativeData ReceivedData;
 		int PacketUpdatedFlags;
@@ -76,17 +70,21 @@ class TOktServ : public QWidget
 #define OKTSERVERR_NO_REGULATOR_FLAG		0x02
 		void DataSender();
 
+#ifndef __linux__
+		void PortSettingsApply();
+		void PrintPortsParameters();
+		TCommPortSettings Settings;
+		static TCommPortSettingsTexts CommPortSettingsTexts;
+
+	public slots:
+		void ErrorHandler(QSerialPort::SerialPortError error);
+#endif
+
 	Q_SIGNALS:
 		void DataUpdate(TOscDataWithIndic &);
 		void Indic(int, int);
 		void ErrorCallback();
 
-	signals:
-
-	public slots:
-#ifndef __linux__
-		//void ErrorHandler(QSerialPort::SerialPortError error);
-#endif
 
 	private:
 		xComboBox *CommPort_ComboBox;

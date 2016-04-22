@@ -153,7 +153,7 @@ class TRegSetupList_ItemDelegate : public QStyledItemDelegate
 
 
 //Столбцы таблицы
-typedef enum  {GETBLOCKSID_NAME_COL=0, GETBLOCKSID_N_COL, GETBLOCKSID_ID_COL, GETBLOCKSID_HEXFILE_COL, GETBLOCKSID_UPDATE_COL, GETBLOCKSID_STATUS_COL, GETBLOCKSID_COLS_NUM } TGetBlocksIDListColumn;
+typedef enum  {GETBLOCKSID_NAME_COL=0, GETBLOCKSID_N_COL, GETBLOCKSID_ID_HEXFILE_COL, GETBLOCKSID_UPDATE_COL, GETBLOCKSID_STATUS_COL, GETBLOCKSID_COLS_NUM } TGetBlocksIDListColumn;
 
 class TGetBlocksIDPar : public QWidget
 	{
@@ -249,7 +249,6 @@ typedef struct
 	struct
 		{
 		QHBoxLayout *Layout;
-		QSpacerItem *Spacer;
 		xButton *Reload_Button;
 		xButton *Close_Button;
 		} ButtonsBar;
@@ -383,6 +382,6 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 
 	};
 
-//#define REGSETUPDBG
+#define REGSETUPDBG
 
 #endif // TOKTSERVREGSETUP_H

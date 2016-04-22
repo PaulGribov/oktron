@@ -37,21 +37,19 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 		font: 18pt;\
 		");
 	Widgets.LoadPars.Label->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-	Widgets.LoadPars.Layout->addWidget(Widgets.LoadPars.Label);
+	Widgets.LoadPars.Layout->addWidget(Widgets.LoadPars.Label, 0, Qt::AlignHCenter | Qt::AlignBottom);
 
 	Widgets.LoadPars.ProgressBar = new QProgressBar();
 	Widgets.LoadPars.ProgressBar->setTextVisible(false);
 	Widgets.LoadPars.ProgressBar->setVisible(false);
-	Widgets.LoadPars.Layout->addWidget(Widgets.LoadPars.ProgressBar);
+	Widgets.LoadPars.Layout->addWidget(Widgets.LoadPars.ProgressBar, 0, Qt::AlignHCenter | Qt::AlignTop);
 
 	Widgets.ButtonsBar.Layout = new QHBoxLayout();
-	Widgets.ButtonsBar.Spacer = new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Minimum);
-	Widgets.ButtonsBar.Layout->addSpacerItem(Widgets.ButtonsBar.Spacer);
-
 	Widgets.ButtonsBar.Reload_Button = new xButton(GenBut, QIcon(":/images/refresh.png"), 32, Qt::ToolButtonTextBesideIcon);
+	Widgets.ButtonsBar.Reload_Button->setMinimumWidth(300);
 	Widgets.ButtonsBar.Layout->addWidget(Widgets.ButtonsBar.Reload_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 	Widgets.ButtonsBar.Close_Button = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
-
+	Widgets.ButtonsBar.Close_Button->setMinimumWidth(300);
 	Widgets.ButtonsBar.Layout->addWidget(Widgets.ButtonsBar.Close_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 
 
@@ -69,6 +67,7 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 		Widgets.TableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		Widgets.TableView->horizontalHeader()->setVisible(false);
 
+		//Выстота строки в таблице...
 		QHeaderView *verticalHeader = Widgets.TableView->verticalHeader();
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 		verticalHeader->sectionResizeMode(QHeaderView::Fixed);
@@ -79,17 +78,13 @@ void TOktServRegSetup::RegSetupWidgetsCreate(TRegSetupWidgets &Widgets, QWidget 
 		}
 
 	Widgets.Layout=new QVBoxLayout();
-
 	Widgets.Layout->addWidget(Widgets.LoadPars.Frame);
-	//Widgets.Layout->addWidget(Widgets.LoadPars.Label, 0, Qt::AlignHCenter | Qt::AlignBottom);
-	//Widgets.Layout->addWidget(Widgets.LoadPars.ProgressBar, 0, Qt::AlignHCenter | Qt::AlignTop);
 	if((pRegSetupPars)||(pGetBlocksIDPars))
 		{
 		Widgets.Layout->addWidget(Widgets.TableView);
 		}
 
 	Widgets.Layout->addLayout(Widgets.ButtonsBar.Layout);
-
 	Widgets.Focused=NULL;
 	}
 
@@ -108,10 +103,11 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 
 	QHBoxLayout *ButtonsBar0_Layout = new QHBoxLayout();
 	SettingsApply_Button = new xButton(GenBut, QIcon(":/images/apply.png"), 32, Qt::ToolButtonTextBesideIcon);
-	SaveSettings_Button = new xButton(GenBut, QIcon(":/images/document_save.png"), 32, Qt::ToolButtonTextBesideIcon);
+	SettingsApply_Button->setMinimumWidth(300);
 	SettingsApply_Button->setEnabled(false);
+	SaveSettings_Button = new xButton(GenBut, QIcon(":/images/document_save.png"), 32, Qt::ToolButtonTextBesideIcon);
+	SaveSettings_Button->setMinimumWidth(300);
 	SaveSettings_Button->setEnabled(false);
-	ButtonsBar0_Layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Minimum));
 	ButtonsBar0_Layout->addWidget(SettingsApply_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 	ButtonsBar0_Layout->addWidget(SaveSettings_Button, 0, Qt::AlignRight | Qt::AlignBottom);
 
@@ -202,6 +198,8 @@ void TOktServRegSetup::Retranslate()
 		<< tr("11") << tr("Блок связи Ethernet") << tr("T8E-")\
 		<< tr("12") << tr("Блок дисплейный (большая индикация)") << tr("T8V-")\
 		<< tr("12") << tr("Блок связи с дисплейным процессором") << tr("T8W-");
+#define INSTALLED_FW_TEXT	"Текущ.:"
+#define AVAILABLE_FW_TEXT	" Доступ.:"
 	}
 
 
@@ -533,14 +531,12 @@ BlockFound_loc:
 				item->setText(QString("%1").arg(BlockAddr));
 				break;
 
-			case GETBLOCKSID_ID_COL:
-			case GETBLOCKSID_HEXFILE_COL:
-				item->setText(id);
+			case GETBLOCKSID_ID_HEXFILE_COL:
+				item->setText(tr(INSTALLED_FW_TEXT)+id);
 				break;
 
 			case GETBLOCKSID_UPDATE_COL:
 				item->setEditable(true);
-				item->setSelectable(true);
 				break;
 
 			case GETBLOCKSID_STATUS_COL:
@@ -556,7 +552,7 @@ BlockFound_loc:
 	pGetBlocksIDPars[ParameterIndex]->Addr=BlockAddr;
 	pGetBlocksIDPars[ParameterIndex]->Updatable=updatable;
 	GetBlocksID.Model.appendRow(items);
-	GetBlocksID.TableView->openPersistentEditor(GetBlocksID.Model.index(ParameterIndex, GETBLOCKSID_UPDATE_COL, QModelIndex()));
+	//GetBlocksID.TableView->openPersistentEditor(GetBlocksID.Model.index(ParameterIndex, GETBLOCKSID_UPDATE_COL, QModelIndex()));
 
 	//Скрыть строку, если её нет
 	GetBlocksID.TableView->setRowHidden(ParameterIndex, !enabled);
@@ -847,13 +843,12 @@ FormattingReq_loc:
 								pGetBlocksIDPars[i]->UpdBut=NULL;
 								}
 							GetBlocksID.Model.clear();
-							GetBlocksID.Model.setHorizontalHeaderLabels(QStringList() << tr("Блок") << tr("№") << tr("ПО блока") << tr("Доступ.ПО") << tr("Обновлние") << tr("Состояние"));
+							GetBlocksID.Model.setHorizontalHeaderLabels(QStringList() << tr("Блок") << tr("№") << tr("ПО блока") << tr("Обновлние") << tr("Состояние"));
 							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_NAME_COL, 180);
 							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_N_COL, 25);
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_ID_COL, 150);
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_HEXFILE_COL, 100);
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_UPDATE_COL, 45);
-							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_STATUS_COL, 70);
+							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_ID_HEXFILE_COL, 220);
+							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_UPDATE_COL, 42);
+							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_STATUS_COL, 100);
 							break;
 						//Инициирование: передача HEX-файла
 						case CMD_PUT_CODE_BLOCK:
@@ -1322,14 +1317,28 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 	QFileInfoList listFiles = dir.entryInfoList(QStringList("*.hex"), QDir::Files);
 	for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
 		{
+#ifndef REGSETUPDBG
 		pGetBlocksIDPars[i]->Updatable=false;
 		pGetBlocksIDPars[i]->HexId=tr("");
-		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_HEXFILE_COL]) pGetBlocksIDPars[i]->pCell[GETBLOCKSID_HEXFILE_COL]->setText(tr(""));
+		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL])
+			{
+			pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL]->setText(tr(INSTALLED_FW_TEXT)+pGetBlocksIDPars[i]->Id);
+			}
 		if(pGetBlocksIDPars[i]->UpdBut)
 			{
 			pGetBlocksIDPars[i]->UpdBut->setEnabled(false);
 			//pGetBlocksIDPars[i]->UpdBut->setText(tr("Загрузить"));
 			}
+#else
+		pGetBlocksIDPars[i]->Updatable=true;
+		pGetBlocksIDPars[i]->HexId=tr("T8K-12345678");
+		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL])
+			{
+			pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL]->setText(tr(INSTALLED_FW_TEXT)+pGetBlocksIDPars[i]->Id+tr(AVAILABLE_FW_TEXT)+"T8K-12345678");
+			}
+		if(pGetBlocksIDPars[i]->UpdBut) pGetBlocksIDPars[i]->UpdBut->setEnabled(true);
+
+#endif
 		}
 
 	foreach(QFileInfo file, listFiles)
@@ -1347,7 +1356,10 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 					pGetBlocksIDPars[i]->Updatable=true;
 					pGetBlocksIDPars[i]->HexId=name;
 					qDebug() << tr("Hex: ") << name;
-					if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_HEXFILE_COL]) pGetBlocksIDPars[i]->pCell[GETBLOCKSID_HEXFILE_COL]->setText(name);
+					if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL])
+						{
+						pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL]->setText(tr(INSTALLED_FW_TEXT)+pGetBlocksIDPars[i]->Id+tr(AVAILABLE_FW_TEXT)+name);
+						}
 					if(pGetBlocksIDPars[i]->UpdBut) pGetBlocksIDPars[i]->UpdBut->setEnabled(true);
 					}
 				}
@@ -1560,56 +1572,66 @@ void TRegSetupPar::WriteButClick()
 
 void RegSetupTableView::OpenEditor4Index(QModelIndex current)
 	{
-	if((pRegSetupPars)&&(current.isValid())&&(!pRegSetupPars[current.row()]->EditorIsOpened[current.column()])&&
-	  (((current.column()>=REGSETUPLIST_VAL_COL)&&(current.column()<=REGSETUPLIST_WRITEBUT_COL)&&
-		(pRegSetupPars[current.row()]->ParType!=tyButton)&&
-		(pRegSetupPars[current.row()]->ParType!=tyTitle)&&
-		pRegSetupPars[current.row()]->Writable)||
-	   ((current.column()==REGSETUPLIST_NAME_COL)&&(pRegSetupPars[current.row()]->ParType==tyButton))))
+	if(current.isValid())
 		{
-		if(!((TOktServRegSetup *)OSRS_parent)->IsBusy())
+		if((pRegSetupPars)&&/*(!pRegSetupPars[current.row()]->EditorIsOpened[current.column()])&&*/
+		  (((current.column()>=REGSETUPLIST_VAL_COL)&&(current.column()<=REGSETUPLIST_WRITEBUT_COL)&&
+			(pRegSetupPars[current.row()]->ParType!=tyButton)&&
+			(pRegSetupPars[current.row()]->ParType!=tyTitle)&&
+			pRegSetupPars[current.row()]->Writable)||
+		   ((current.column()==REGSETUPLIST_NAME_COL)&&(pRegSetupPars[current.row()]->ParType==tyButton))))
 			{
-			pRegSetupPars[current.row()]->pCell[current.column()]->setIcon(QIcon());
+			if(!((TOktServRegSetup *)OSRS_parent)->IsBusy())
+				{
+				pRegSetupPars[current.row()]->pCell[current.column()]->setIcon(QIcon());
+				edit(current);
+				pRegSetupPars[current.row()]->EditorIsOpened[current.column()]=true;
+				}
+			}
+		else if((pGetBlocksIDPars)&&(current.column()==GETBLOCKSID_UPDATE_COL)&&(pGetBlocksIDPars[current.row()]->Updatable))
+			{
 			edit(current);
-			pRegSetupPars[current.row()]->EditorIsOpened[current.column()]=true;
 			}
 		}
 	}
 
 void RegSetupTableView::CloseEditor4Index(QModelIndex previous)
 	{
-	if((pRegSetupPars)&&(previous.isValid())&&(pRegSetupPars[previous.row()]->EditorIsOpened[previous.column()])&&
-	  (((previous.column()>=REGSETUPLIST_VAL_COL)&&(previous.column()<=REGSETUPLIST_WRITEBUT_COL)&&
-		(pRegSetupPars[previous.row()]->ParType!=tyButton)&&
-		(pRegSetupPars[previous.row()]->ParType!=tyTitle)&&
-		pRegSetupPars[previous.row()]->Writable)||
-	   ((previous.column()==REGSETUPLIST_NAME_COL)&&(pRegSetupPars[previous.row()]->ParType==tyButton))))
+	if(previous.isValid())
 		{
-		pRegSetupPars[previous.row()]->EditorIsOpened[previous.column()]=false;
-		switch(previous.column())
+		if((pRegSetupPars)&&/*(pRegSetupPars[previous.row()]->EditorIsOpened[previous.column()])&&*/
+		  (((previous.column()>=REGSETUPLIST_VAL_COL)&&(previous.column()<=REGSETUPLIST_WRITEBUT_COL)&&
+			(pRegSetupPars[previous.row()]->ParType!=tyButton)&&
+			(pRegSetupPars[previous.row()]->ParType!=tyTitle)&&
+			pRegSetupPars[previous.row()]->Writable)||
+		   ((previous.column()==REGSETUPLIST_NAME_COL)&&(pRegSetupPars[previous.row()]->ParType==tyButton))))
 			{
-			case REGSETUPLIST_PLUSBUT_COL:
-				pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/plus.png"));
-				break;
+			pRegSetupPars[previous.row()]->EditorIsOpened[previous.column()]=false;
+			switch(previous.column())
+				{
+				case REGSETUPLIST_PLUSBUT_COL:
+					pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/plus.png"));
+					break;
 
-			case REGSETUPLIST_MINUSBUT_COL:
-				pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/minus.png"));
-				break;
+				case REGSETUPLIST_MINUSBUT_COL:
+					pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/minus.png"));
+					break;
 
-			case REGSETUPLIST_READBUT_COL:
-				pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/refresh.png"));
-				break;
+				case REGSETUPLIST_READBUT_COL:
+					pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/refresh.png"));
+					break;
 
-			case REGSETUPLIST_WRITEBUT_COL:
-				pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/document_save.png"));
-				break;
+				case REGSETUPLIST_WRITEBUT_COL:
+					pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/document_save.png"));
+					break;
 
-			case REGSETUPLIST_NAME_COL:
-				pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/advancedsettings.png"));
-				break;
+				case REGSETUPLIST_NAME_COL:
+					pRegSetupPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/advancedsettings.png"));
+					break;
 
-			default:
-				break;
+				default:
+					break;
+				}
 			}
 		}
 	}
@@ -1704,8 +1726,8 @@ void TRegSetupList_ItemDelegate::paint(QPainter *painter, const QStyleOptionView
 	if((index.isValid())&&
 	   (((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->ParType!=tyButton)&&
 	   (((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->ParType!=tyTitle)&&
-	   (((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Writable)&&
-	   (!((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->EditorIsOpened[index.column()])
+	   (((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Writable)/*&&
+	   (!((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->EditorIsOpened[index.column()])*/
 	   ) switch(index.column())
 		{
 		case REGSETUPLIST_PLUSBUT_COL:
@@ -1736,7 +1758,6 @@ void TRegSetupList_ItemDelegate::paint(QPainter *painter, const QStyleOptionView
 				{
 				QStyleOptionViewItemV4 opt(option);
 				initStyleOption(&opt, index);
-				//opt.font.setPointSize(opt.font.pointSize()+5);
 				opt.rect.adjusted(1,0,-1,0);
 				QStyledItemDelegate::paint(painter, opt, index);
 				return;
