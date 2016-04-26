@@ -28,7 +28,7 @@ class EventsList_ItemDelegate : public QStyledItemDelegate
 	};
 
 
-class TEventsLog : public QMainWindow
+class TEventsLog : public QWidget
 	{
 		Q_OBJECT
 	public:
@@ -38,8 +38,6 @@ class TEventsLog : public QMainWindow
 		TEventExt *CheckDataEvent(TOscDataWithIndic &, TOscDataWithIndic &);
 		QStandardItemModel EventsList_Model;
 		QTableView *EventsList_TableView;
-		xTabWidget *EventsList_TabWidget;
-		xButton *EventsList_CloseButton;
 
 		void AddNewEvent(TEventExt *);
 		void Save();

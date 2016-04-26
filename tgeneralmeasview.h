@@ -14,7 +14,7 @@
 #include "toktservext.h"
 
 
-class TGeneralMeasView : public QMainWindow
+class TGeneralMeasView : public QWidget
 	{
 		Q_OBJECT
 	public:

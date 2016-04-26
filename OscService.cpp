@@ -105,7 +105,6 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 	//ParametersView_TabWidget->setIconSize(QSize(48,48));
 
 	//Создание закладок "Параметры регулятора"
-	int k=0;
 	for(int i=0;i<OKTSERV_PACKETS_NUM;i++)
 		{
 		Packet[i].Tab = new QWidget();

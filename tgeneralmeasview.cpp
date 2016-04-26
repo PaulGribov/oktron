@@ -1,12 +1,12 @@
 #include "tgeneralmeasview.h"
 
-TGeneralMeasView::TGeneralMeasView(QWidget *parent) : QMainWindow(parent)
+TGeneralMeasView::TGeneralMeasView(QWidget *parent) : QWidget(parent)
 	{
 	//Текущие измерения
 	QVBoxLayout *LeftCol_Layout = new QVBoxLayout();
 	QVBoxLayout *RightCol_Layout = new QVBoxLayout();
 
-	QBrush brush(Qt::blue);
+	QBrush brush(QColor(5,116,174));
 	brush.setStyle(Qt::SolidPattern);
 	QPalette palette0;
 	palette0.setBrush(QPalette::Active, QPalette::WindowText, brush);
@@ -71,7 +71,7 @@ TGeneralMeasView::TGeneralMeasView(QWidget *parent) : QMainWindow(parent)
 	QHBoxLayout *Meas_Layout = new QHBoxLayout();
 	Meas_Layout->addLayout(LeftCol_Layout);
 	Meas_Layout->addLayout(RightCol_Layout);
-	//ui->Meas_GroupBox->setLayout(Meas_Layout);
+	setLayout(Meas_Layout);
 	/*
 	QVBoxLayout *LastEventExt_Layout = new QVBoxLayout();
 	CREATE_LABEL_PARAMETER(LastEvent, "", LastEventExt, 4, 4, "", 350)

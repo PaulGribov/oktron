@@ -15,13 +15,13 @@
 #include "teventslog.h"
 #include "toktservext.h"
 #include "xWidgets.h"
+#include "tmainmenu.h"
+#include "tgeneralmeasview.h"
 
 
 namespace Ui {
     class MainWindow;
 }
-
-
 
 class MainWindow : public QMainWindow
 	{
@@ -36,6 +36,8 @@ class MainWindow : public QMainWindow
 		QLabel *SystemTime_Label;
 		TProgSettings *ProgSettings;
 		TEventsLog *EventsLog;
+		TMainMenu *MainMenu;
+		TGeneralMeasView *GeneralMeasView;
 		QTimer *SystemTime_QTimer;
 		QLabel *DestDiskState_Label;
 		bool DestDiskState;
@@ -56,7 +58,8 @@ class MainWindow : public QMainWindow
 #define OKT_KEY_TRY_MASK		0x0400
 #define OKT_KEY_ESC_MASK		0x0800
 
-
+		xTabWidget *MainWindow_TabWidget;
+		xButton *MainMenu_Button;
 
 	public slots:
 		void DataProcess(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool);
@@ -65,36 +68,11 @@ class MainWindow : public QMainWindow
 		void KeysPoll();
 		void CheckGrowKeys(unsigned short mask);
 		void DataSender();
-		void MenuCreate();
 		void Retranslate();
 
-		void ParsOfReserv_Button_OnClick();
-		void ParsOfBase_Button_OnClick();
-		void EventsLog_Button_OnClick();
-		void MakeOsc_Button_OnClick();
-		void RegsSetup_Button_OnClick();
-		void ProgSettings_Button_OnClick();
-		void OscListOfBase_Button_OnClick();
-		void OscListOfReserv_Button_OnClick();
-		void OktServOnOff_Button_OnClick();
-		void GetBlocksID_Button_OnClick();
 
 	private:
 		Ui::MainWindow *ui;
-
-		xButton *ParsOfReserv_Button;
-		xButton *ParsOfBase_Button;
-		xButton *EventsLog_Button;
-		xButton *RegsSetup_Button;
-		xButton *GetBlocksID_Button;
-		xButton *MakeOsc_Button;
-		xButton *ProgSettings_Button;
-		/*
-		void OscListOfBase_Button_OnClick();
-		void OscListOfReserv_Button_OnClick();
-		void OktServOnOff_Button_OnClick();
-		*/
-
 
 		unsigned short KeysState;
 #define OKT_KEYS_NUM	16

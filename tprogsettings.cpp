@@ -3,8 +3,9 @@
 #include <QSpacerItem>
 #include <QXmlStreamReader>
 #include "work.h"
+#include "mainwindow.h"
 
-TProgSettings::TProgSettings(QWidget *parent, TOktServExt **pOktServExt0, TOktServExt **pOktServExt1) : QMainWindow(parent)
+TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWindow)
 	{
 	setWindowIcon(QIcon(":/images/applications_system.png"));
 
@@ -59,7 +60,7 @@ TProgSettings::TProgSettings(QWidget *parent, TOktServExt **pOktServExt0, TOktSe
 	PortSettings_GroupBox[1]=NULL;
 #endif
 
-	*pOktServExt0=new TOktServExt(PortSettings_GroupBox[0]
+	((MainWindow *)obj_MainWindow)->OktServExt[0]=new TOktServExt(PortSettings_GroupBox[0]
 #ifdef __linux__
 	#ifndef __i386__
 		, "ttySP1"
@@ -68,8 +69,8 @@ TProgSettings::TProgSettings(QWidget *parent, TOktServExt **pOktServExt0, TOktSe
 	#endif
 #endif
 		);
-	OktServ[0]=*pOktServExt0;
-	*pOktServExt1=new TOktServExt(PortSettings_GroupBox[1]
+
+	((MainWindow *)obj_MainWindow)->OktServExt[1]=new TOktServExt(PortSettings_GroupBox[1]
 #ifdef __linux__
 	#ifndef __i386__
 		, "ttySP2"
@@ -78,7 +79,6 @@ TProgSettings::TProgSettings(QWidget *parent, TOktServExt **pOktServExt0, TOktSe
 	#endif
 #endif
 		);
-	OktServ[1]=*pOktServExt1;
 
 #ifndef __linux__
 	//PortSettings_Layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Expanding));
@@ -134,8 +134,8 @@ void TProgSettings::show()
 #ifndef __linux__
 void TProgSettings::PortsSettingsApply()
 	{
-	OktServ[0]->PortSettingsApply();
-	OktServ[1]->PortSettingsApply();
+	((MainWindow *)obj_MainWindow)->OktServExt[0]->PortSettingsApply();
+	((MainWindow *)obj_MainWindow)->OktServExt[1]->PortSettingsApply();
 	}
 #endif
 void TProgSettings::DateTimeUpdated(QTime &date)
@@ -186,7 +186,7 @@ void TProgSettings::Load()
 		IniFile.close();
 		}
 #ifndef __linux__
-	for(int i=0;i<2;i++) OktServ[i]->PrintPortsParameters();
+	for(int i=0;i<2;i++) ((MainWindow *)obj_MainWindow)->OktServExt[i]->PrintPortsParameters();
 #endif
 	AutomaticStart_CheckBox->setChecked(GeneralSettings.AutomaticStart);
 	}
@@ -250,7 +250,7 @@ void TProgSettings::SaveGeneralSettings(QXmlStreamWriter &xml)
 #ifndef __linux__
 void TProgSettings::LoadCommSettings(QXmlStreamReader &xml, int server_index)
 	{
-	TCommPortSettings *settings=&OktServ[server_index]->Settings;
+	TCommPortSettings *settings=&(((MainWindow *)obj_MainWindow)->OktServExt[server_index]->Settings);
 	QXmlStreamAttributes attributes = xml.attributes();
 
 	if(attributes.hasAttribute(tr("CommPortIndex")))
@@ -269,7 +269,7 @@ void TProgSettings::LoadCommSettings(QXmlStreamReader &xml, int server_index)
 
 void TProgSettings::SaveCommSettings(QXmlStreamWriter &xml, int server_index)
 	{
-	TCommPortSettings *settings=&OktServ[server_index]->Settings;
+	TCommPortSettings *settings=&(((MainWindow *)obj_MainWindow)->OktServExt[server_index]->Settings);
 	QString port_name = TOktServ::CommPortSettingsTexts.CommPort[settings->CommPort_index];
 	QString key_prefix = QString(tr("OktServ%1")).arg(server_index);
 

@@ -2,26 +2,10 @@
 #include "work.h"
 #include <QHeaderView>
 
-TEventsLog::TEventsLog(QWidget *parent) : QMainWindow(parent)
+TEventsLog::TEventsLog(QWidget *parent) : QWidget(parent)
 	{
-	setWindowIcon(QIcon(":/images/clipboard_new.png"));
-
-	QWidget *EventsList_CentralWidget=new QWidget();
-	setCentralWidget(EventsList_CentralWidget);
-
-	QVBoxLayout *EventsList_ExtLayout = new QVBoxLayout();
-	EventsList_CentralWidget->setLayout(EventsList_ExtLayout);
-
-	EventsList_TabWidget=new xTabWidget();
-	EventsList_ExtLayout->addWidget(EventsList_TabWidget);
-	EventsList_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(19).arg(280).arg(36));
-	EventsList_TabWidget->setUsesScrollButtons(false);
-
-	QWidget *EventsList_Tab=new QWidget();
-	EventsList_TabWidget->addTab(EventsList_Tab/*, QIcon(":/images/clipboard_new.png")*/, "");
-
 	QVBoxLayout *EventsList_IntLayout = new QVBoxLayout();
-	EventsList_Tab->setLayout(EventsList_IntLayout);
+	setLayout(EventsList_IntLayout);
 
 	EventsList_TableView=new QTableView();
 #ifdef __i386__
@@ -41,10 +25,6 @@ TEventsLog::TEventsLog(QWidget *parent) : QMainWindow(parent)
 #endif
 	verticalHeader->setDefaultSectionSize(60);
 
-	EventsList_CloseButton = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
-	EventsList_ExtLayout->addWidget(EventsList_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
-	connect(EventsList_CloseButton, SIGNAL(clicked()), this, SLOT(Close()));
-
 	EventsList_TableView->setModel(&EventsList_Model);
 	EventsList_TableView->setItemDelegate(new EventsList_ItemDelegate());
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
@@ -59,15 +39,11 @@ TEventsLog::TEventsLog(QWidget *parent) : QMainWindow(parent)
 
 void TEventsLog::Retranslate()
 	{
-	setWindowTitle(tr("ЖУРНАЛ СОБЫТИЙ"));
-	EventsList_TabWidget->setTabText(0, windowTitle());
-	EventsList_CloseButton->setText(tr("ЗАКРЫТЬ"));
-
 	EventsList_Model.clear();
 	EventsList_Model.setHorizontalHeaderLabels(QStringList() << tr("Время") << tr("Событие") << tr("Осц.") );
 
-	EventsList_TableView->setColumnWidth(EVLOG_DATETIME_COL, 160);
-	EventsList_TableView->setColumnWidth(EVLOG_TEXT_COL, 300);
+	EventsList_TableView->setColumnWidth(EVLOG_DATETIME_COL, 140);
+	EventsList_TableView->setColumnWidth(EVLOG_TEXT_COL, 320);
 	EventsList_TableView->setColumnWidth(EVLOG_OSCINDEX_COL, 80);
 	}
 

@@ -120,7 +120,7 @@ QString xTableViewStyleSheet="\
 	:enabled {\
 		gridline-color: rgb(154,154,154);\
 		background: rgb(235,236,236);\
-		font: 16pt; }\
+		font: 20pt; }\
 	::item:focus {\
 		border-image: url(:/images/border_but0_enabled.png) 10;\
 		border-width: 1px;\

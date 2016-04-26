@@ -71,6 +71,7 @@ class TOktServ : public QWidget
 		void DataSender();
 
 #ifndef __linux__
+		/*
 		void PortSettingsApply();
 		void PrintPortsParameters();
 		TCommPortSettings Settings;
@@ -78,6 +79,7 @@ class TOktServ : public QWidget
 
 	public slots:
 		void ErrorHandler(QSerialPort::SerialPortError error);
+		*/
 #endif
 
 	Q_SIGNALS:

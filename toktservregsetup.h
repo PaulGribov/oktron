@@ -168,14 +168,12 @@ class TGetBlocksIDPar : public QWidget
 				pCell[i]=NULL;
 				}
 			Updatable=false;
-			UpdBut=NULL;
 			}
 
 		QString Id;
 		QString HexId;
 		bool Updatable;
 		int Addr;
-		xButton *UpdBut;
 		QStandardItem *pCell[GETBLOCKSID_COLS_NUM];	//Указатель на ячейку
 
 

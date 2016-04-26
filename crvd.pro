@@ -23,7 +23,8 @@ SOURCES += main.cpp mainwindow.cpp \
     teventslog.cpp \
     toktservext.cpp \
     tgeneralmeasview.cpp \
-    xWidgets.cpp
+    xWidgets.cpp \
+    tmainmenu.cpp
 HEADERS += mainwindow.h \
     work.h \
     OscService.h \
@@ -34,7 +35,8 @@ HEADERS += mainwindow.h \
     teventslog.h \
     toktservext.h \
     tgeneralmeasview.h \
-    xWidgets.h
+    xWidgets.h \
+    tmainmenu.h
 FORMS += mainwindow.ui
 
 RESOURCES += \

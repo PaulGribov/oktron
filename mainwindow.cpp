@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
 	setWindowTitle(QApplication::applicationName());
 
 	//Создание серверов
-	ProgSettings=new TProgSettings(this, &OktServExt[0], &OktServExt[1]);
+	ProgSettings=new TProgSettings(this);
 	for(int i=0;i<2;i++)
 		{
 		connect(OktServExt[i], SIGNAL(DataProcessLocal(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)), this, SLOT(DataProcess(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)));
@@ -41,13 +41,33 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(DataSender_QTimer , SIGNAL(timeout()), this, SLOT(DataSender()));
 	DataSender_QTimer->stop();
 
-
 	DestDiskState_Label=new QLabel();
 	DestDiskState_Label->setText(tr("Диска нет"));
 	//ui->statusBar->addWidget(DestDiskState_Label);
 
-	//Журнал событий
-	EventsLog = new TEventsLog();
+	QWidget *MainWindow_CentralWidget=new QWidget();
+	setCentralWidget(MainWindow_CentralWidget);
+
+	QVBoxLayout *MainWindow_ExtLayout = new QVBoxLayout();
+	MainWindow_CentralWidget->setLayout(MainWindow_ExtLayout);
+
+	MainWindow_TabWidget=new xTabWidget();
+	MainWindow_ExtLayout->addWidget(MainWindow_TabWidget);
+	MainWindow_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(19).arg(180).arg(36));
+	MainWindow_TabWidget->setUsesScrollButtons(false);
+
+	EventsLog = new TEventsLog(); //Журнал событий
+	MainWindow_TabWidget->addTab(EventsLog, "");
+
+	GeneralMeasView = new TGeneralMeasView(this); //Текущие показания
+	MainWindow_TabWidget->addTab(GeneralMeasView, "");
+
+	MainMenu = new TMainMenu(this); //Главное меню
+	MainWindow_TabWidget->addTab(MainMenu, "");
+
+	//MainMenu_Button = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
+	//MainWindow_ExtLayout->addWidget(MainMenu_Button, 0, Qt::AlignRight | Qt::AlignBottom);
+	//connect(EventsList_CloseButton, SIGNAL(clicked()), this, SLOT(Close()));
 
 	for(int i=0;i<OKT_KEYS_NUM;i++) KeyTimeCnt[i]=0;
 	KeysPoll_QTimer = new QTimer(this);
@@ -55,63 +75,19 @@ MainWindow::MainWindow(QWidget *parent)
 	KeysPoll_QTimer->start(1);
 	KeysState=0;
 
-	Connect_Disconnect(ProgSettings->GeneralSettings.AutomaticStart);
+	Connect_Disconnect(true);
 
 	PrintEvent(EventsLog->MakeEvent(tr("Старт программы"), false));
 
-	MenuCreate();
 	Retranslate();
-
-	EventsLog_Button_OnClick();
 	}
 
-void MainWindow::MenuCreate()
-	{
-	QHBoxLayout *Line1_Layout = new QHBoxLayout();
-
-	ParsOfBase_Button = new xButton(GenBut, QIcon(":/images/meter3.png"));
-	connect(ParsOfBase_Button, SIGNAL(clicked()), this, SLOT(ParsOfBase_Button_OnClick()));
-	Line1_Layout->addWidget(ParsOfBase_Button);
-
-	ParsOfReserv_Button = new xButton(GenBut, QIcon(":/images/meter3.png"));
-	connect(ParsOfReserv_Button, SIGNAL(clicked()), this, SLOT(ParsOfReserv_Button_OnClick()));
-	Line1_Layout->addWidget(ParsOfReserv_Button);
-
-	RegsSetup_Button = new xButton(GenBut, QIcon(":/images/advancedsettings.png"));
-	connect(RegsSetup_Button, SIGNAL(clicked()), this, SLOT(RegsSetup_Button_OnClick()));
-	Line1_Layout->addWidget(RegsSetup_Button);
-
-	QHBoxLayout *Line2_Layout = new QHBoxLayout();
-
-	GetBlocksID_Button = new xButton(GenBut, QIcon(":/images/memory.png"));
-	connect(GetBlocksID_Button, SIGNAL(clicked()), this, SLOT(GetBlocksID_Button_OnClick()));
-	Line2_Layout->addWidget(GetBlocksID_Button);
-
-	EventsLog_Button = new xButton(GenBut, QIcon(":/images/clipboard_new.png"));
-	connect(EventsLog_Button, SIGNAL(clicked()), this, SLOT(EventsLog_Button_OnClick()));
-	Line2_Layout->addWidget(EventsLog_Button);
-
-	ProgSettings_Button = new xButton(GenBut, QIcon(":/images/applications_system.png"));
-	ProgSettings_Button->setIcon(QIcon(":/images/applications_system.png"));
-	connect(ProgSettings_Button, SIGNAL(clicked()), this, SLOT(ProgSettings_Button_OnClick()));
-	Line2_Layout->addWidget(ProgSettings_Button);
-
-	QWidget *Main_Widget=new QWidget();
-	QVBoxLayout *Col_Layout = new QVBoxLayout();
-	Col_Layout->addLayout(Line1_Layout);
-	Col_Layout->addLayout(Line2_Layout);
-	Main_Widget->setLayout(Col_Layout);
-	setCentralWidget(Main_Widget);
-	}
 
 void MainWindow::Retranslate()
 	{
-	ParsOfBase_Button->setText(tr("ПАРАМЕТРЫ\nОСНОВНОГО"));
-	ParsOfReserv_Button->setText(tr("ПАРАМЕТРЫ\nРЕЗЕРВНОГО"));
-	RegsSetup_Button->setText(tr("НАСТРОЙКИ\nРЕГУЛЯТОРА"));
-	GetBlocksID_Button->setText(tr("СПИСОК\nБЛОКОВ"));
-	EventsLog_Button->setText(tr("ЖУРНАЛ\nСОБЫТИЙ"));
-	ProgSettings_Button->setText(tr("НАСТРОЙКИ\nПРОГРАММЫ"));
+	MainWindow_TabWidget->setTabText(0, tr("ЖУРНАЛ"));
+	MainWindow_TabWidget->setTabText(1, tr("ПОКАЗАНИЯ"));
+	MainWindow_TabWidget->setTabText(2, tr("ГЛАВНОЕ МЕНЮ"));
 	}
 
 
@@ -140,7 +116,8 @@ void MainWindow::Connect_Disconnect(bool state)
 	//ui->OktServOnOff_Button->setText(state?tr("Выключить сервер"):tr("Включить сервер"));
 	if(!state)
 		{
-		//PrintDataDisabled();
+		GeneralMeasView->PrintDataDisabled();
+
 #ifndef __linux__
 		ProgSettings->PortsSettingsApply_Button->setEnabled(true);
 #endif
@@ -349,7 +326,7 @@ void MainWindow::DataProcess(TOscDataWithIndic &od, TOscDataWithIndic &previous_
 			//Вывод данных на форму
 			if(print)
 				{
-				//PrintData(od, okt_serv->Name1);
+				GeneralMeasView->PrintData(od, ""/*okt_serv->Name1*/);
 				}
 			}
 
@@ -358,7 +335,7 @@ void MainWindow::DataProcess(TOscDataWithIndic &od, TOscDataWithIndic &previous_
 		}
 	else
 		{
-		//if((okt_serv->Master)||(okt_serv->ForceMaster)) PrintDataDisabled();
+		if((okt_serv->Master)||(okt_serv->ForceMaster)) GeneralMeasView->PrintDataDisabled();
 		}
 	}
 
@@ -381,95 +358,3 @@ void MainWindow::showExpanded()
 }
 
 
-void MainWindow::ParsOfBase_Button_OnClick()
-	{
-#ifndef __i386__
-	OktServExt[0]->ParametersView_MainWindow->showFullScreen();
-#else
-	OktServExt[0]->ParametersView_MainWindow->showNormal();
-#endif
-	}
-
-void MainWindow::ParsOfReserv_Button_OnClick()
-	{
-#ifndef __i386__
-	OktServExt[1]->ParametersView_MainWindow->showFullScreen();
-#else
-	OktServExt[1]->ParametersView_MainWindow->showNormal();
-#endif
-	}
-
-
-void MainWindow::EventsLog_Button_OnClick()
-	{
-#ifndef __i386__
-	EventsLog->showFullScreen();
-#else
-	EventsLog->showNormal();
-#endif
-	}
-
-void MainWindow::MakeOsc_Button_OnClick()
-	{
-	//TEvent Event={QDateTime::currentDateTime(), tr("Старт")};
-	//OscService0->OscStart(Event);
-	//OscService1->OscStart(Event);
-	close();
-	/*
-	QApplication::postEvent(QApplication::focusWidget(),
-		new QKeyEvent(QEvent::KeyPress,
-		Qt::Key_Up,
-		Qt::NoModifier));
-	*/
-	}
-
-void MainWindow::RegsSetup_Button_OnClick()
-	{
-#ifndef __i386__
-	OktServExt[0]->RegSetup_MainWindow->showFullScreen();
-#else
-	OktServExt[0]->RegSetup_MainWindow->showNormal();
-#endif
-	OktServExt[0]->RegSetup_Tab->setFocus();
-	}
-
-void MainWindow::ProgSettings_Button_OnClick()
-	{
-#ifndef __i386__
-	ProgSettings->showFullScreen();
-#else
-	ProgSettings->show();
-#endif
-	}
-
-void MainWindow::OscListOfBase_Button_OnClick()
-	{
-#ifndef __i386__
-	OktServExt[0]->OscList_MainWindow->showFullScreen();
-#else
-	OktServExt[0]->OscList_MainWindow->showNormal();
-#endif
-	}
-
-void MainWindow::OscListOfReserv_Button_OnClick()
-	{
-#ifndef __i386__
-	OktServExt[1]->OscList_MainWindow->showFullScreen();
-#else
-	OktServExt[1]->OscList_MainWindow->showNormal();
-#endif
-	}
-
-void MainWindow::OktServOnOff_Button_OnClick()
-	{
-	Connect_Disconnect(!(OktServExt[0]->StateOn|OktServExt[1]->StateOn));
-	}
-
-void MainWindow::GetBlocksID_Button_OnClick()
-	{
-#ifndef __i386__
-	OktServExt[0]->GetBlocksID_MainWindow->showFullScreen();
-#else
-	OktServExt[0]->GetBlocksID_MainWindow->showNormal();
-#endif
-	}

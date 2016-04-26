@@ -17,11 +17,10 @@ class TProgSettings : public QMainWindow
 	{
 		Q_OBJECT
 	public:
-		explicit TProgSettings(QWidget *parent=NULL, TOktServExt **pOktServExt0=NULL, TOktServExt **pOktServExt1=NULL);
+		explicit TProgSettings(QWidget *obj_MainWindow);
 
 		QDateTimeEdit *SetDateTime;
 		QGroupBox *PortSettings_GroupBox[2], *GeneralSettings_GroupBox, *SetDateTime_GroupBox;
-		TOktServ *OktServ[2];
 		xTabWidget *ProgSettings_tabWidget;
 		QWidget *PortSettings_Tab, *GeneralSettings_Tab;
 		xButton *PortsSettingsApply_Button;
@@ -30,11 +29,6 @@ class TProgSettings : public QMainWindow
 			bool AutomaticStart;
 			} GeneralSettings;
 
-		void SetOktServers(TOktServ *OktServ0, TOktServ *OktServ1)
-			{
-			this->OktServ[0]=OktServ0;
-			this->OktServ[1]=OktServ1;
-			}
 		void show();
 		QDateTime PresetVal;
 		xButton *Save_Button;
@@ -51,7 +45,7 @@ class TProgSettings : public QMainWindow
 
 	public slots:
 #ifndef __linux__
-		void PortsSettingsApply();
+		//void PortsSettingsApply();
 #endif
 		void Close();
 		void Save();

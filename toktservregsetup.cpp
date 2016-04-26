@@ -552,7 +552,6 @@ BlockFound_loc:
 	pGetBlocksIDPars[ParameterIndex]->Addr=BlockAddr;
 	pGetBlocksIDPars[ParameterIndex]->Updatable=updatable;
 	GetBlocksID.Model.appendRow(items);
-	//GetBlocksID.TableView->openPersistentEditor(GetBlocksID.Model.index(ParameterIndex, GETBLOCKSID_UPDATE_COL, QModelIndex()));
 
 	//Скрыть строку, если её нет
 	GetBlocksID.TableView->setRowHidden(ParameterIndex, !enabled);
@@ -565,11 +564,6 @@ void TOktServRegSetup::WidgetsEnabled(bool e)
 		{
 		SettingsApply_Button->setEnabled(false);
 		SaveSettings_Button->setEnabled(false);
-		for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
-			{
-			if(pGetBlocksIDPars[i]->UpdBut) pGetBlocksIDPars[i]->UpdBut->setEnabled(false);
-			}
-
 		for(int i=0;i<REG_SETUP_PARS_NUM;i++)
 			{
 			if(pRegSetupPars[i]->Enabled)
@@ -589,10 +583,6 @@ void TOktServRegSetup::WidgetsEnabled(bool e)
 			{
 			SettingsApply_Button->setEnabled(true);
 			SaveSettings_Button->setEnabled(true);
-			}
-		for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
-			{
-			if(pGetBlocksIDPars[i]->UpdBut) pGetBlocksIDPars[i]->UpdBut->setEnabled(pGetBlocksIDPars[i]->Updatable);
 			}
 		for(int i=0;i<REG_SETUP_PARS_NUM;i++)
 			{
@@ -838,10 +828,6 @@ FormattingReq_loc:
 							break;
 						//Инициирование: чтение ID блоков
 						case CMD_GET_BLOCK_ID:
-							for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
-								{
-								pGetBlocksIDPars[i]->UpdBut=NULL;
-								}
 							GetBlocksID.Model.clear();
 							GetBlocksID.Model.setHorizontalHeaderLabels(QStringList() << tr("Блок") << tr("№") << tr("ПО блока") << tr("Обновлние") << tr("Состояние"));
 							GetBlocksID.TableView->setColumnWidth(GETBLOCKSID_NAME_COL, 180);
@@ -1324,20 +1310,21 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 			{
 			pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL]->setText(tr(INSTALLED_FW_TEXT)+pGetBlocksIDPars[i]->Id);
 			}
-		if(pGetBlocksIDPars[i]->UpdBut)
+		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_UPDATE_COL])
 			{
-			pGetBlocksIDPars[i]->UpdBut->setEnabled(false);
-			//pGetBlocksIDPars[i]->UpdBut->setText(tr("Загрузить"));
+			pGetBlocksIDPars[i]->pCell[GETBLOCKSID_UPDATE_COL]->setIcon(QIcon());
 			}
 #else
-		pGetBlocksIDPars[i]->Updatable=true;
+		pGetBlocksIDPars[i]->Updatable=(i&0x01)?true:false;
 		pGetBlocksIDPars[i]->HexId=tr("T8K-12345678");
 		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL])
 			{
 			pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL]->setText(tr(INSTALLED_FW_TEXT)+pGetBlocksIDPars[i]->Id+tr(AVAILABLE_FW_TEXT)+"T8K-12345678");
 			}
-		if(pGetBlocksIDPars[i]->UpdBut) pGetBlocksIDPars[i]->UpdBut->setEnabled(true);
-
+		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_UPDATE_COL])
+			{
+			pGetBlocksIDPars[i]->pCell[GETBLOCKSID_UPDATE_COL]->setIcon(QIcon((pGetBlocksIDPars[i]->Updatable)?":/images/advancedsettings.png":""));
+			}
 #endif
 		}
 
@@ -1360,7 +1347,10 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 						{
 						pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL]->setText(tr(INSTALLED_FW_TEXT)+pGetBlocksIDPars[i]->Id+tr(AVAILABLE_FW_TEXT)+name);
 						}
-					if(pGetBlocksIDPars[i]->UpdBut) pGetBlocksIDPars[i]->UpdBut->setEnabled(true);
+					if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_UPDATE_COL])
+						{
+						pGetBlocksIDPars[i]->pCell[GETBLOCKSID_UPDATE_COL]->setIcon(QIcon(":/images/advancedsettings.png"));
+						}
 					}
 				}
 			}
@@ -1590,7 +1580,11 @@ void RegSetupTableView::OpenEditor4Index(QModelIndex current)
 			}
 		else if((pGetBlocksIDPars)&&(current.column()==GETBLOCKSID_UPDATE_COL)&&(pGetBlocksIDPars[current.row()]->Updatable))
 			{
-			edit(current);
+			if(!((TOktServRegSetup *)OSRS_parent)->IsBusy())
+				{
+				pGetBlocksIDPars[current.row()]->pCell[current.column()]->setIcon(QIcon());
+				edit(current);
+				}
 			}
 		}
 	}
@@ -1632,6 +1626,10 @@ void RegSetupTableView::CloseEditor4Index(QModelIndex previous)
 				default:
 					break;
 				}
+			}
+		else if((pGetBlocksIDPars)&&(previous.column()==GETBLOCKSID_UPDATE_COL)&&(pGetBlocksIDPars[previous.row()]->Updatable))
+			{
+			pGetBlocksIDPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/advancedsettings.png"));
 			}
 		}
 	}
@@ -2054,8 +2052,6 @@ QWidget *TGetBlocksIDList_ItemDelegate::createEditor(QWidget *parent, const QSty
 			{
 			xButton *editor = new xButton(TableBut, QIcon(":/images/advancedsettings.png"), 28, Qt::ToolButtonIconOnly, parent);
 			connect(editor, SIGNAL(clicked()), ((TOktServRegSetup *)OSRS_parent)->pGetBlocksIDPars[index.row()], SLOT(ButClick()));
-			((TOktServRegSetup *)OSRS_parent)->pGetBlocksIDPars[index.row()]->UpdBut=editor;
-			editor->setEnabled(false);
 			return editor;
 			}
 
@@ -2085,12 +2081,12 @@ void TGetBlocksIDList_ItemDelegate::paint(QPainter *painter, const QStyleOptionV
 			//Код 0 - ничего нет
 			if(progress==0)
 				{
-				progressBarOption.text = tr("");
+				break;
 				}
 			//Код 101 - Сохранена
 			else if(progress==101)
 				{
-				progressBarOption.text = tr("Обновлено");
+				progressBarOption.text = tr("Обнов.");
 				}
 			//Код 102 - Ошибка
 			else if(progress==102)
@@ -2102,13 +2098,13 @@ void TGetBlocksIDList_ItemDelegate::paint(QPainter *painter, const QStyleOptionV
 			else if(progress==103)
 				{
 				progressBarOption.progress = 0;
-				progressBarOption.text = tr("Таймаут,занят");
+				progressBarOption.text = tr("Таймаут, занят");
 				}
 			//Код 104 - Ошибка файла
 			else if(progress==104)
 				{
 				progressBarOption.progress = 0;
-				progressBarOption.text = tr("Ошибка'HEX'");
+				progressBarOption.text = tr("Ошибка 'HEX'");
 				}
 			else
 				{
