@@ -50,7 +50,6 @@ class TProgSettings : public QMainWindow
 		void Close();
 		void Save();
 		void Load();
-		void DateTimeUpdated(QTime &date);
 
 	};
 

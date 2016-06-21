@@ -11,6 +11,7 @@
 #include <work.h>
 #include <QStandardItem>
 #include <QTableView>
+#include "mainwindow.h"
 
 QStringList TOktServRegSetup::YESNO_sl;
 
@@ -596,7 +597,6 @@ void TOktServRegSetup::WidgetsEnabled(bool e)
 
 	GetBlocksID.ButtonsBar.Reload_Button->setEnabled(e);
 	RegSetup.ButtonsBar.Reload_Button->setEnabled(e);
-
 	}
 
 
@@ -612,6 +612,7 @@ void TOktServRegSetup::RegSetupReq()
 		case CMD_GET_BLOCK_ID:
 			if(prevCmd==Cmd) break;
 			GetBlocksID.LoadPars.Label->setText(tr("Загрузка параметров ..."));
+			GetBlocksID.LoadPars.Layout->setAlignment(GetBlocksID.LoadPars.Label, Qt::AlignHCenter | Qt::AlignBottom);
 			GetBlocksID.LoadPars.Frame->setVisible(true);
 			GetBlocksID.LoadPars.ProgressBar->setVisible(true);
 			GetBlocksID.LoadPars.ProgressBar->setRange(1,100);
@@ -622,6 +623,7 @@ void TOktServRegSetup::RegSetupReq()
 		case CMD_READ_SETTINGS_DESC:
 			if(prevCmd==Cmd) break;
 			RegSetup.LoadPars.Label->setText(tr("Загрузка параметров ..."));
+			RegSetup.LoadPars.Layout->setAlignment(RegSetup.LoadPars.Label, Qt::AlignHCenter | Qt::AlignBottom);
 			RegSetup.LoadPars.Frame->setVisible(true);
 			RegSetup.LoadPars.ProgressBar->setVisible(true);
 			RegSetup.LoadPars.ProgressBar->setRange(1,100);
@@ -640,6 +642,7 @@ void TOktServRegSetup::RegSetupReq()
 				{
 				//Параметры прочтены - показать список
 				case CMD_GET_BLOCK_ID:
+					GetBlocksID.LoadPars.Layout->setAlignment(GetBlocksID.LoadPars.Label, Qt::AlignHCenter | Qt::AlignVCenter);
 					GetBlocksID.LoadPars.Frame->setVisible(false);
 					GetBlocksID.LoadPars.ProgressBar->setVisible(false);
 					GetBlocksID.TableView->setVisible(true);
@@ -648,6 +651,7 @@ void TOktServRegSetup::RegSetupReq()
 
 				//Параметры прочтены - показать список
 				case CMD_READ_SETTINGS_DESC:
+					RegSetup.LoadPars.Layout->setAlignment(RegSetup.LoadPars.Label, Qt::AlignHCenter | Qt::AlignVCenter);
 					RegSetup.LoadPars.Frame->setVisible(false);
 					RegSetup.LoadPars.ProgressBar->setVisible(false);
 					RegSetup.TableView->setVisible(true);
@@ -699,6 +703,7 @@ void TOktServRegSetup::RegSetupReq()
 			switch(prevCmd)
 				{
 				case CMD_GET_BLOCK_ID:
+					GetBlocksID.LoadPars.Layout->setAlignment(GetBlocksID.LoadPars.Label, Qt::AlignHCenter | Qt::AlignVCenter);
 					GetBlocksID.LoadPars.ProgressBar->setVisible(false);
 					//Если загружен ID-регулятора, то показать список несмотря на ошибку (режим загрузчика)
 					if(ParameterIndex)
@@ -718,6 +723,7 @@ void TOktServRegSetup::RegSetupReq()
 
 				case CMD_READ_SETTINGS_DESC:
 					RegSetup.LoadPars.Label->setText(ErrMsg);
+					RegSetup.LoadPars.Layout->setAlignment(RegSetup.LoadPars.Label, Qt::AlignHCenter | Qt::AlignVCenter);
 					RegSetup.LoadPars.Frame->setVisible(true);
 					RegSetup.LoadPars.ProgressBar->setVisible(false);
 					RegSetup.TableView->setVisible(false);
@@ -819,7 +825,7 @@ FormattingReq_loc:
 							RegSetup.Model.clear();
 							RegSetup.Model.setHorizontalHeaderLabels(QStringList() << tr("Параметр") << tr("Значение") << tr("") << tr("") << tr("") << tr("") << tr("Статус"));
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_NAME_COL, 270);
-							RegSetup.TableView->setColumnWidth(REGSETUPLIST_VAL_COL, 80);
+							RegSetup.TableView->setColumnWidth(REGSETUPLIST_VAL_COL, 85);
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_PLUSBUT_COL, 42);
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_MINUSBUT_COL, 42);
 							RegSetup.TableView->setColumnWidth(REGSETUPLIST_READBUT_COL, 42);
@@ -1299,8 +1305,6 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 	QDir::setCurrent("/mnt/localdisk");
 #endif
 	qDebug() << tr("Search for HEXs...");
-	QDir dir;
-	QFileInfoList listFiles = dir.entryInfoList(QStringList("*.hex"), QDir::Files);
 	for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
 		{
 #ifndef REGSETUPDBG
@@ -1327,7 +1331,8 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 			}
 #endif
 		}
-
+	QDir dir;
+	QFileInfoList listFiles = dir.entryInfoList(QStringList("*.hex"), QDir::Files, QDir::Time);
 	foreach(QFileInfo file, listFiles)
 		{
 		QString name = QStringList(file.fileName().split(".")).at(0).toUpper();
@@ -1640,11 +1645,11 @@ void RegSetupTableView::currentChanged(const QModelIndex &current, const QModelI
 	OpenEditor4Index(current);
 	CloseEditor4Index(previous);
 	QTableView::currentChanged(current, previous);
+	MainWindow::IdleTimeout=0;
 	}
 
 bool RegSetupTableView::eventFilter(QObject *obj, QEvent *e)
 	{
-
 	QModelIndex current=currentIndex();
 	switch(e->type())
 		{
@@ -1659,23 +1664,19 @@ bool RegSetupTableView::eventFilter(QObject *obj, QEvent *e)
 			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
 			switch(keyEvent->key())
 				{
-				case Qt::Key_Escape:
-					{
-					QWidget *w=this;
-					while(w->inherits("QMainWindow")==false)
-						{
-						w=w->parentWidget();
-						}
-					w->close();
-					return true;
-					}
 				case Qt::Key_Space:
-					e->ignore();
-					NextFocusChain->setFocus();
-					return true;
+					nextInFocusChain()->setFocus();
+					break;
 				default:
 					break;
 				}
+			}
+			break;
+		case QEvent::MouseMove:
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonDblClick:
+			{
+			MainWindow::IdleTimeout=0;
 			}
 			break;
 		default:
@@ -1898,7 +1899,7 @@ QWidget *TRegSetupList_ItemDelegate::createEditor(QWidget *parent, const QStyleO
 				editor->setMinimum(-32767*coef);
 				editor->setMaximum(32767*coef);
 				editor->setSingleStep(coef);
-				editor->setDecimals(10	);
+				editor->setDecimals(10);
 				editor->setEnabled(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->Writable);
 				return editor;
 				}

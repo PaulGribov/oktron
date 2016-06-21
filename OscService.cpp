@@ -31,6 +31,40 @@ void Test(TEvent &Event)
 	}
 */
 
+bool TParsTableView::eventFilter(QObject *obj, QEvent *e)
+	{
+	switch(e->type())
+		{
+		case QEvent::KeyPress:
+			{
+			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
+			switch(keyEvent->key())
+				{
+				default:
+					break;
+				}
+			}
+			break;
+		case QEvent::MouseMove:
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonDblClick:
+			{
+			MainWindow::IdleTimeout=0;
+			}
+			break;
+		default:
+			break;
+		}
+	return QObject::eventFilter(obj, e);
+	}
+
+void TParsTableView::currentChanged(const QModelIndex &current, const QModelIndex &previous)
+	{
+	MainWindow::IdleTimeout=0;
+	QTableView::currentChanged(current, previous);
+	}
+
+
 void TOscService::BitsDescFillToModel(struct PacketDescStruct &packet, struct BitsDescStruct &bits)
 	{
 	for(int k=0;k<bits.StringList.count();k++)
@@ -114,7 +148,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 			{
 			ParametersView_TabWidget->addTab(Packet[i].Tab/*, QIcon(":/images/meter3.png")*/, "");
 			}
-		Packet[i].TableView = new QTableView(Packet[i].Tab);
+		Packet[i].TableView = new TParsTableView(Packet[i].Tab);
 #ifdef __i386__
 		Packet[i].TableView->setMinimumHeight(300);
 		Packet[i].TableView->setMinimumWidth(600);
@@ -446,7 +480,7 @@ void TOscService::AddOscRecord(TOscDataWithIndic &data, bool print)
 
 
 
-	if(print)
+	if(print && ParametersView_TabWidget->isVisible())
 		{
 		//Обновление содержимого таблицы
 		switch(ParametersView_TabWidget->currentIndex())
@@ -548,7 +582,7 @@ bool TOscService::SaveOscillogram(TOscProcess &op)
 		//Формирование заголовка в памяти
 		OsdHeaderBuf	<< tr("<VERSION>{1.0}\r\n")
 				<< tr("<RUS CODE>{WIN}\r\n")
-				<< tr("<RATE>{0.001}\r\n")
+				<< tr("<RATE>{0.020}\r\n")
 				<< tr("<NUMBER>{%1}\r\n").arg(OscData.count())
 				<< tr("<FILENAME>{") << OscFileName << tr("}\r\n")
 				<< tr("<EVENT TIME>") << op.EventExt.Event.DateTime.toString(tr("{dd.MM.yyyy hh:mm:ss}\r\n"))

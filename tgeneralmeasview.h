@@ -30,9 +30,9 @@ class TGeneralMeasView : public QWidget
 		MW_DECL_LABEL_PARAMETER(Istat_act)
 		MW_DECL_LABEL_PARAMETER(LastEvent)
 
-		bool PrintDataEnabled;
 		void PrintData(TOscDataWithIndic &, QString);
 		void PrintDataDisabled();
+		void Retranslate();
 
 	signals:
 

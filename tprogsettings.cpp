@@ -17,7 +17,7 @@ TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWind
 	//Закладки настроек программы
 	ProgSettings_tabWidget=new xTabWidget();
 	ProgSettings_Layout->addWidget(ProgSettings_tabWidget);
-	ProgSettings_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(24).arg(280).arg(36));
+	ProgSettings_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(24).arg(300).arg(36));
 	ProgSettings_tabWidget->setIconSize(QSize(36,36));
 	ProgSettings_tabWidget->setUsesScrollButtons(false);
 
@@ -30,19 +30,18 @@ TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWind
 	QVBoxLayout *GeneralSettings_Layout = new QVBoxLayout();
 
 	AutomaticStart_CheckBox = new QCheckBox();
-	GeneralSettings_Layout->addWidget(AutomaticStart_CheckBox, 0, Qt::AlignHCenter | Qt::AlignVCenter);
+	//GeneralSettings_Layout->addWidget(AutomaticStart_CheckBox, 0, Qt::AlignHCenter | Qt::AlignVCenter);
 
 	SetDateTime_GroupBox=new QGroupBox();
 	GeneralSettings_Layout->addWidget(SetDateTime_GroupBox, 0, Qt::AlignHCenter | Qt::AlignVCenter);
 	QVBoxLayout *SetDateTime_Layout = new QVBoxLayout();
 	SetDateTime_GroupBox->setLayout(SetDateTime_Layout);
 	SetDateTime=new QDateTimeEdit();
+	SetDateTime->setStyleSheet("font: 20pt;");
 	SetDateTime_Layout->addWidget(SetDateTime);
-	//connect(SetDateTime, SIGNAL(timeChanged()), this, SLOT(DateTimeUpdated()));
 
 	//Присвоение слоя закладке
 	GeneralSettings_Tab->setLayout(GeneralSettings_Layout);
-
 
 	//------------------------------------------------------------------------------------------------------------
 	//Закладка "настройки портов серверов"
@@ -68,6 +67,7 @@ TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWind
 		, "ttyUSB0"
 	#endif
 #endif
+		, (((MainWindow *)obj_MainWindow)->Reg1_Label)[0]
 		);
 
 	((MainWindow *)obj_MainWindow)->OktServExt[1]=new TOktServExt(PortSettings_GroupBox[1]
@@ -78,7 +78,11 @@ TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWind
 		, "ttyS0"
 	#endif
 #endif
+		, (((MainWindow *)obj_MainWindow)->Reg1_Label)[1]
 		);
+
+	((MainWindow *)obj_MainWindow)->OktServExt[0]->okt_serv_other=((MainWindow *)obj_MainWindow)->OktServExt[1];
+	((MainWindow *)obj_MainWindow)->OktServExt[1]->okt_serv_other=((MainWindow *)obj_MainWindow)->OktServExt[0];
 
 #ifndef __linux__
 	//PortSettings_Layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Expanding));
@@ -131,6 +135,7 @@ void TProgSettings::show()
 	SetDateTime->setDateTime(PresetVal);
 	QMainWindow::show();
 	}
+
 #ifndef __linux__
 void TProgSettings::PortsSettingsApply()
 	{
@@ -138,10 +143,6 @@ void TProgSettings::PortsSettingsApply()
 	((MainWindow *)obj_MainWindow)->OktServExt[1]->PortSettingsApply();
 	}
 #endif
-void TProgSettings::DateTimeUpdated(QTime &date)
-	{
-	SetDateTime_GroupBox->setTitle(date.toString(tr("dd.MM.yyyy hh:mm:ss")));
-	}
 
 void TProgSettings::Close()
 	{

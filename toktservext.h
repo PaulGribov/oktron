@@ -3,7 +3,6 @@
 
 #include "toktservregsetup.h"
 
-
 class TOktServExt : public TOktServ
 	{
 		Q_OBJECT
@@ -12,6 +11,7 @@ class TOktServExt : public TOktServ
 #ifdef __linux__
 			, const char *port_name="ttySP1"
 #endif
+			, QLabel *RegState_Label=NULL
 			);
 
 		QMainWindow *OscList_MainWindow;
@@ -29,10 +29,14 @@ class TOktServExt : public TOktServ
 
 		TOktServRegSetup *RegSetup_GetBlocksID;
 
+		QString Name;
 		bool Master;//Ведущий
-		bool ForceMaster;
 		void StartStop(bool);
 		void Retranslate();
+		QLabel *RegState_Label;
+		int server_index;
+		void *okt_serv_other;
+		bool FirstDataAsquired;
 
 	Q_SIGNALS:
 		void DataProcessLocal(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool);
@@ -55,7 +59,6 @@ class TOktServExt : public TOktServ
 		TOscDataWithIndic previous_od;
 		int PktCntPrescale;
 		static int server_count;
-		int server_index;
 	};
 
 

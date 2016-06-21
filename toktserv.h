@@ -67,7 +67,6 @@ class TOktServ : public QWidget
 		int PacketID[OKTSERV_PACKETS_NUM];
 		int ErrorFlags;
 #define OKTSERVERR_TIMEOUT_FLAG			0x01
-#define OKTSERVERR_NO_REGULATOR_FLAG		0x02
 		void DataSender();
 
 #ifndef __linux__

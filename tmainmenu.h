@@ -20,8 +20,7 @@ class TMainMenu : public QMainWindow
 
 		QWidget *obj_MainWindow;
 		TOktServExt **OktServExt;
-		xButton *ParsOfReserv_Button;
-		xButton *ParsOfBase_Button;
+		xButton *ParsOfReg_Button[2];
 		xButton *EventsLog_Button;
 		xButton *RegsSetup_Button;
 		xButton *GetBlocksID_Button;
@@ -30,7 +29,6 @@ class TMainMenu : public QMainWindow
 		/*
 		void OscListOfBase_Button_OnClick();
 		void OscListOfReserv_Button_OnClick();
-		void OktServOnOff_Button_OnClick();
 		*/
 
 
@@ -49,7 +47,6 @@ class TMainMenu : public QMainWindow
 		void ProgSettings_Button_OnClick();
 		void OscListOfBase_Button_OnClick();
 		void OscListOfReserv_Button_OnClick();
-		void OktServOnOff_Button_OnClick();
 		void GetBlocksID_Button_OnClick();
 
 	};

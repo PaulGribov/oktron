@@ -9,7 +9,6 @@
 #include <QLabel>
 #include "xWidgets.h"
 
-
 class QModelIndex;
 class QPainter;
 class QStyleOptionViewItem;
@@ -131,8 +130,6 @@ typedef union
 #pragma pack(pop)
 
 
-
-
 //Структура одной записи данных осциллограмм
 typedef struct
 	{
@@ -181,6 +178,18 @@ typedef struct
 	QStandardItem *pOscStateCell;
 	} TOscProcess;
 
+class TParsTableView : public QTableView
+	{
+		Q_OBJECT
+	public:
+		TParsTableView(QWidget *parent) : QTableView(parent)
+			{
+			installEventFilter(this);
+			}
+		bool eventFilter(QObject *obj, QEvent *e);
+		void currentChanged(const QModelIndex &current, const QModelIndex &previous);
+
+	};
 
 class TOscService : public QWidget
 	{
@@ -208,7 +217,7 @@ class TOscService : public QWidget
 		struct PacketDescStruct {
 			QStringList StringList;
 			QWidget *Tab;
-			QTableView *TableView;
+			TParsTableView *TableView;
 			QStandardItemModel Model;
 			QList<QStandardItem *> Items[16];
 			} Packet[OKTSERV_PACKETS_NUM];

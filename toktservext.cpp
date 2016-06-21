@@ -5,16 +5,18 @@ QMainWindow *TOktServExt::RegSetup_MainWindow=NULL;
 xTabWidget *TOktServExt::RegSetup_tabWidget=NULL;
 QPixmap *TOktServExt::wait_qp[4]={NULL, NULL, NULL, NULL};
 QMainWindow *TOktServExt::GetBlocksID_MainWindow=NULL;
-xTabWidget *TOktServExt::GetBlocksID_tabWidget=NULL;;
+xTabWidget *TOktServExt::GetBlocksID_tabWidget=NULL;
 
 TOktServExt::TOktServExt(QGroupBox *PortSettings_GroupBox
 #ifdef __linux__
-		, const char *port_name) : TOktServ(PortSettings_GroupBox, port_name)
+		, const char *port_name, QLabel *RegState_Label) : TOktServ(PortSettings_GroupBox, port_name)
 #else
-		) : TOktServ(PortSettings_GroupBox)
+		, QLabel *RegState_Label) : TOktServ(PortSettings_GroupBox)
 #endif
 	{
 	server_index=server_count++;
+
+	this->RegState_Label=(RegState_Label==NULL)?new QLabel():RegState_Label;
 
 	connect(this, SIGNAL(DataUpdate(TOscDataWithIndic &)), this, SLOT(GetDataOktServ(TOscDataWithIndic &)));
 	connect(this, SIGNAL(ErrorCallback()), this, SLOT(CatchError()));
@@ -24,7 +26,7 @@ TOktServExt::TOktServExt(QGroupBox *PortSettings_GroupBox
 	OscList_MainWindow->setWindowIcon(QIcon(":/images/stocks.png"));
 	ParametersView_MainWindow = new QMainWindow();
 	ParametersView_MainWindow->setWindowIcon(QIcon(":/images/meter3.png"));
-	OscService=new TOscService(OscList_MainWindow, ParametersView_MainWindow, true);
+	OscService=new TOscService(OscList_MainWindow, ParametersView_MainWindow, (server_index==0));
 
 	//Иконки для индикатора данных
 	for(int i=0;i<4;i++) { wait_qp[i]=new QPixmap(tr(":/images/Wait%1_24.png").arg(i)); }
@@ -70,62 +72,47 @@ TOktServExt::TOktServExt(QGroupBox *PortSettings_GroupBox
 	connect(RegSetup_GetBlocksID, SIGNAL(GetBlocksID_CloseSignal()), this, SLOT(GetBlocksID_CloseSlotExternal()));
 
 	Master=false;
-	ForceMaster=false;
+	FirstDataAsquired=false;
+	okt_serv_other=NULL;
 	Retranslate();
 	}
 
 void TOktServExt::Retranslate()
 	{
-	QString Name0=(server_index==0)?tr("ОСНОВНОЙ"):tr("РЕЗЕРВНЫЙ");
-	OscList_MainWindow->setWindowTitle(tr("ОСЦИЛЛОГРАММЫ -")+Name0);
-	ParametersView_MainWindow->setWindowTitle(tr("ПАРАМЕТРЫ -")+Name0);
+	Name=(server_index==0)?tr("ОСНОВНОЙ"):tr("РЕЗЕРВНЫЙ");
+	OscList_MainWindow->setWindowTitle(tr("ОСЦИЛЛОГРАММЫ -")+Name);
+	ParametersView_MainWindow->setWindowTitle(tr("ПАРАМЕТРЫ -")+Name);
 	RegSetup_MainWindow->setWindowTitle(tr("НАСТРОЙКИ РЕГУЛЯТОРА"));
-	RegSetup_tabWidget->setTabText(server_index, Name0);
+	RegSetup_tabWidget->setTabText(server_index, Name);
 	GetBlocksID_MainWindow->setWindowTitle(tr("СПИСОК БЛОКОВ"));
-	GetBlocksID_tabWidget->setTabText(server_index, Name0);
+	GetBlocksID_tabWidget->setTabText(server_index, Name);
 	}
 
 //Слот обработки данных
 void TOktServExt::GetDataOktServ(TOscDataWithIndic &od)
 	{
 	bool print=false;
-	if((++PktCntPrescale&0x07)==0)
+	if((++PktCntPrescale&0x0F)==0)
 		{
-		/*
-		if(ForceMaster)
-			{
-			OktServIndic_Label->setPixmap(QPixmap(tr(":/images/warning_24.png")));
-			}
-		else
-			{
-			OktServIndic_Label->setPixmap(*wait_qp[(PktCntPrescale>>3) & 0x03]);
-			}
-		OktServIndic_Label->setPixmap(*wait_qp[(PktCntPrescale>>3) & 0x03]);
-		OktServIndic_Label->clear();
-		*/
-		//PktCnt_Label->setText(tr("Пакеты: %1").arg(PktCnt));
+
+		//RegState_Label->setText(tr("Пакеты: %1").arg(PktCnt));
+		RegState_Label->setText(tr("На связи"));
 		print=true;
 		}
 	DataProcessLocal(od, previous_od, this, 0, print);
 	}
 
 void TOktServExt::CatchError()
-	{
-	/*
+	{	
 	if(ErrorFlags & OKTSERVERR_TIMEOUT_FLAG)
 		{
-		PktCnt_Label->setText(tr("Таймаут"));
-		}
-	else if(ErrorFlags & OKTSERVERR_NO_REGULATOR_FLAG)
-		{
-		PktCnt_Label->setText(tr("Нет регулятора"));
+		RegState_Label->setText(tr("Таймаут"));
 		}
 	else
 		{
-		PktCnt_Label->setText(QString("ErrFlags: 0x%1").arg(ErrorFlags, 4, 16, QLatin1Char('0')).toUpper());
+		RegState_Label->setText(QString("Err: 0x%1").arg(ErrorFlags, 4, 16, QLatin1Char('0')).toUpper());
 		}
-	OktServIndic_Label->setPixmap(QPixmap(tr(":/images/block_24.png")));
-	*/
+
 	DataProcessLocal(previous_od, previous_od, this, ErrorFlags, true);
 	}
 

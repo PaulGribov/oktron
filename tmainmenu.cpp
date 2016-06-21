@@ -13,13 +13,13 @@ void TMainMenu::MenuCreate()
 	{
 	QHBoxLayout *Line1_Layout = new QHBoxLayout();
 
-	ParsOfBase_Button = new xButton(GenBut, QIcon(":/images/meter3.png"));
-	connect(ParsOfBase_Button, SIGNAL(clicked()), this, SLOT(ParsOfBase_Button_OnClick()));
-	Line1_Layout->addWidget(ParsOfBase_Button);
+	ParsOfReg_Button[0] = new xButton(GenBut, QIcon(":/images/meter3.png"));
+	connect(ParsOfReg_Button[0], SIGNAL(clicked()), this, SLOT(ParsOfBase_Button_OnClick()));
+	Line1_Layout->addWidget(ParsOfReg_Button[0]);
 
-	ParsOfReserv_Button = new xButton(GenBut, QIcon(":/images/meter3.png"));
-	connect(ParsOfReserv_Button, SIGNAL(clicked()), this, SLOT(ParsOfReserv_Button_OnClick()));
-	Line1_Layout->addWidget(ParsOfReserv_Button);
+	ParsOfReg_Button[1] = new xButton(GenBut, QIcon(":/images/meter3.png"));
+	connect(ParsOfReg_Button[1], SIGNAL(clicked()), this, SLOT(ParsOfReserv_Button_OnClick()));
+	Line1_Layout->addWidget(ParsOfReg_Button[1]);
 
 	RegsSetup_Button = new xButton(GenBut, QIcon(":/images/advancedsettings.png"));
 	connect(RegsSetup_Button, SIGNAL(clicked()), this, SLOT(RegsSetup_Button_OnClick()));
@@ -31,9 +31,9 @@ void TMainMenu::MenuCreate()
 	connect(GetBlocksID_Button, SIGNAL(clicked()), this, SLOT(GetBlocksID_Button_OnClick()));
 	Line2_Layout->addWidget(GetBlocksID_Button);
 
-	EventsLog_Button = new xButton(GenBut, QIcon(":/images/clipboard_new.png"));
-	connect(EventsLog_Button, SIGNAL(clicked()), this, SLOT(EventsLog_Button_OnClick()));
-	Line2_Layout->addWidget(EventsLog_Button);
+	//EventsLog_Button = new xButton(GenBut, QIcon(":/images/clipboard_new.png"));
+	//connect(EventsLog_Button, SIGNAL(clicked()), this, SLOT(EventsLog_Button_OnClick()));
+	//Line2_Layout->addWidget(EventsLog_Button);
 
 	ProgSettings_Button = new xButton(GenBut, QIcon(":/images/applications_system.png"));
 	ProgSettings_Button->setIcon(QIcon(":/images/applications_system.png"));
@@ -50,11 +50,11 @@ void TMainMenu::MenuCreate()
 
 void TMainMenu::Retranslate()
 	{
-	ParsOfBase_Button->setText(tr("ПАРАМЕТРЫ\nОСНОВНОГО"));
-	ParsOfReserv_Button->setText(tr("ПАРАМЕТРЫ\nРЕЗЕРВНОГО"));
+	ParsOfReg_Button[0]->setText(tr("ПАРАМЕТРЫ\nОСНОВНОГО"));
+	ParsOfReg_Button[1]->setText(tr("ПАРАМЕТРЫ\nРЕЗЕРВНОГО"));
 	RegsSetup_Button->setText(tr("НАСТРОЙКИ\nРЕГУЛЯТОРА"));
 	GetBlocksID_Button->setText(tr("СПИСОК\nБЛОКОВ"));
-	EventsLog_Button->setText(tr("ЖУРНАЛ\nСОБЫТИЙ"));
+	//EventsLog_Button->setText(tr("ЖУРНАЛ\nСОБЫТИЙ"));
 	ProgSettings_Button->setText(tr("НАСТРОЙКИ\nПРОГРАММЫ"));
 	}
 
@@ -130,11 +130,6 @@ void TMainMenu::OscListOfReserv_Button_OnClick()
 #else
 	OktServExt[1]->OscList_MainWindow->showNormal();
 #endif
-	}
-
-void TMainMenu::OktServOnOff_Button_OnClick()
-	{
-	//Connect_Disconnect(!(OktServExt[0]->StateOn|OktServExt[1]->StateOn));
 	}
 
 void TMainMenu::GetBlocksID_Button_OnClick()

@@ -206,6 +206,7 @@ class TGetBlocksIDList_ItemDelegate : public QStyledItemDelegate
 
 class RegSetupTableView : public QTableView
 	{
+		Q_OBJECT
 	public:
 		RegSetupTableView(QWidget *NextFocusChain=NULL, TRegSetupPar **pRegSetupPars=NULL, TGetBlocksIDPar **pGetBlocksIDPars=NULL, void *parent=NULL) : QTableView()
 			{
@@ -380,6 +381,6 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 
 	};
 
-#define REGSETUPDBG
+//#define REGSETUPDBG
 
 #endif // TOKTSERVREGSETUP_H

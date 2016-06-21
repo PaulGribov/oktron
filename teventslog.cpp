@@ -1,13 +1,16 @@
 #include "teventslog.h"
 #include "work.h"
 #include <QHeaderView>
+#include "mainwindow.h"
 
-TEventsLog::TEventsLog(QWidget *parent) : QWidget(parent)
+TEventsLog::TEventsLog(QWidget *obj_MainWindow) : QWidget(obj_MainWindow)
 	{
+	this->obj_MainWindow=obj_MainWindow;
+
 	QVBoxLayout *EventsList_IntLayout = new QVBoxLayout();
 	setLayout(EventsList_IntLayout);
 
-	EventsList_TableView=new QTableView();
+	EventsList_TableView=new TEvListTableView(this);
 #ifdef __i386__
 	EventsList_TableView->setMinimumHeight(300);
 	EventsList_TableView->setMinimumWidth(600);
@@ -36,14 +39,46 @@ TEventsLog::TEventsLog(QWidget *parent) : QWidget(parent)
 	Load();
 	}
 
+void TEvListTableView::currentChanged(const QModelIndex &current, const QModelIndex &previous)
+	{
+	QTableView::currentChanged(current, previous);
+	MainWindow::IdleTimeout=0;
+	}
+
+bool TEvListTableView::eventFilter(QObject *obj, QEvent *e)
+	{
+	switch(e->type())
+		{
+		case QEvent::KeyPress:
+			{
+			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
+			switch(keyEvent->key())
+				{
+				default:
+					break;
+				}
+			}
+			break;
+		case QEvent::MouseMove:
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonDblClick:
+			{
+			MainWindow::IdleTimeout=0;
+			}
+			break;
+		default:
+			break;
+		}
+	return QObject::eventFilter(obj, e);
+	}
 
 void TEventsLog::Retranslate()
 	{
 	EventsList_Model.clear();
 	EventsList_Model.setHorizontalHeaderLabels(QStringList() << tr("Время") << tr("Событие") << tr("Осц.") );
 
-	EventsList_TableView->setColumnWidth(EVLOG_DATETIME_COL, 140);
-	EventsList_TableView->setColumnWidth(EVLOG_TEXT_COL, 320);
+	EventsList_TableView->setColumnWidth(EVLOG_DATETIME_COL, 130);
+	EventsList_TableView->setColumnWidth(EVLOG_TEXT_COL, 335);
 	EventsList_TableView->setColumnWidth(EVLOG_OSCINDEX_COL, 80);
 	}
 
@@ -82,10 +117,14 @@ void TEventsLog::AddNewEvent(TEventExt *e)
 		EventsList_Model.removeRow(0);
 		}
 
+	GotoLastEvent();
+	}
+
+void TEventsLog::GotoLastEvent()
+	{
 	QModelIndex newIndex = EventsList_Model.index(EventsList_Model.rowCount()-1, 0);
 	//selectionModel()->select(newIndex, QItemSelectionModel::Select);
 	EventsList_TableView->setCurrentIndex(newIndex);
-
 	}
 
 void TEventsLog::Save()
@@ -214,13 +253,39 @@ TEventExt *TEventsLog::MakeEvent(QString ev_txt, bool osc)
 
 TEventExt *TEventsLog::CheckDataEvent(TOscDataWithIndic &od, TOscDataWithIndic &previous_od)
 	{
-	TEventExt *e;
+	TEventExt *e=NULL;
+	int f;
 	//Изменение состояния флага - Вкл/Выкл
-	if((previous_od.OscData.Packet0.ModeFlags1 ^ od.OscData.Packet0.ModeFlags1) & SW_ON_MODEFALGS1_BIT)
-		e=MakeEvent(od.OscData.Packet0.ModeFlags1 & SW_ON_MODEFALGS1_BIT ? tr("Включение") : tr("Выключение"), true);
-	else
-		e=NULL;
+	f=(previous_od.OscData.Packet0.ModeFlags1 ^ od.OscData.Packet0.ModeFlags1) & 0x0D;
+	if(f)
+		{
+		QStringList *s=&(((MainWindow *)obj_MainWindow)->OktServExt[0]->OscService->ModeFlags1.StringList);
+		int m=0x01;
+		for(int i=0;i<s->count();i++)
+			{
+			if(f&m)
+				{
+				if(e) delete e;
+				e=MakeEvent(s->at(i) + (od.OscData.Packet0.ModeFlags1 & m ? tr(" - Включено") : tr(" - Выключено")), true);
+				}
+			}
 
+		}
+	f=(previous_od.OscData.Packet0.ModeFlags2 ^ od.OscData.Packet0.ModeFlags2) & 0xFF;
+	if(f)
+		{
+		QStringList *s=&(((MainWindow *)obj_MainWindow)->OktServExt[0]->OscService->ModeFlags2.StringList);
+		int m=0x01;
+		for(int i=0;i<s->count();i++)
+			{
+			if(f & m & od.OscData.Packet0.ModeFlags2)
+				{
+				if(e) delete e;
+				e=MakeEvent(s->at(i), true);
+				}
+			}
+
+		}
 	return e;
 	}
 

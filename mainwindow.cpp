@@ -6,6 +6,7 @@
 #include "work.h"
 #include "OscService.h"
 
+int MainWindow::IdleTimeout=0;
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ui(new Ui::MainWindow)
@@ -20,19 +21,43 @@ MainWindow::MainWindow(QWidget *parent)
 #endif
 	setWindowTitle(QApplication::applicationName());
 
+	QHBoxLayout *Status_Layout = new QHBoxLayout();
+
+#define CREATE_STATUS_LABEL(a,b) {\
+	QVBoxLayout *a = new QVBoxLayout();\
+	a##0##b=new QLabel();\
+	a##0##b->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);\
+	a##0##b->setStyleSheet("\
+		color: rgb(154,154,154);\
+		font: 18pt;\
+		");\
+	a->addWidget(a##0##b);\
+	a##1##b=new QLabel();\
+	a##1##b->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);\
+	a##1##b->setStyleSheet("\
+		color: rgb(154,154,154);\
+		font: 21pt;\
+		");\
+	a->addWidget(a##1##b);\
+	Status_Layout->addLayout(a); }
+
+	CREATE_STATUS_LABEL(Reg, _Label[0])
+	CREATE_STATUS_LABEL(Reg, _Label[1])
+	CREATE_STATUS_LABEL(SystemTime, _Label)
+	CREATE_STATUS_LABEL(DestDiskState, _Label)
+
 	//Создание серверов
 	ProgSettings=new TProgSettings(this);
 	for(int i=0;i<2;i++)
 		{
 		connect(OktServExt[i], SIGNAL(DataProcessLocal(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)), this, SLOT(DataProcess(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)));
+		PrintDataEnabled[i]=false;
 		}
 
 	ProgSettings->GeneralSettings.AutomaticStart=true;
 	ProgSettings->Load();
 
-	//Таймер
-	SystemTime_Label=new QLabel();
-	//ui->statusBar->addWidget(SystemTime_Label);
+	time_scale=0;
 	SystemTime_QTimer = new QTimer(this);
 	connect(SystemTime_QTimer, SIGNAL(timeout()), this, SLOT(SystemTimeTick()));
 	SystemTime_QTimer->start(1000);
@@ -41,14 +66,10 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(DataSender_QTimer , SIGNAL(timeout()), this, SLOT(DataSender()));
 	DataSender_QTimer->stop();
 
-	DestDiskState_Label=new QLabel();
-	DestDiskState_Label->setText(tr("Диска нет"));
-	//ui->statusBar->addWidget(DestDiskState_Label);
-
 	QWidget *MainWindow_CentralWidget=new QWidget();
 	setCentralWidget(MainWindow_CentralWidget);
 
-	QVBoxLayout *MainWindow_ExtLayout = new QVBoxLayout();
+	QVBoxLayout *MainWindow_ExtLayout = new QVBoxLayout();		
 	MainWindow_CentralWidget->setLayout(MainWindow_ExtLayout);
 
 	MainWindow_TabWidget=new xTabWidget();
@@ -56,7 +77,7 @@ MainWindow::MainWindow(QWidget *parent)
 	MainWindow_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(19).arg(180).arg(36));
 	MainWindow_TabWidget->setUsesScrollButtons(false);
 
-	EventsLog = new TEventsLog(); //Журнал событий
+	EventsLog = new TEventsLog(this); //Журнал событий
 	MainWindow_TabWidget->addTab(EventsLog, "");
 
 	GeneralMeasView = new TGeneralMeasView(this); //Текущие показания
@@ -64,6 +85,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 	MainMenu = new TMainMenu(this); //Главное меню
 	MainWindow_TabWidget->addTab(MainMenu, "");
+
+	MainWindow_ExtLayout->addLayout(Status_Layout);
 
 	//MainMenu_Button = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
 	//MainWindow_ExtLayout->addWidget(MainMenu_Button, 0, Qt::AlignRight | Qt::AlignBottom);
@@ -79,6 +102,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 	PrintEvent(EventsLog->MakeEvent(tr("Старт программы"), false));
 
+	installEventFilter(this);
+
 	Retranslate();
 	}
 
@@ -88,6 +113,10 @@ void MainWindow::Retranslate()
 	MainWindow_TabWidget->setTabText(0, tr("ЖУРНАЛ"));
 	MainWindow_TabWidget->setTabText(1, tr("ПОКАЗАНИЯ"));
 	MainWindow_TabWidget->setTabText(2, tr("ГЛАВНОЕ МЕНЮ"));
+	Reg0_Label[0]->setText(tr("Основной:"));
+	Reg0_Label[1]->setText(tr("Резервный:"));
+	SystemTime0_Label->setText(tr("Системное время:"));
+	DestDiskState0_Label->setText(tr("Накопитель:"));
 	}
 
 
@@ -100,29 +129,25 @@ void MainWindow::Connect_Disconnect(bool state)
 
 		if(!OktServExt[i]->StateOn)
 			{
-			//OktServExt[i]->OktServIndic_Label->setPixmap(QPixmap(":/images/stop_24.png"));
-			OktServExt[i]->ParametersView_MainWindow->close();
+			RegViewSetEnabled(false, i);
 			}
 		else
 			{
-			//OktServExt[i]->PktCnt_Label->setText(tr("Нет данных"));
+			Reg1_Label[i]->setText(tr("Нет данных"));
 			}
 		}
 
 	state=(OktServExt[0]->StateOn||OktServExt[1]->StateOn);
-	QPixmap pixmap(state?":/images/red_switch_256.png":":/images/green_switch_256.png");
-	QIcon ButtonIcon(pixmap);
-	//ui->OktServOnOff_Button->setIcon(ButtonIcon);
-	//ui->OktServOnOff_Button->setText(state?tr("Выключить сервер"):tr("Включить сервер"));
+
 	if(!state)
 		{
 		GeneralMeasView->PrintDataDisabled();
-
 #ifndef __linux__
 		ProgSettings->PortsSettingsApply_Button->setEnabled(true);
 #endif
 		for(int i=0;i<2;i++)
 			{
+			RegViewSetEnabled(false, i);
 			OktServExt[i]->RegSetup_GetBlocksID->Stop();
 			}
 		DataSender_QTimer->stop();
@@ -148,20 +173,25 @@ void MainWindow::DataSender()
 	if(OktServExt[1]->StateOn) OktServExt[1]->DataSender();
 	}
 
-
 //Слот обработки таймера
 void MainWindow::SystemTimeTick()
 	{
-	SystemTime_Label->setText(QDateTime::currentDateTime().toString(tr("dd.MM.yyyy hh:mm:ss")));
+	QDateTime dt=QDateTime::currentDateTime();
+	SystemTime1_Label->setText(dt.toString(tr("dd.MM.yyyy hh:mm:ss")));
 
-	//Выбор регулятора для принудительного осц-ия
-	OktServExt[1]->ForceMaster=OktServExt[0]->ErrorFlags || !OktServExt[0]->StateOn;
-	OktServExt[0]->ForceMaster=OktServExt[1]->ErrorFlags || !OktServExt[1]->StateOn;
+	if(++IdleTimeout==30)
+		{
+		ChildWindowClose(true);
+		MainWindow_TabWidget->setCurrentIndex(0);
+		EventsLog->GotoLastEvent();
+		EventsLog->EventsList_TableView->setFocus();
+		}
+	//SystemTime1_Label->setText(QString("%1").arg(MainWindow::IdleTimeout));
+
+	time_scale++;
 
 #ifdef __linux__
-
-	static int scale;
-	if((scale++ & 0x3)==0x3)
+	if((time_scale & 0x3)==0x3)
 		{
 		SystemTime_QTimer->stop();
 		char *dev_name = LastConnectedDiskFind();
@@ -169,11 +199,15 @@ void MainWindow::SystemTimeTick()
 		if(DestDiskState != DestDiskStateNew)
 			{
 			DestDiskState = DestDiskStateNew;
-			DestDiskState_Label->setText(DestDiskStateNew?dev_name:tr("НЕТ диска"));
 			if(DestDiskStateNew)
 				{
+				DestDiskState1_Label->setText(dev_name);
 				PrintEvent(EventsLog->MakeEvent(CopyToDestDisk(dev_name)?tr("Информация успешно выгружена на съёмный диск"):tr("Ошибка при выгрузке информации на съёмный диск"), false));
 				}
+			}
+		if(!DestDiskStateNew)
+			{
+			DestDiskState1_Label->setText(tr("НЕТ диска"));
 			}
 		SystemTime_QTimer->start(1000);
 		}
@@ -228,6 +262,52 @@ void MainWindow::CheckGrowKeys(unsigned short mask)
 		}
 	}
 
+
+void MainWindow::ChildWindowClose(bool CloseAnyway)
+	{
+	QWidget *w=QApplication::focusWidget();
+
+	//Если кнопка "Выход"
+	if(!CloseAnyway)
+		{
+		//.. и есть родитель из закладок, то переход на закладки
+		if(	w->inherits("xButton") ||
+			w->inherits("TEvListTableView") ||
+			w->inherits("RegSetupTableView") ||
+			w->inherits("TParsTableView") ||
+			w->inherits("QTableView") ||
+			w->inherits("QDateTimeEdit")
+			)
+			{
+			while(w->inherits("QMainWindow")==false)
+				{
+				if((w->inherits("QTabBar"))||(w->inherits("xTabWidget")))
+					{
+					w->setFocus();
+					return;
+					}
+				w=w->parentWidget();
+				}
+			return;
+			}
+		//
+		else if(w->inherits("QComboBox") ||
+			w->inherits("HexSpinBox") ||
+			w->inherits("DoubleSpinBox")
+			)
+			{
+			w->close();
+			return;
+			}
+		}
+	//Закрытие главного окна
+	while(w->inherits("QMainWindow")==false)
+		{
+		w=w->parentWidget();
+		}
+	if((w!=this)&&(w!=MainMenu)) w->close();
+	}
+
 void MainWindow::KeysPoll()
 	{
 	static int DecPrescale;
@@ -252,35 +332,36 @@ void MainWindow::KeysPoll()
 						Qt::Key_Right,
 						Qt::NoModifier));
 					}
-				else if((mask==OKT_KEY_ENTER_MASK)&&(QApplication::focusWidget()->objectName()!="OktServOnOff_Button"))
+				else if(mask==OKT_KEY_ENTER_MASK)
 					{
-					QApplication::postEvent(QApplication::focusWidget(),
-								new QKeyEvent(QEvent::KeyPress,
-								Qt::Key_Space,
-								Qt::NoModifier));
-					QApplication::postEvent(QApplication::focusWidget(),
-								new QKeyEvent(QEvent::KeyRelease,
-								Qt::Key_Space,
-								Qt::NoModifier));
+					QWidget *w=QApplication::focusWidget();
+
+					//Выход из списка по нажатию ввода
+					if(w->inherits("TEvListTableView") ||
+						w->inherits("TParsTableView"))
+						{
+						ChildWindowClose(false);
+						}
+					else
+						{
+						QApplication::postEvent(QApplication::focusWidget(),
+									new QKeyEvent(QEvent::KeyPress,
+									Qt::Key_Space,
+									Qt::NoModifier));
+						QApplication::postEvent(QApplication::focusWidget(),
+									new QKeyEvent(QEvent::KeyRelease,
+									Qt::Key_Space,
+									Qt::NoModifier));
+						}
 					}
 				else if(mask==OKT_KEY_ESC_MASK)
 					{
-					/*
-					QApplication::postEvent(QApplication::focusWidget(),
-						new QKeyEvent(QEvent::KeyPress,
-						Qt::Key_Escape,
-						Qt::NoModifier));
-					*/
-					QWidget *w=QApplication::focusWidget();
-					while((w)&&(w->inherits("QMainWindow")==false))
-						{
-						w=w->parentWidget();
-						}
-					if((w)&&(w!=this)) w->close();
+					ChildWindowClose(false);
 					}
 				else
+					{
 					CheckGrowKeys(mask);
-
+					}
 				}
 			else if(((KeyTimeCnt[i]>1000)&&(KeyTimeCnt[i]%50==0)) ||
 				((KeyTimeCnt[i]>3000)&&(KeyTimeCnt[i]%5==0)) ||
@@ -290,8 +371,7 @@ void MainWindow::KeysPoll()
 				CheckGrowKeys(mask);
 				}
 
-
-			KeyTimeCnt[i]++;
+			if(++KeyTimeCnt[i]<1000) IdleTimeout=0;
 			}
 		else
 			{
@@ -305,40 +385,116 @@ void MainWindow::KeysPoll()
 //Обработка данных от сервера
 void MainWindow::DataProcess(TOscDataWithIndic &od, TOscDataWithIndic &previous_od, TOktServExt *okt_serv, int error_flags, bool print)
 	{
-	if((error_flags&(~OKTSERVERR_NO_REGULATOR_FLAG))==0)
+	static TOktServExt *cur_okt_serv;
+
+	if(error_flags==0)
 		{
-		okt_serv->Master = od.OscData.Packet0.ModeFlags1 & REG_SELECTED_MODEFALGS1_BIT;
+		okt_serv->Master = (od.OscData.Packet0.ModeFlags1 & REG_SELECTED_MODEFALGS1_BIT)?true:false;
 
 		//Осциллографирование данных
 		okt_serv->OscService->AddOscRecord(od, print);
 
-		//SystemTime_Label->setText(QString("0x%1").arg(okt_serv->PacketUpdatedFlags, 4, 16, QLatin1Char('0')).toUpper());
-
 		//Если регулятор в работе или принудительно используется, то обработка событий...
-		if((okt_serv->Master)||(okt_serv->ForceMaster))
+		if(okt_serv->Master)
 			{
+			if(cur_okt_serv!=okt_serv)
+				{
+				cur_okt_serv=okt_serv;
+				if(okt_serv->Master) PrintEvent(EventsLog->MakeEvent(tr("Переход на ")+okt_serv->Name, false));
+				}
+data_acquire_loc:
 			KeysState=od.Packet3.KeysState;
 
-			//Вычисление события и его обработка
-			TEventExt *e=EventsLog->CheckDataEvent(od, previous_od);
-			if(e) PrintEvent(e);
+			if(okt_serv->FirstDataAsquired)
+				{
+				//Вычисление события и его обработка
+				TEventExt *e=EventsLog->CheckDataEvent(od, previous_od);
+				if(e) PrintEvent(e);
+				}
+			else
+				{
+				okt_serv->FirstDataAsquired=true;
+				}
 
 			//Вывод данных на форму
 			if(print)
 				{
-				GeneralMeasView->PrintData(od, ""/*okt_serv->Name1*/);
+				GeneralMeasView->PrintData(od, cur_okt_serv->Name);
+				RegViewSetEnabled(true, okt_serv->server_index);
 				}
-			}
 
-		//Перезапись предыдущих данных
-		previous_od=od;
+			//Перезапись предыдущих данных
+			previous_od=od;
+			}
+		else if(((TOktServExt *)(okt_serv->okt_serv_other))->ErrorFlags)
+			{
+			//Проверка перехода на др.регулятор в "пассивном" режиме - отслеживания нуля в бите выбора
+			// -- для случая отсутствия связи с ведущим
+			if(cur_okt_serv==okt_serv)
+				{
+				cur_okt_serv=((TOktServExt *)(okt_serv->okt_serv_other));
+				PrintEvent(EventsLog->MakeEvent(tr("Переход на ")+((TOktServExt *)(okt_serv->okt_serv_other))->Name+" (нет связи)", false));
+				}
+			goto data_acquire_loc;
+			}
 		}
 	else
 		{
-		if((okt_serv->Master)||(okt_serv->ForceMaster)) GeneralMeasView->PrintDataDisabled();
+		PrintEvent(EventsLog->MakeEvent(tr("Нет связи с блоком \"")+okt_serv->Name+"\"", false));
+
+		RegViewSetEnabled(false, okt_serv->server_index);
+
+		if(((TOktServExt *)(okt_serv->okt_serv_other))->ErrorFlags)
+			{
+			GeneralMeasView->PrintDataDisabled();
+			}
 		}
 	}
 
+void MainWindow::RegViewSetEnabled(bool e, int i)
+	{
+	if(e)
+		{
+		if(!PrintDataEnabled[i])
+			{
+			PrintDataEnabled[i]=true;
+
+			MainMenu->ParsOfReg_Button[i]->setEnabled(OktServExt[i]->StateOn);
+			}
+		}
+	else
+		{
+		if(PrintDataEnabled[i])
+			{
+			OktServExt[i]->ParametersView_MainWindow->close();
+			OktServExt[i]->OscService->ResetOscProcess();
+			MainMenu->ParsOfReg_Button[i]->setEnabled(false);
+
+			PrintDataEnabled[i]=false;
+			}
+		}
+	}
+
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *e)
+	{
+	switch(e->type())
+		{
+		case QEvent::KeyPress:
+		case QEvent::MouseMove:
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonDblClick:
+			{
+			IdleTimeout=0;
+			}
+			break;
+
+		default:
+			break;
+		}
+
+	return QObject::eventFilter(obj, e);
+	}
 
 
 MainWindow::~MainWindow()

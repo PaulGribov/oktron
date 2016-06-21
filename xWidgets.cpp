@@ -1,4 +1,5 @@
 #include "xWidgets.h"
+#include "mainwindow.h"
 
 QString xButtonSelectedStyleSheet="\
 	:enabled {\
@@ -211,21 +212,14 @@ bool xButton::eventFilter(QObject *obj, QEvent *e)
 				}
 			break;
 		case QEvent::KeyPress:
+			break;
+		case QEvent::MouseMove:
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonDblClick:
 			{
-			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
-			if(keyEvent->key()==Qt::Key_Escape)
-				{
-				QWidget *w=parentWidget();
-				while(w->inherits("QMainWindow")==false)
-					{
-					w=w->parentWidget();
-					}
-				w->close();
-				return true;
-				}
+			MainWindow::IdleTimeout=0;
 			}
 			break;
-
 		default:
 			break;
 		}
@@ -239,47 +233,62 @@ xTabWidget::xTabWidget(QWidget *parent) : QTabWidget(parent)
 
 bool xTabWidget::eventFilter(QObject *obj, QEvent *e)
 	{
-	if(e->type() == QEvent::KeyPress)
+	switch(e->type())
 		{
-		QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
-		if(keyEvent->key()==Qt::Key_Escape)
+		case QEvent::KeyPress:
 			{
-			QWidget *w=parentWidget();
-			while(w->inherits("QMainWindow")==false)
+			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
+			int k=keyEvent->key();
+			if((k==Qt::Key_Return)||(k==Qt::Key_Space))
 				{
-				w=w->parentWidget();
+				QApplication::postEvent(this,
+							new QKeyEvent(QEvent::KeyPress,
+							Qt::Key_Tab,
+							Qt::NoModifier));
+				return true;
 				}
-			w->close();
-			return true;
+			else if(obj->inherits("QTabWidget")==true)
+				{
+				switch(k)
+					{
+					case Qt::Key_Up:
+						QApplication::postEvent(this,
+									new QKeyEvent(QEvent::KeyPress,
+									Qt::Key_Backtab,
+									Qt::NoModifier));
+						return true;
+					case Qt::Key_Down:
+						QApplication::postEvent(this,
+									new QKeyEvent(QEvent::KeyPress,
+									Qt::Key_Tab,
+									Qt::NoModifier));
+						return true;
+					case Qt::Key_Space:
+					default:
+						break;
+					}
+				}
 			}
-		else if(obj->inherits("QTabWidget")==true)
+			break;
+		case QEvent::MouseMove:
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonDblClick:
 			{
-			switch(keyEvent->key())
-				{
-				case Qt::Key_Up:
-					QApplication::postEvent(this,
-								new QKeyEvent(QEvent::KeyPress,
-								Qt::Key_Backtab,
-								Qt::NoModifier));
-					return true;
-				case Qt::Key_Down:
-					QApplication::postEvent(this,
-								new QKeyEvent(QEvent::KeyPress,
-								Qt::Key_Tab,
-								Qt::NoModifier));
-					return true;
-				case Qt::Key_Space:
-				default:
-					break;
-				}
+			MainWindow::IdleTimeout=0;
 			}
+			break;
+
+		default:
+			break;
 		}
+
 	return QObject::eventFilter(obj, e);
 	}
 
 
 bool xComboBox::eventFilter(QObject *obj, QEvent *e)
 	{
+	/*
 	if((e->type() == QEvent::KeyPress))
 		{
 		QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
@@ -321,6 +330,7 @@ bool xComboBox::eventFilter(QObject *obj, QEvent *e)
 				break;
 			}
 		}
+		*/
 	return QObject::eventFilter(obj, e);
 	}
 

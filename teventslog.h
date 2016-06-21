@@ -27,22 +27,35 @@ class EventsList_ItemDelegate : public QStyledItemDelegate
 	void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
 	};
 
+class TEvListTableView : public QTableView
+	{
+		Q_OBJECT
+	public:
+		TEvListTableView(QWidget *parent=NULL) : QTableView(parent)
+			{
+			installEventFilter(this);
+			}
+		bool eventFilter(QObject *obj, QEvent *e);
+
+		void currentChanged(const QModelIndex &current, const QModelIndex &previous);
+	};
 
 class TEventsLog : public QWidget
 	{
 		Q_OBJECT
 	public:
-		explicit TEventsLog(QWidget *parent = 0);
+		explicit TEventsLog(QWidget *obj_MainWindow);
 		QList<TEventExt> EventsList;
 		TEventExt *MakeEvent(QString, bool);
 		TEventExt *CheckDataEvent(TOscDataWithIndic &, TOscDataWithIndic &);
 		QStandardItemModel EventsList_Model;
-		QTableView *EventsList_TableView;
+		TEvListTableView *EventsList_TableView;
 
 		void AddNewEvent(TEventExt *);
 		void Save();
 		void Load();
 		void Retranslate();
+		void GotoLastEvent();
 
 	signals:
 
@@ -50,6 +63,7 @@ class TEventsLog : public QWidget
 		void Close();
 
 	private:
+		QWidget *obj_MainWindow;
 		int OscIndex;
 	};
 

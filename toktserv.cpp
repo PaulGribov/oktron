@@ -285,7 +285,6 @@ NextSyncFind_loc:
 
 						PktCnt++;
 
-						ErrorFlags&=~OKTSERVERR_NO_REGULATOR_FLAG;
 						memcpy(&(ReceivedData.UnstructuredPacket[PacketIndex]), (p+2), OKTSERV_DATA_PACKETSIZE);
 						PacketUpdatedFlags|=1<<PacketIndex;
 						}
@@ -311,7 +310,7 @@ DataSender_loc:
 
 	//Отправка данных в осциллограммы каждые 20мс
 	//Первые 5 пакетов относятся к данным осциллографирования
-	if(((DataSender_Prescale&0x3)==0)&&((PacketUpdatedFlags&0x1D)==0x1D))
+	if(/*((DataSender_Prescale&0x1)==0)&&*/((PacketUpdatedFlags&0x1D)==0x1D))
 		{
 		TOscDataWithIndic od={
 			{

@@ -33,7 +33,6 @@ class MainWindow : public QMainWindow
 		void showExpanded();
 
 		TOktServExt *OktServExt[2];
-		QLabel *SystemTime_Label;
 		TProgSettings *ProgSettings;
 		TEventsLog *EventsLog;
 		TMainMenu *MainMenu;
@@ -60,12 +59,21 @@ class MainWindow : public QMainWindow
 
 		xTabWidget *MainWindow_TabWidget;
 		xButton *MainMenu_Button;
+		void RegViewSetEnabled(bool, int i);
+		bool PrintDataEnabled[2];
+		QLabel *SystemTime0_Label, *SystemTime1_Label;
+		QLabel *Reg0_Label[2], *Reg1_Label[2];
+		QLabel *DestDiskState0_Label, *DestDiskState1_Label;
+		static int IdleTimeout;
+		bool eventFilter(QObject *obj, QEvent *e);
+
 
 	public slots:
 		void DataProcess(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool);
 
 		void SystemTimeTick();
 		void KeysPoll();
+		void ChildWindowClose(bool CloseAnyway);
 		void CheckGrowKeys(unsigned short mask);
 		void DataSender();
 		void Retranslate();
@@ -79,7 +87,7 @@ class MainWindow : public QMainWindow
 		int KeyTimeCnt[OKT_KEYS_NUM];
 		QTimer *KeysPoll_QTimer;
 		QTimer *DataSender_QTimer;
-
+		qint64 time_scale;
 
 
 	};
