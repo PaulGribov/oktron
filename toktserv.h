@@ -10,11 +10,10 @@
 #include <QLabel>
 #include <QTimer>
 #include "OscService.h"
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 	#include <QtSerialPort/QSerialPort>
 	#include <QtSerialPort/QSerialPortInfo>
-#endif
-#ifdef __linux__
+#else
 	#include <string.h>
 	#include <stdlib.h>
 	#include <stdio.h>
@@ -26,20 +25,10 @@
 
 typedef struct {
 	int CommPort_index;
-	int BaudRate_index;
-	int DataBits_index;
-	int Parity_index;
-	int StopBits_index;
-	int FlowControl_index;
 	} TCommPortSettings;
 
 typedef struct {
 	QStringList CommPort;
-	QStringList BaudRate;
-	QStringList DataBits;
-	QStringList Parity;
-	QStringList StopBits;
-	QStringList FlowControl;
 	} TCommPortSettingsTexts;
 
 
@@ -50,9 +39,9 @@ class TOktServ : public QWidget
 		Q_OBJECT
 	public:
 		explicit TOktServ(QGroupBox *PortSettings_GroupBox = 0
-		#ifdef __linux__
+#if !defined(Q_OS_WIN)
 			, const char *port_name="ttySP1"
-		#endif
+#endif
 			);
 		unsigned char Crc8Calc(unsigned char *, int);
 		int PktCnt;
@@ -69,8 +58,7 @@ class TOktServ : public QWidget
 #define OKTSERVERR_TIMEOUT_FLAG			0x01
 		void DataSender();
 
-#ifndef __linux__
-		/*
+#if defined(Q_OS_WIN)
 		void PortSettingsApply();
 		void PrintPortsParameters();
 		TCommPortSettings Settings;
@@ -78,7 +66,6 @@ class TOktServ : public QWidget
 
 	public slots:
 		void ErrorHandler(QSerialPort::SerialPortError error);
-		*/
 #endif
 
 	Q_SIGNALS:
@@ -101,10 +88,10 @@ class TOktServ : public QWidget
 		int DataBufIndex;
 		int TimeoutCnt;
 		int DataSender_Prescale;
-#ifdef __linux__
-		int CommPortFD;
-#else
+#if defined(Q_OS_WIN)
 		QSerialPort *CommPort;
+#else
+		int CommPortFD;
 #endif
 	};
 

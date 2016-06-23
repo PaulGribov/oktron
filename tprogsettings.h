@@ -8,7 +8,7 @@
 #include "toktservext.h"
 #include <QDateTimeEdit>
 #include <QCheckBox>
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 	#include <QtSerialPort/QSerialPort>
 	#include <QtSerialPort/QSerialPortInfo>
 #endif
@@ -34,6 +34,7 @@ class TProgSettings : public QMainWindow
 		xButton *Save_Button;
 		xButton *Close_Button;
 		void Retranslate();
+		QWidget *obj_MainWindow;
 
 	private:
 		void SaveCommSettings(QXmlStreamWriter &xml, int server_index);
@@ -44,8 +45,8 @@ class TProgSettings : public QMainWindow
 	signals:
 
 	public slots:
-#ifndef __linux__
-		//void PortsSettingsApply();
+#if defined(Q_OS_WIN)
+		void PortsSettingsApply();
 #endif
 		void Close();
 		void Save();

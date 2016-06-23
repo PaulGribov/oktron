@@ -2,13 +2,13 @@
 #include "mainwindow.h"
 
 
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 TCommPortSettingsTexts TOktServ::CommPortSettingsTexts;
 #endif
 static const char SYNC_DATA[] = {0x34, 0x12, 0x00};
 
 TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox
-#ifdef __linux__
+#if !defined(Q_OS_WIN)
 		, const char *port_name
 #endif
 		) : QWidget(PortSettings_GroupBox)
@@ -19,7 +19,7 @@ TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox
 	PktCnt=0;
 	DataSender_Prescale=0;
 
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 	CommPort = new QSerialPort();
 	QWidget::connect(CommPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(ErrorHandler(QSerialPort::SerialPortError)));
 
@@ -31,41 +31,6 @@ TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox
 			{
 			CommPortSettingsTexts.CommPort.append(info.portName());
 			}
-
-		CommPortSettingsTexts.BaudRate.clear();
-		CommPortSettingsTexts.BaudRate.append(QObject::tr("1200"));
-		CommPortSettingsTexts.BaudRate.append(QObject::tr("2400"));
-		CommPortSettingsTexts.BaudRate.append(QObject::tr("4800"));
-		CommPortSettingsTexts.BaudRate.append(QObject::tr("9600"));
-		CommPortSettingsTexts.BaudRate.append(QObject::tr("19200"));
-		CommPortSettingsTexts.BaudRate.append(QObject::tr("38400"));
-		CommPortSettingsTexts.BaudRate.append(QObject::tr("57600"));
-		CommPortSettingsTexts.BaudRate.append(QObject::tr("115200"));
-
-		CommPortSettingsTexts.DataBits.clear();
-		CommPortSettingsTexts.DataBits.append(QObject::tr("5"));
-		CommPortSettingsTexts.DataBits.append(QObject::tr("6"));
-		CommPortSettingsTexts.DataBits.append(QObject::tr("7"));
-		CommPortSettingsTexts.DataBits.append(QObject::tr("8"));
-
-		CommPortSettingsTexts.Parity.clear();
-		CommPortSettingsTexts.Parity.append(QObject::tr("Нет"));
-		CommPortSettingsTexts.Parity.append(QObject::tr("Чет"));
-		CommPortSettingsTexts.Parity.append(QObject::tr("Нечет"));
-		CommPortSettingsTexts.Parity.append(QObject::tr("Всегда 1"));
-		CommPortSettingsTexts.Parity.append(QObject::tr("Всегда 0"));
-
-		CommPortSettingsTexts.StopBits.clear();
-		CommPortSettingsTexts.StopBits.append(QObject::tr("1"));
-	#ifdef Q_OS_WIN
-		CommPortSettingsTexts.StopBits.append(QObject::tr("1.5"));
-	#endif
-		CommPortSettingsTexts.StopBits.append(QObject::tr("2"));
-
-		CommPortSettingsTexts.FlowControl.clear();
-		CommPortSettingsTexts.FlowControl.append(QObject::tr("Нет"));
-		CommPortSettingsTexts.FlowControl.append(QObject::tr("RTS/CTS"));
-		CommPortSettingsTexts.FlowControl.append(QObject::tr("XON/XOFF"));
 		}
 
 	//Настройки по-умолчанию
@@ -79,11 +44,6 @@ TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox
 	Settings.CommPort_index--;
 quitchkport_loc:
 	#endif
-	Settings.BaudRate_index=7;
-	Settings.DataBits_index=3;
-	Settings.Parity_index=0;
-	Settings.StopBits_index=0;
-	Settings.FlowControl_index=0;
 
 	//Создание графических элементов настроек
 #define CREATE_COMBOBOX_PARAMETER(a, b, c){\
@@ -99,22 +59,6 @@ quitchkport_loc:
 	QVBoxLayout *PortSettings_Layout = new QVBoxLayout();
 	PortSettings_GroupBox->setLayout(PortSettings_Layout);
 	CREATE_COMBOBOX_PARAMETER(CommPort, "Порт:", PortSettings)
-	QGroupBox *Settings_GroupBox=new QGroupBox();
-	Settings_GroupBox->setTitle(tr("Параметры"));
-	QVBoxLayout *Settings_Layout = new QVBoxLayout();
-	Settings_GroupBox->setLayout(Settings_Layout);
-	PortSettings_Layout->addWidget(Settings_GroupBox);
-	CREATE_COMBOBOX_PARAMETER(BaudRate, "Скорость:", Settings)
-	CREATE_COMBOBOX_PARAMETER(DataBits, "Бит данных:", Settings)
-	CREATE_COMBOBOX_PARAMETER(Parity, "Четность:", Settings)
-	CREATE_COMBOBOX_PARAMETER(StopBits, "Стоп бит:", Settings)
-	CREATE_COMBOBOX_PARAMETER(FlowControl, "Аппарат. контроль:", Settings)
-
-	PortSettings_GroupBox->parentWidget()->setTabOrder(CommPort_ComboBox, BaudRate_ComboBox);
-	PortSettings_GroupBox->parentWidget()->setTabOrder(BaudRate_ComboBox, DataBits_ComboBox);
-	PortSettings_GroupBox->parentWidget()->setTabOrder(DataBits_ComboBox, Parity_ComboBox);
-	PortSettings_GroupBox->parentWidget()->setTabOrder(Parity_ComboBox, StopBits_ComboBox);
-	PortSettings_GroupBox->parentWidget()->setTabOrder(StopBits_ComboBox, FlowControl_ComboBox);
 
 	//Заполнить списки и вывод текущих настроек
 	PrintPortsParameters();
@@ -125,18 +69,13 @@ quitchkport_loc:
 	PacketToSendIndex=0;
 	}
 
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 //===========================================================================
 //Применение установленных пользователем насртроек
 //===========================================================================
 void TOktServ::PortSettingsApply()
 	{
 	Settings.CommPort_index=CommPort_ComboBox->currentIndex();
-	Settings.BaudRate_index=BaudRate_ComboBox->currentIndex();
-	Settings.DataBits_index=DataBits_ComboBox->currentIndex();
-	Settings.Parity_index=Parity_ComboBox->currentIndex();
-	Settings.StopBits_index=StopBits_ComboBox->currentIndex();
-	Settings.FlowControl_index=FlowControl_ComboBox->currentIndex();
 	}
 
 //===========================================================================
@@ -144,21 +83,6 @@ void TOktServ::PortSettingsApply()
 //===========================================================================
 void TOktServ::PrintPortsParameters()
 	{
-	BaudRate_ComboBox->clear();
-	BaudRate_ComboBox->addItems(CommPortSettingsTexts.BaudRate);
-	BaudRate_ComboBox->setCurrentIndex(Settings.BaudRate_index);
-	DataBits_ComboBox->clear();
-	DataBits_ComboBox->addItems(CommPortSettingsTexts.DataBits);
-	DataBits_ComboBox->setCurrentIndex(Settings.DataBits_index);
-	Parity_ComboBox->clear();
-	Parity_ComboBox->addItems(CommPortSettingsTexts.Parity);
-	Parity_ComboBox->setCurrentIndex(Settings.Parity_index);
-	StopBits_ComboBox->clear();
-	StopBits_ComboBox->addItems(CommPortSettingsTexts.StopBits);
-	StopBits_ComboBox->setCurrentIndex(Settings.StopBits_index);
-	FlowControl_ComboBox->clear();
-	FlowControl_ComboBox->addItems(CommPortSettingsTexts.FlowControl);
-	FlowControl_ComboBox->setCurrentIndex(Settings.FlowControl_index);
 	CommPort_ComboBox->clear();
 	if(CommPortSettingsTexts.CommPort.count())
 		{
@@ -431,11 +355,11 @@ bool TOktServ::StartStop(bool StateOnIn)
 			}
 #else
 		CommPort->setPortName(CommPortSettingsTexts.CommPort.at(Settings.CommPort_index));
-		CommPort->setBaudRate(CommPortSettingsTexts.BaudRate.at(Settings.BaudRate_index).toInt());
-		CommPort->setDataBits(static_cast<QSerialPort::DataBits>(CommPortSettingsTexts.DataBits.at(Settings.DataBits_index).toInt()));
-		CommPort->setParity(static_cast<QSerialPort::Parity>(CommPortSettingsTexts.Parity.at(Settings.Parity_index).toInt()));
-		CommPort->setStopBits(static_cast<QSerialPort::StopBits>(CommPortSettingsTexts.StopBits.at(Settings.StopBits_index).toInt()));
-		CommPort->setFlowControl(static_cast<QSerialPort::FlowControl>(CommPortSettingsTexts.FlowControl.at(Settings.FlowControl_index).toInt()));
+		CommPort->setBaudRate(QSerialPort::Baud115200);
+		CommPort->setDataBits(QSerialPort::Data8);
+		CommPort->setParity(QSerialPort::NoParity);
+		CommPort->setStopBits(QSerialPort::OneStop);
+		CommPort->setFlowControl(QSerialPort::NoFlowControl);
 		if(!CommPort->open(QIODevice::ReadWrite))
 			{
 			//QMessageBox::critical(this, QObject::tr("Ошибка при открытии порта"), CommPort->errorString());

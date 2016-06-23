@@ -8,7 +8,7 @@ class TOktServExt : public TOktServ
 		Q_OBJECT
 	public:
 		TOktServExt(QGroupBox *PortSettings_GroupBox = 0
-#ifdef __linux__
+#if !defined(Q_OS_WIN)
 			, const char *port_name="ttySP1"
 #endif
 			, QLabel *RegState_Label=NULL

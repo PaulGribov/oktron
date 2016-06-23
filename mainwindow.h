@@ -70,7 +70,6 @@ class MainWindow : public QMainWindow
 
 	public slots:
 		void DataProcess(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool);
-
 		void SystemTimeTick();
 		void KeysPoll();
 		void ChildWindowClose(bool CloseAnyway);
@@ -88,7 +87,6 @@ class MainWindow : public QMainWindow
 		QTimer *KeysPoll_QTimer;
 		QTimer *DataSender_QTimer;
 		qint64 time_scale;
-
 
 	};
 

@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
 	for(int i=0;i<2;i++)
 		{
 		connect(OktServExt[i], SIGNAL(DataProcessLocal(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)), this, SLOT(DataProcess(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)));
-		PrintDataEnabled[i]=false;
+		PrintDataEnabled[i]=true;
 		}
 
 	ProgSettings->GeneralSettings.AutomaticStart=true;
@@ -69,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
 	QWidget *MainWindow_CentralWidget=new QWidget();
 	setCentralWidget(MainWindow_CentralWidget);
 
-	QVBoxLayout *MainWindow_ExtLayout = new QVBoxLayout();		
+	QVBoxLayout *MainWindow_ExtLayout = new QVBoxLayout();
 	MainWindow_CentralWidget->setLayout(MainWindow_ExtLayout);
 
 	MainWindow_TabWidget=new xTabWidget();
@@ -124,8 +124,13 @@ void MainWindow::Connect_Disconnect(bool state)
 	{
 	for(int i=0;i<2;i++)
 		{
-		/*if(i==0) { */if(state!=OktServExt[i]->StateOn) OktServExt[i]->StartStop(state); /*}
-		else OktServExt[i]->StartStop(false);*/
+#ifndef __linux__
+		if(i==0) {
+#endif
+			if(state!=OktServExt[i]->StateOn) OktServExt[i]->StartStop(state);
+#ifndef __linux__
+			} else OktServExt[i]->StartStop(false);
+#endif
 
 		if(!OktServExt[i]->StateOn)
 			{
@@ -266,9 +271,20 @@ void MainWindow::CheckGrowKeys(unsigned short mask)
 void MainWindow::ChildWindowClose(bool CloseAnyway)
 	{
 	QWidget *w=QApplication::focusWidget();
-
+	//Нет фокуса - закрыть все окна
+	if(w==NULL)
+		{
+		OktServExt[0]->ParametersView_MainWindow->close();
+		OktServExt[1]->ParametersView_MainWindow->close();
+		OktServExt[0]->RegSetup_MainWindow->close();
+		OktServExt[1]->RegSetup_MainWindow->close();
+		OktServExt[0]->GetBlocksID_MainWindow->close();
+		OktServExt[1]->GetBlocksID_MainWindow->close();
+		ProgSettings->close();
+		return;
+		}
 	//Если кнопка "Выход"
-	if(!CloseAnyway)
+	else if(!CloseAnyway)
 		{
 		//.. и есть родитель из закладок, то переход на закладки
 		if(	w->inherits("xButton") ||
@@ -290,7 +306,7 @@ void MainWindow::ChildWindowClose(bool CloseAnyway)
 				}
 			return;
 			}
-		//
+		// Настройки регулятора - редакторы - просто закрыть виджет
 		else if(w->inherits("QComboBox") ||
 			w->inherits("HexSpinBox") ||
 			w->inherits("DoubleSpinBox")
@@ -300,7 +316,7 @@ void MainWindow::ChildWindowClose(bool CloseAnyway)
 			return;
 			}
 		}
-	//Закрытие главного окна
+	//Поиск и закрытие главного окна
 	while(w->inherits("QMainWindow")==false)
 		{
 		w=w->parentWidget();
@@ -318,24 +334,27 @@ void MainWindow::KeysPoll()
 			{
 			if(KeyTimeCnt[i]==0)
 				{
-				if(mask==OKT_KEY_LEFT_MASK)
+				QWidget *w=QApplication::focusWidget();
+				if(w==NULL)
 					{
-					QApplication::postEvent(QApplication::focusWidget(),
+					//Нет фокуса - ничего не делаем
+					}
+				else if(mask==OKT_KEY_LEFT_MASK)
+					{
+					QApplication::postEvent(w,
 						new QKeyEvent(QEvent::KeyPress,
 						Qt::Key_Left,
 						Qt::NoModifier));
 					}
 				else if(mask==OKT_KEY_RIGHT_MASK)
 					{
-					QApplication::postEvent(QApplication::focusWidget(),
+					QApplication::postEvent(w,
 						new QKeyEvent(QEvent::KeyPress,
 						Qt::Key_Right,
 						Qt::NoModifier));
 					}
 				else if(mask==OKT_KEY_ENTER_MASK)
 					{
-					QWidget *w=QApplication::focusWidget();
-
 					//Выход из списка по нажатию ввода
 					if(w->inherits("TEvListTableView") ||
 						w->inherits("TParsTableView"))
@@ -344,11 +363,11 @@ void MainWindow::KeysPoll()
 						}
 					else
 						{
-						QApplication::postEvent(QApplication::focusWidget(),
+						QApplication::postEvent(w,
 									new QKeyEvent(QEvent::KeyPress,
 									Qt::Key_Space,
 									Qt::NoModifier));
-						QApplication::postEvent(QApplication::focusWidget(),
+						QApplication::postEvent(w,
 									new QKeyEvent(QEvent::KeyRelease,
 									Qt::Key_Space,
 									Qt::NoModifier));

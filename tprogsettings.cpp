@@ -7,6 +7,8 @@
 
 TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWindow)
 	{
+	this->obj_MainWindow=obj_MainWindow;
+
 	setWindowIcon(QIcon(":/images/applications_system.png"));
 
 	QVBoxLayout *ProgSettings_Layout = new QVBoxLayout();
@@ -45,7 +47,7 @@ TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWind
 
 	//------------------------------------------------------------------------------------------------------------
 	//Закладка "настройки портов серверов"
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 	PortSettings_Tab = new QWidget();
 	ProgSettings_tabWidget->addTab(PortSettings_Tab, QIcon(":/images/serial_port.png"), "");
 	//Настройки портов
@@ -84,7 +86,7 @@ TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWind
 	((MainWindow *)obj_MainWindow)->OktServExt[0]->okt_serv_other=((MainWindow *)obj_MainWindow)->OktServExt[1];
 	((MainWindow *)obj_MainWindow)->OktServExt[1]->okt_serv_other=((MainWindow *)obj_MainWindow)->OktServExt[0];
 
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 	//PortSettings_Layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Expanding));
 
 	//Кнопка "применить"
@@ -119,7 +121,7 @@ void TProgSettings::Retranslate()
 	{
 	setWindowTitle("НАСТРОЙКИ ПРОГРАММЫ");
 	ProgSettings_tabWidget->setTabText(0, tr("ОБЩИЕ НАСТРОЙКИ"));
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 	ProgSettings_tabWidget->setTabText(1, tr("НАСТРОЙКИ ПОРТОВ"));
 	PortsSettingsApply_Button->setText(tr("ПРИМЕНИТЬ"));
 #endif
@@ -136,12 +138,13 @@ void TProgSettings::show()
 	QMainWindow::show();
 	}
 
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 void TProgSettings::PortsSettingsApply()
 	{
 	((MainWindow *)obj_MainWindow)->OktServExt[0]->PortSettingsApply();
 	((MainWindow *)obj_MainWindow)->OktServExt[1]->PortSettingsApply();
 	}
+
 #endif
 
 void TProgSettings::Close()
@@ -168,7 +171,7 @@ void TProgSettings::Load()
 			if(token == QXmlStreamReader::StartElement)
 				{
 				if(xml.name() == tr("Settings")) continue;
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 				for(int i=0;i<2;i++)
 					{
 					if(xml.name() == tr("OktServ%1").arg(i))
@@ -186,7 +189,7 @@ void TProgSettings::Load()
 
 		IniFile.close();
 		}
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 	for(int i=0;i<2;i++) ((MainWindow *)obj_MainWindow)->OktServExt[i]->PrintPortsParameters();
 #endif
 	AutomaticStart_CheckBox->setChecked(GeneralSettings.AutomaticStart);
@@ -208,7 +211,7 @@ void TProgSettings::Save()
 		//xml.setCodec("Windows-1251");
 
 		xml.writeStartElement(tr("Settings"));
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 		for(int i=0;i<2;i++) SaveCommSettings(xml, i);
 #endif
 		SaveGeneralSettings(xml);
@@ -216,11 +219,6 @@ void TProgSettings::Save()
 
 		IniFile.close();
 		}
-
-	/*
-	qDebug() << PresetVal.toString("dd_MM_yyyy__hh_mm_ss");
-	qDebug() << SetDateTime->dateTime().toString("dd_MM_yyyy__hh_mm_ss");
-	*/
 	if(PresetVal!=SetDateTime->dateTime())
 		{
 		qDebug() << tr("Datetime updated...");
@@ -248,7 +246,7 @@ void TProgSettings::SaveGeneralSettings(QXmlStreamWriter &xml)
 	xml.writeEndElement();
 	}
 
-#ifndef __linux__
+#if defined(Q_OS_WIN)
 void TProgSettings::LoadCommSettings(QXmlStreamReader &xml, int server_index)
 	{
 	TCommPortSettings *settings=&(((MainWindow *)obj_MainWindow)->OktServExt[server_index]->Settings);
@@ -256,16 +254,6 @@ void TProgSettings::LoadCommSettings(QXmlStreamReader &xml, int server_index)
 
 	if(attributes.hasAttribute(tr("CommPortIndex")))
 		settings->CommPort_index=attributes.value(tr("CommPortIndex")).toString().toInt();
-	if(attributes.hasAttribute(tr("BaudRateIndex")))
-		settings->BaudRate_index=attributes.value(tr("BaudRateIndex")).toString().toInt();
-	if(attributes.hasAttribute(tr("DataBitsIndex")))
-		settings->DataBits_index=attributes.value(tr("DataBitsIndex")).toString().toInt();
-	if(attributes.hasAttribute(tr("StopBitsIndex")))
-		settings->StopBits_index=attributes.value(tr("StopBitsIndex")).toString().toInt();
-	if(attributes.hasAttribute(tr("ParityIndex")))
-		settings->Parity_index=attributes.value(tr("ParityIndex")).toString().toInt();
-	if(attributes.hasAttribute(tr("FlowControlIndex")))
-		settings->FlowControl_index=attributes.value(tr("FlowControlIndex")).toString().toInt();
 	}
 
 void TProgSettings::SaveCommSettings(QXmlStreamWriter &xml, int server_index)
@@ -278,13 +266,6 @@ void TProgSettings::SaveCommSettings(QXmlStreamWriter &xml, int server_index)
 
 	xml.writeStartElement(key_prefix);
 	xml.writeAttribute(tr("CommPortName"), port_name);
-	xml.writeAttribute(tr("CommPortIndex"), QString().setNum(settings->CommPort_index));
-	xml.writeAttribute(tr("BaudRateIndex"), QString().setNum(settings->BaudRate_index));
-	xml.writeAttribute(tr("DataBitsIndex"), QString().setNum(settings->DataBits_index));
-	xml.writeAttribute(tr("StopBitsIndex"), QString().setNum(settings->StopBits_index));
-	xml.writeAttribute(tr("ParityIndex"), QString().setNum(settings->Parity_index));
-	xml.writeAttribute(tr("FlowControlIndex"), QString().setNum(settings->FlowControl_index));
 	xml.writeEndElement();
 	}
 #endif
-
