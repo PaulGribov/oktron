@@ -76,21 +76,21 @@ MainWindow::MainWindow(QWidget *parent)
 	MainWindow_ExtLayout->addWidget(MainWindow_TabWidget);
 	MainWindow_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(19).arg(180).arg(36));
 	MainWindow_TabWidget->setUsesScrollButtons(false);
+	MainWindow_TabWidget->setIconSize(QSize(32,32));
 
 	EventsLog = new TEventsLog(this); //Журнал событий
 	MainWindow_TabWidget->addTab(EventsLog, "");
+	MainWindow_TabWidget->setTabIcon(0, QIcon(":/images/clipboard_new.png"));
 
 	GeneralMeasView = new TGeneralMeasView(this); //Текущие показания
 	MainWindow_TabWidget->addTab(GeneralMeasView, "");
+	MainWindow_TabWidget->setTabIcon(1, QIcon(":/images/meter3.png"));
 
 	MainMenu = new TMainMenu(this); //Главное меню
 	MainWindow_TabWidget->addTab(MainMenu, "");
+	MainWindow_TabWidget->setTabIcon(2, QIcon(":/images/advancedsettings.png"));
 
 	MainWindow_ExtLayout->addLayout(Status_Layout);
-
-	//MainMenu_Button = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon);
-	//MainWindow_ExtLayout->addWidget(MainMenu_Button, 0, Qt::AlignRight | Qt::AlignBottom);
-	//connect(EventsList_CloseButton, SIGNAL(clicked()), this, SLOT(Close()));
 
 	for(int i=0;i<OKT_KEYS_NUM;i++) KeyTimeCnt[i]=0;
 	KeysPoll_QTimer = new QTimer(this);
@@ -112,7 +112,7 @@ void MainWindow::Retranslate()
 	{
 	MainWindow_TabWidget->setTabText(0, tr("ЖУРНАЛ"));
 	MainWindow_TabWidget->setTabText(1, tr("ПОКАЗАНИЯ"));
-	MainWindow_TabWidget->setTabText(2, tr("ГЛАВНОЕ МЕНЮ"));
+	MainWindow_TabWidget->setTabText(2, tr("МЕНЮ"));
 	Reg0_Label[0]->setText(tr("Основной:"));
 	Reg0_Label[1]->setText(tr("Резервный:"));
 	SystemTime0_Label->setText(tr("Системное время:"));
@@ -131,7 +131,6 @@ void MainWindow::Connect_Disconnect(bool state)
 #ifndef __linux__
 			} else OktServExt[i]->StartStop(false);
 #endif
-
 		if(!OktServExt[i]->StateOn)
 			{
 			RegViewSetEnabled(false, i);
@@ -169,7 +168,6 @@ void MainWindow::Connect_Disconnect(bool state)
 			}
 		DataSender_QTimer->start(20);
 		}
-
 	}
 
 void MainWindow::DataSender()
@@ -288,9 +286,8 @@ void MainWindow::ChildWindowClose(bool CloseAnyway)
 		{
 		//.. и есть родитель из закладок, то переход на закладки
 		if(	w->inherits("xButton") ||
-			w->inherits("TEvListTableView") ||
+			w->inherits("xTableView") ||
 			w->inherits("RegSetupTableView") ||
-			w->inherits("TParsTableView") ||
 			w->inherits("QTableView") ||
 			w->inherits("QDateTimeEdit")
 			)
@@ -356,8 +353,7 @@ void MainWindow::KeysPoll()
 				else if(mask==OKT_KEY_ENTER_MASK)
 					{
 					//Выход из списка по нажатию ввода
-					if(w->inherits("TEvListTableView") ||
-						w->inherits("TParsTableView"))
+					if(w->inherits("xTableView"))
 						{
 						ChildWindowClose(false);
 						}

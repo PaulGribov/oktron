@@ -31,9 +31,13 @@ void TMainMenu::MenuCreate()
 	connect(GetBlocksID_Button, SIGNAL(clicked()), this, SLOT(GetBlocksID_Button_OnClick()));
 	Line2_Layout->addWidget(GetBlocksID_Button);
 
-	//EventsLog_Button = new xButton(GenBut, QIcon(":/images/clipboard_new.png"));
-	//connect(EventsLog_Button, SIGNAL(clicked()), this, SLOT(EventsLog_Button_OnClick()));
-	//Line2_Layout->addWidget(EventsLog_Button);
+	OscList_Button[0] = new xButton(GenBut, QIcon(":/images/stocks.png"));
+	connect(OscList_Button[0], SIGNAL(clicked()), this, SLOT(OscListOfBase_Button_OnClick()));
+	Line2_Layout->addWidget(OscList_Button[0]);
+
+	OscList_Button[1] = new xButton(GenBut, QIcon(":/images/stocks.png"));
+	connect(OscList_Button[1], SIGNAL(clicked()), this, SLOT(OscListOfReserv_Button_OnClick()));
+	Line2_Layout->addWidget(OscList_Button[1]);
 
 	ProgSettings_Button = new xButton(GenBut, QIcon(":/images/applications_system.png"));
 	ProgSettings_Button->setIcon(QIcon(":/images/applications_system.png"));
@@ -54,8 +58,9 @@ void TMainMenu::Retranslate()
 	ParsOfReg_Button[1]->setText(tr("ПАРАМЕТРЫ\nРЕЗЕРВНОГО"));
 	RegsSetup_Button->setText(tr("НАСТРОЙКИ\nРЕГУЛЯТОРА"));
 	GetBlocksID_Button->setText(tr("СПИСОК\nБЛОКОВ"));
-	//EventsLog_Button->setText(tr("ЖУРНАЛ\nСОБЫТИЙ"));
-	ProgSettings_Button->setText(tr("НАСТРОЙКИ\nПРОГРАММЫ"));
+	OscList_Button[0]->setText(tr("ОСЦ.\nОСНОВ."));
+	OscList_Button[1]->setText(tr("ОСЦ.\nРЕЗЕРВ."));
+	ProgSettings_Button->setText(tr("НАСТРОЙК.\nПРОГРАМ."));
 	}
 
 void TMainMenu::ParsOfBase_Button_OnClick()
@@ -75,7 +80,6 @@ void TMainMenu::ParsOfReserv_Button_OnClick()
 	OktServExt[1]->ParametersView_MainWindow->showNormal();
 #endif
 	}
-
 
 void TMainMenu::EventsLog_Button_OnClick()
 	{

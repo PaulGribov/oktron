@@ -10,7 +10,7 @@ TEventsLog::TEventsLog(QWidget *obj_MainWindow) : QWidget(obj_MainWindow)
 	QVBoxLayout *EventsList_IntLayout = new QVBoxLayout();
 	setLayout(EventsList_IntLayout);
 
-	EventsList_TableView=new TEvListTableView(this);
+	EventsList_TableView=new xTableView(this);
 #ifdef __i386__
 	EventsList_TableView->setMinimumHeight(300);
 	EventsList_TableView->setMinimumWidth(600);
@@ -37,39 +37,6 @@ TEventsLog::TEventsLog(QWidget *obj_MainWindow) : QWidget(obj_MainWindow)
 	Retranslate();
 	OscIndex=0;
 	Load();
-	}
-
-void TEvListTableView::currentChanged(const QModelIndex &current, const QModelIndex &previous)
-	{
-	QTableView::currentChanged(current, previous);
-	MainWindow::IdleTimeout=0;
-	}
-
-bool TEvListTableView::eventFilter(QObject *obj, QEvent *e)
-	{
-	switch(e->type())
-		{
-		case QEvent::KeyPress:
-			{
-			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
-			switch(keyEvent->key())
-				{
-				default:
-					break;
-				}
-			}
-			break;
-		case QEvent::MouseMove:
-		case QEvent::MouseButtonPress:
-		case QEvent::MouseButtonDblClick:
-			{
-			MainWindow::IdleTimeout=0;
-			}
-			break;
-		default:
-			break;
-		}
-	return QObject::eventFilter(obj, e);
 	}
 
 void TEventsLog::Retranslate()

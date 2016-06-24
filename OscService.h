@@ -178,19 +178,6 @@ typedef struct
 	QStandardItem *pOscStateCell;
 	} TOscProcess;
 
-class TParsTableView : public QTableView
-	{
-		Q_OBJECT
-	public:
-		TParsTableView(QWidget *parent) : QTableView(parent)
-			{
-			installEventFilter(this);
-			}
-		bool eventFilter(QObject *obj, QEvent *e);
-		void currentChanged(const QModelIndex &current, const QModelIndex &previous);
-
-	};
-
 class TOscService : public QWidget
 	{
 		Q_OBJECT
@@ -204,8 +191,9 @@ class TOscService : public QWidget
 		int OscStart(TEventExt *);
 		int OscCounter;
 		QStandardItemModel OscList_Model;
-		QTableView *OscList_TableView;
+		xTableView *OscList_TableView;
 		xTabWidget *ParametersView_TabWidget;
+		xTabWidget *OscList_TabWidget;
 		xButton *OscList_CloseButton;
 		xButton *ParametersView_CloseButton;
 		QStringList TabNames_StringList;
@@ -217,7 +205,7 @@ class TOscService : public QWidget
 		struct PacketDescStruct {
 			QStringList StringList;
 			QWidget *Tab;
-			TParsTableView *TableView;
+			xTableView *TableView;
 			QStandardItemModel Model;
 			QList<QStandardItem *> Items[16];
 			} Packet[OKTSERV_PACKETS_NUM];

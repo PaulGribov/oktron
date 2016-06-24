@@ -31,40 +31,6 @@ void Test(TEvent &Event)
 	}
 */
 
-bool TParsTableView::eventFilter(QObject *obj, QEvent *e)
-	{
-	switch(e->type())
-		{
-		case QEvent::KeyPress:
-			{
-			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
-			switch(keyEvent->key())
-				{
-				default:
-					break;
-				}
-			}
-			break;
-		case QEvent::MouseMove:
-		case QEvent::MouseButtonPress:
-		case QEvent::MouseButtonDblClick:
-			{
-			MainWindow::IdleTimeout=0;
-			}
-			break;
-		default:
-			break;
-		}
-	return QObject::eventFilter(obj, e);
-	}
-
-void TParsTableView::currentChanged(const QModelIndex &current, const QModelIndex &previous)
-	{
-	MainWindow::IdleTimeout=0;
-	QTableView::currentChanged(current, previous);
-	}
-
-
 void TOscService::BitsDescFillToModel(struct PacketDescStruct &packet, struct BitsDescStruct &bits)
 	{
 	for(int k=0;k<bits.StringList.count();k++)
@@ -95,21 +61,31 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 	QVBoxLayout *OscList_ExtLayout = new QVBoxLayout();
 	OscList_CentralWidget->setLayout(OscList_ExtLayout);
 
-	xTabWidget *OscList_TabWidget=new xTabWidget();
+	OscList_TabWidget=new xTabWidget();
+	OscList_TabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(24).arg(280).arg(36));
+	OscList_TabWidget->setUsesScrollButtons(false);
 	OscList_ExtLayout->addWidget(OscList_TabWidget);
+	OscList_TabWidget->setIconSize(QSize(32,32));
 
 	QWidget *OscList_Tab=new QWidget();
-	OscList_TabWidget->addTab(OscList_Tab, QIcon(":/images/stocks.png"), ((QMainWindow *)OscList_parent)->windowTitle());
+	OscList_TabWidget->addTab(OscList_Tab, QIcon(":/images/stocks.png"), "");
 
 	QVBoxLayout *OscList_IntLayout = new QVBoxLayout();
 	OscList_Tab->setLayout(OscList_IntLayout);
 
-	OscList_TableView=new QTableView();
+	OscList_TableView=new xTableView();
 	OscList_IntLayout->addWidget(OscList_TableView);
 	OscList_TableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	OscList_TableView->setStyleSheet(xTableViewStyleSheet);
 	OscList_TableView->verticalHeader()->setVisible(false);
 	OscList_TableView->setShowGrid(false);
+	QHeaderView *verticalHeader = OscList_TableView->verticalHeader();
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+	verticalHeader->sectionResizeMode(QHeaderView::Fixed);
+#else
+	verticalHeader->setResizeMode(QHeaderView::Fixed);
+#endif
+	verticalHeader->setDefaultSectionSize(60);
 
 	OscList_CloseButton = new xButton(GenBut, QIcon(":/images/button_cancel.png"), 32, Qt::ToolButtonTextBesideIcon, OscList_parent);
 	OscList_ExtLayout->addWidget(OscList_CloseButton, 0, Qt::AlignRight | Qt::AlignBottom);
@@ -148,7 +124,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 			{
 			ParametersView_TabWidget->addTab(Packet[i].Tab/*, QIcon(":/images/meter3.png")*/, "");
 			}
-		Packet[i].TableView = new TParsTableView(Packet[i].Tab);
+		Packet[i].TableView = new xTableView(Packet[i].Tab);
 #ifdef __i386__
 		Packet[i].TableView->setMinimumHeight(300);
 		Packet[i].TableView->setMinimumWidth(600);
@@ -174,12 +150,14 @@ void TOscService::Retranslate()
 	OscList_CloseButton->setText(tr("ЗАКРЫТЬ"));
 	ParametersView_CloseButton->setText(tr("ЗАКРЫТЬ"));
 
+	OscList_TabWidget->setTabText(0, "ОСЦИЛЛОГРАММЫ");
+
 	OscList_Model.clear();
-	OscList_Model.setHorizontalHeaderLabels(QStringList() << tr("Номер осц.") << tr("Дата и время") << tr("Событие") << tr("Состояние"));
+	OscList_Model.setHorizontalHeaderLabels(QStringList() << tr("№") << tr("Время") << tr("Событие") << tr("Сост."));
 
 	//Инициализация элементов граф.интерфейса MainWindow для сервиса осциллограмм
-	OscList_TableView->setColumnWidth(OSC_INDEX_COL, 80);
-	OscList_TableView->setColumnWidth(OSC_DATETIME_COL, 160);
+	OscList_TableView->setColumnWidth(OSC_INDEX_COL, 40);
+	OscList_TableView->setColumnWidth(OSC_DATETIME_COL, 130);
 	OscList_TableView->setColumnWidth(OSC_EVENT_COL, 250);
 	OscList_TableView->setColumnWidth(OSC_STATE_COL, 100);
 

@@ -57,5 +57,17 @@ class xComboBox : public QComboBox
 		bool eventFilter(QObject *obj, QEvent *e);
 	};
 
+class xTableView : public QTableView
+	{
+		Q_OBJECT
+	public:
+		xTableView(QWidget *parent=NULL) : QTableView(parent)
+			{
+			installEventFilter(this);
+			}
+		bool eventFilter(QObject *obj, QEvent *e);
+
+		void currentChanged(const QModelIndex &current, const QModelIndex &previous);
+	};
 
 #endif // XWIDGETS_H

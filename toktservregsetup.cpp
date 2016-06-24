@@ -203,7 +203,6 @@ void TOktServRegSetup::Retranslate()
 #define AVAILABLE_FW_TEXT	" Доступ.:"
 	}
 
-
 void TOktServRegSetup::Start_Service()
 	{
 	TimeoutCnt=0;
@@ -263,7 +262,6 @@ void TOktServRegSetup::SaveSettings()
 	}
 
 const float Order[]={1.0, 0.1, 0.01, 0.001};
-
 
 float TOktServRegSetup::CalcValue(int index)
 	{
@@ -1159,6 +1157,7 @@ ErrorCmd_loc:
 
 						TimeoutCnt=0;
 						IOPacketDeliveredTimeoutCnt=0;
+						MainWindow::IdleTimeout=0; //Сброс таймаута бездействия
 
 						QApplication::processEvents();
 						}
@@ -1216,6 +1215,7 @@ ErrorCmd_loc:
 
 				TimeoutCnt=0;
 				IOPacketDeliveredTimeoutCnt=0;
+				MainWindow::IdleTimeout=0; //Сброс таймаута бездействия
 
 				QApplication::processEvents();
 				}
@@ -1268,6 +1268,7 @@ ErrorCmd_loc:
 				TimeoutCnt=0;
 				IOPacketDeliveredTimeoutCnt=0;
 				QApplication::processEvents();
+				MainWindow::IdleTimeout=0; //Сброс таймаута бездействия
 
 				break;
 			}

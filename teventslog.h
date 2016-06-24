@@ -27,19 +27,6 @@ class EventsList_ItemDelegate : public QStyledItemDelegate
 	void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
 	};
 
-class TEvListTableView : public QTableView
-	{
-		Q_OBJECT
-	public:
-		TEvListTableView(QWidget *parent=NULL) : QTableView(parent)
-			{
-			installEventFilter(this);
-			}
-		bool eventFilter(QObject *obj, QEvent *e);
-
-		void currentChanged(const QModelIndex &current, const QModelIndex &previous);
-	};
-
 class TEventsLog : public QWidget
 	{
 		Q_OBJECT
@@ -49,7 +36,7 @@ class TEventsLog : public QWidget
 		TEventExt *MakeEvent(QString, bool);
 		TEventExt *CheckDataEvent(TOscDataWithIndic &, TOscDataWithIndic &);
 		QStandardItemModel EventsList_Model;
-		TEvListTableView *EventsList_TableView;
+		xTableView *EventsList_TableView;
 
 		void AddNewEvent(TEventExt *);
 		void Save();

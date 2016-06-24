@@ -26,6 +26,8 @@ class TMainMenu : public QMainWindow
 		xButton *GetBlocksID_Button;
 		xButton *MakeOsc_Button;
 		xButton *ProgSettings_Button;
+		xButton *OscList_Button[2];
+
 		/*
 		void OscListOfBase_Button_OnClick();
 		void OscListOfReserv_Button_OnClick();

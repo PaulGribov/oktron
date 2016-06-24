@@ -334,3 +334,35 @@ bool xComboBox::eventFilter(QObject *obj, QEvent *e)
 	return QObject::eventFilter(obj, e);
 	}
 
+void xTableView::currentChanged(const QModelIndex &current, const QModelIndex &previous)
+	{
+	QTableView::currentChanged(current, previous);
+	MainWindow::IdleTimeout=0;
+	}
+
+bool xTableView::eventFilter(QObject *obj, QEvent *e)
+	{
+	switch(e->type())
+		{
+		case QEvent::KeyPress:
+			{
+			QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
+			switch(keyEvent->key())
+				{
+				default:
+					break;
+				}
+			}
+			break;
+		case QEvent::MouseMove:
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonDblClick:
+			{
+			MainWindow::IdleTimeout=0;
+			}
+			break;
+		default:
+			break;
+		}
+	return QObject::eventFilter(obj, e);
+	}
