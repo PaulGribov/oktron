@@ -79,6 +79,7 @@ class MainWindow : public QMainWindow
 
 
 	private:
+		int watchdog_fd;
 		Ui::MainWindow *ui;
 
 		unsigned short KeysState;

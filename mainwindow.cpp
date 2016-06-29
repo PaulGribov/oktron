@@ -6,11 +6,27 @@
 #include "work.h"
 #include "OscService.h"
 
+#ifndef __i386__
+	#include <sys/mount.h>
+	#include <sys/types.h>
+	#include <sys/wait.h>
+	#include <sys/ioctl.h>
+	#include <linux/rtc.h>
+	#include <fcntl.h>
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <unistd.h>
+	#include <errno.h>
+	#include <sys/ioctl.h>
+	#include <linux/watchdog.h>
+#endif
+
 int MainWindow::IdleTimeout=0;
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ui(new Ui::MainWindow)
 	{
+	watchdog_fd=NULL;
 	ui->setupUi(this);
 	setStyleSheet("background-color: rgb(235,236,236);");
 
@@ -90,6 +106,8 @@ MainWindow::MainWindow(QWidget *parent)
 	MainWindow_TabWidget->addTab(MainMenu, "");
 	MainWindow_TabWidget->setTabIcon(2, QIcon(":/images/advancedsettings.png"));
 
+	MainWindow_TabWidget->setCurrentIndex(1); //Текущая закладка - "ПОКАЗАНИЯ"
+
 	MainWindow_ExtLayout->addLayout(Status_Layout);
 
 	for(int i=0;i<OKT_KEYS_NUM;i++) KeyTimeCnt[i]=0;
@@ -105,8 +123,17 @@ MainWindow::MainWindow(QWidget *parent)
 	installEventFilter(this);
 
 	Retranslate();
-	}
 
+#ifndef __i386__
+	//Установка Wdt - 40c таймаут
+	int timeout=40;
+	watchdog_fd = open("/dev/watchdog", O_RDWR);
+	if(watchdog_fd)
+		{
+		ioctl(watchdog_fd, WDIOC_SETTIMEOUT, &timeout);
+		}
+#endif
+	}
 
 void MainWindow::Retranslate()
 	{
@@ -118,7 +145,6 @@ void MainWindow::Retranslate()
 	SystemTime0_Label->setText(tr("Системное время:"));
 	DestDiskState0_Label->setText(tr("Накопитель:"));
 	}
-
 
 void MainWindow::Connect_Disconnect(bool state)
 	{
@@ -163,6 +189,7 @@ void MainWindow::Connect_Disconnect(bool state)
 #endif
 		for(int i=0;i<2;i++)
 			{
+			RegViewSetEnabled(OktServExt[i]->StateOn, i);
 			OktServExt[i]->RegSetup_GetBlocksID->ReadSettingsDesc();
 			OktServExt[i]->RegSetup_GetBlocksID->GetBlocksIDSlot();
 			}
@@ -181,7 +208,7 @@ void MainWindow::SystemTimeTick()
 	{
 	QDateTime dt=QDateTime::currentDateTime();
 	SystemTime1_Label->setText(dt.toString(tr("dd.MM.yyyy hh:mm:ss")));
-
+	/*
 	if(++IdleTimeout==30)
 		{
 		ChildWindowClose(true);
@@ -189,6 +216,7 @@ void MainWindow::SystemTimeTick()
 		EventsLog->GotoLastEvent();
 		EventsLog->EventsList_TableView->setFocus();
 		}
+	*/
 	//SystemTime1_Label->setText(QString("%1").arg(MainWindow::IdleTimeout));
 
 	time_scale++;
@@ -196,6 +224,13 @@ void MainWindow::SystemTimeTick()
 #ifdef __linux__
 	if((time_scale & 0x3)==0x3)
 		{
+	#ifndef __i386__
+		//Сброс Wdt
+		if(watchdog_fd)
+			{
+			ioctl(watchdog_fd, WDIOC_KEEPALIVE, 0);
+			}
+	#endif
 		SystemTime_QTimer->stop();
 		char *dev_name = LastConnectedDiskFind();
 		bool DestDiskStateNew = strlen(dev_name)>0;
@@ -205,7 +240,10 @@ void MainWindow::SystemTimeTick()
 			if(DestDiskStateNew)
 				{
 				DestDiskState1_Label->setText(dev_name);
+				Connect_Disconnect(false); //Остановка сервера для нормальной работы с USB
+				QApplication::processEvents();
 				PrintEvent(EventsLog->MakeEvent(CopyToDestDisk(dev_name)?tr("Информация успешно выгружена на съёмный диск"):tr("Ошибка при выгрузке информации на съёмный диск"), false));
+				Connect_Disconnect(true); //Пуск сервера
 				}
 			}
 		if(!DestDiskStateNew)
