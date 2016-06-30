@@ -40,6 +40,9 @@ class MainWindow : public QMainWindow
 		QTimer *SystemTime_QTimer;
 		QLabel *DestDiskState_Label;
 		bool DestDiskState;
+		QMainWindow *Baner_MainWindow;
+		QLabel *Baner0_Label;
+		QLabel *Baner1_Label;
 
 		void Connect_Disconnect(bool state);
 		void PrintEvent(TEventExt *);
@@ -90,5 +93,12 @@ class MainWindow : public QMainWindow
 		qint64 time_scale;
 
 	};
+
+#ifndef __i386__
+	#define WDT_RST_MAINWINDOW() { if(watchdog_fd) { ioctl(watchdog_fd, WDIOC_KEEPALIVE, 0); } }
+#else
+	#define WDT_RST_MAINWINDOW() { }
+#endif
+
 
 #endif // MAINWINDOW_H

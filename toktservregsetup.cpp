@@ -15,11 +15,15 @@
 
 QStringList TOktServRegSetup::YESNO_sl;
 
+void *TGetBlocksIDPar::OSRS_parent=NULL;
 
 void TGetBlocksIDPar::ButClick()
 	{
 	//QMessageBox::information(this, QObject::tr("ButClick нажата"), QObject::tr("Кнопка %1").arg(Index));
-	((TOktServRegSetup *)OSRS_parent)->PostReq(CMD_PUT_CODE_BLOCK, Index);
+	if((OSRS_parent!=NULL)&&(!((TOktServRegSetup *)OSRS_parent)->IsBusy()))
+		{
+		((TOktServRegSetup *)OSRS_parent)->PostReq(CMD_PUT_CODE_BLOCK, Index);
+		}
 	}
 
 
@@ -850,7 +854,8 @@ FormattingReq_loc:
 								}
 							else
 								{
-								pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(104));
+								if(pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]!=NULL)
+									pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(104));
 								LastErrorCode=errHexFileNotLoaded;
 								Cmd=CMD_ERROR;
 								}
@@ -1175,9 +1180,9 @@ ErrorCmd_loc:
 				{
 #ifdef REGSETUPDBG
 				char buf[GETBLOCKSID_NAME_LEN*4+1];
-				strcpy(buf, "T8K-12345678");
+				strcpy(buf, "\
+T8R-0001 122800");
 				AddRow2Table_GetBlocksID(buf, true, true);
-
 #else
 				char NameInWin1251[GETBLOCKSID_NAME_LEN+1];
 				int i;
@@ -1231,12 +1236,14 @@ ErrorCmd_loc:
 						HexUploadTimeout=0;
 						if(++HexLineIndex<HexLinesNumber)
 							{
-							pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(HexLineIndex*100/HexLinesNumber));
+							if(pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]!=NULL)
+								pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(HexLineIndex*100/HexLinesNumber));
 							}
 						break;
 					//команда выполнена, запись закончена
 					case 1:
-						pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(101));
+						if(pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]!=NULL)
+							pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(101));
 						Cmd=CMD_IDLE;
 						break;
 					//команда не выполнена, устройство не отвечает
@@ -1248,7 +1255,8 @@ ErrorCmd_loc:
 					case 3:
 						if(++HexUploadTimeout>10)
 							{
-							pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(103));
+							if(pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]!=NULL)
+								pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(103));
 							LastErrorCode=errPutCodeBlock_DeviceBusyTimeout;
 							Cmd=CMD_ERROR;
 							}
@@ -1308,7 +1316,7 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 	qDebug() << tr("Search for HEXs...");
 	for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
 		{
-#ifndef REGSETUPDBG
+#ifndef REG_SETUPDBG
 		pGetBlocksIDPars[i]->Updatable=false;
 		pGetBlocksIDPars[i]->HexId=tr("");
 		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL])
@@ -1321,7 +1329,7 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 			}
 #else
 		pGetBlocksIDPars[i]->Updatable=(i&0x01)?true:false;
-		pGetBlocksIDPars[i]->HexId=tr("T8K-12345678");
+		pGetBlocksIDPars[i]->HexId=tr("T8R-12345678");
 		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL])
 			{
 			pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL]->setText(tr(INSTALLED_FW_TEXT)+pGetBlocksIDPars[i]->Id+tr(AVAILABLE_FW_TEXT)+"T8K-12345678");
@@ -1333,11 +1341,10 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 #endif
 		}
 	QDir dir;
-	QFileInfoList listFiles = dir.entryInfoList(QStringList("*.hex"), QDir::Files, QDir::Time);
+	QFileInfoList listFiles = dir.entryInfoList(QStringList("*.hex"), QDir::Files, QDir::Name/* | QDir::Reversed*/);
 	foreach(QFileInfo file, listFiles)
 		{
 		QString name = QStringList(file.fileName().split(".")).at(0).toUpper();
-
 		for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
 			{
 			QString str=pGetBlocksIDPars[i]->Id;

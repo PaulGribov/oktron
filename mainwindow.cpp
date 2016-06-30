@@ -110,6 +110,24 @@ MainWindow::MainWindow(QWidget *parent)
 
 	MainWindow_ExtLayout->addLayout(Status_Layout);
 
+	Baner_MainWindow = new QMainWindow();
+	QWidget *Baner_CentralWidget=new QWidget(Baner_MainWindow);
+	Baner_MainWindow->setCentralWidget(Baner_CentralWidget);
+	QVBoxLayout *Baner_Layout = new QVBoxLayout();
+	Baner_CentralWidget->setLayout(Baner_Layout);
+	Baner0_Label = new QLabel(Baner_MainWindow);
+	Baner0_Label->setStyleSheet("\
+		color: rgb(154,154,154);\
+		font: 32pt;\
+		");\
+	Baner_Layout->addWidget(Baner0_Label, 0, Qt::AlignHCenter | Qt::AlignBottom);
+	Baner1_Label = new QLabel(Baner_MainWindow);
+	Baner1_Label->setStyleSheet("\
+		color: rgb(154,154,154);\
+		font: 32pt;\
+		");\
+	Baner_Layout->addWidget(Baner1_Label, 0, Qt::AlignHCenter | Qt::AlignTop);
+
 	for(int i=0;i<OKT_KEYS_NUM;i++) KeyTimeCnt[i]=0;
 	KeysPoll_QTimer = new QTimer(this);
 	connect(KeysPoll_QTimer , SIGNAL(timeout()), this, SLOT(KeysPoll()));
@@ -124,9 +142,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 	Retranslate();
 
+
 #ifndef __i386__
-	//Установка Wdt - 40c таймаут
-	int timeout=40;
+	//Установка Wdt - 30c таймаут
+	int timeout=30;
 	watchdog_fd = open("/dev/watchdog", O_RDWR);
 	if(watchdog_fd)
 		{
@@ -223,14 +242,9 @@ void MainWindow::SystemTimeTick()
 
 #ifdef __linux__
 	if((time_scale & 0x3)==0x3)
-		{
-	#ifndef __i386__
-		//Сброс Wdt
-		if(watchdog_fd)
-			{
-			ioctl(watchdog_fd, WDIOC_KEEPALIVE, 0);
-			}
-	#endif
+		{		
+		WDT_RST_MAINWINDOW() //Сброс Wdt
+
 		SystemTime_QTimer->stop();
 		char *dev_name = LastConnectedDiskFind();
 		bool DestDiskStateNew = strlen(dev_name)>0;
@@ -240,10 +254,60 @@ void MainWindow::SystemTimeTick()
 			if(DestDiskStateNew)
 				{
 				DestDiskState1_Label->setText(dev_name);
+				Baner0_Label->setText(tr("Обнаружен внешний"));
+				Baner1_Label->setText(tr("USB-накопитель, ожидайте..."));
+#ifndef __i386__
+				Baner_MainWindow->showFullScreen();
+#else
+				Baner_MainWindow->showNormal();
+#endif
+				PrintEvent(EventsLog->MakeEvent(tr("Обнаружен внешний USB-накопитель..."), false));
 				Connect_Disconnect(false); //Остановка сервера для нормальной работы с USB
 				QApplication::processEvents();
-				PrintEvent(EventsLog->MakeEvent(CopyToDestDisk(dev_name)?tr("Информация успешно выгружена на съёмный диск"):tr("Ошибка при выгрузке информации на съёмный диск"), false));
+				sleep(3);
+
+				WDT_RST_MAINWINDOW() //Сброс Wdt
+
+				//Повторное определение его имени диска
+				dev_name = LastConnectedDiskFind();
+				DestDiskState1_Label->setText(dev_name);
+				bool is_hex, result=CopyToDestDisk(dev_name, is_hex);
+				QString res0_txt, res1_txt;
+				if(is_hex)
+					{
+					if(result)
+						{
+						res0_txt=tr("Файлы ПО успешно выгружены");
+						res1_txt=tr("со съёмного диска");
+						}
+					else
+						{
+						res0_txt=tr("Ошибка при выгрузке ПО");
+						res1_txt=tr("со съёмного диска");
+						}
+					}
+				else
+					{
+					if(result)
+						{
+						res0_txt=tr("Информация успешно выгружена");
+						res1_txt=tr("на съёмный диск");
+						}
+					else
+						{
+						res0_txt=tr("Ошибка при выгрузке информации");
+						res1_txt=tr("на съёмный диск");
+						}
+					}
+				PrintEvent(EventsLog->MakeEvent(res0_txt+" "+res1_txt, false));
 				Connect_Disconnect(true); //Пуск сервера
+				WDT_RST_MAINWINDOW() //Сброс Wdt
+				Baner0_Label->setText(res0_txt);
+				Baner1_Label->setText(res1_txt);
+				QApplication::processEvents();
+				sleep(5);
+				WDT_RST_MAINWINDOW() //Сброс Wdt
+				Baner_MainWindow->close();
 				}
 			}
 		if(!DestDiskStateNew)

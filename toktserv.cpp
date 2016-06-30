@@ -362,7 +362,7 @@ bool TOktServ::StartStop(bool StateOnIn)
 		CommPort->setFlowControl(QSerialPort::NoFlowControl);
 		if(!CommPort->open(QIODevice::ReadWrite))
 			{
-			//QMessageBox::critical(this, QObject::tr("Ошибка при открытии порта"), CommPort->errorString());
+			QMessageBox::critical(this, QObject::tr("Ошибка при открытии порта"), CommPort->errorString());
 			StateOnIn=false;
 			}
 #endif

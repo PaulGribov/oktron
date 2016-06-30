@@ -7,7 +7,7 @@ char *utf8_to_cp1251_qstr(QString in);
 #if !defined(Q_OS_WIN)
 	char *LastConnectedDiskFind();
 	bool GetDestDiskState(char *dev_name);
-	bool CopyToDestDisk(char *dev_name);
+	bool CopyToDestDisk(char *dev_name, bool &hex_exists);
 	bool SetSystemClock(QDateTime &date);
 #endif
 

@@ -291,7 +291,7 @@ bool usbreset(const char *dev_name)
 	}
 
 
-bool CopyToDestDisk(char *dev_name)
+bool CopyToDestDisk(char *dev_name, bool &hex_exists)
 	{
 	FILE *fp;
 	char command[256];
@@ -347,34 +347,29 @@ remdeverr_loc:
 
 		if(errorlevel==0)
 			{
-
-			sleep(5);
-
-			//Копирование содержимого каталога
-			strcpy(command, "cp -v -f -r /mnt/localdisk/oscs /mnt/destdisk/osc_from__");
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
-			strcat(command, QDateTime::currentDateTime().toString("dd_MM_yyyy__hh_mm_ss").toLatin1().data());
-#else
-			strcat(command, QDateTime::currentDateTime().toString("dd_MM_yyyy__hh_mm_ss").toAscii().data());
-#endif
-			fp = popen(command, "r");
-			if(fp)
-				{
-				memset(str0, 0, 256);
-				while(fgets(str0, 255, fp) != NULL)
-					{
-					qDebug() << str0;
-					}
-				status=pclose(fp);
-				errorlevel=WEXITSTATUS(status);
-				qDebug() << QString("cp localdisk/oscs->destdisk: %1").arg(errorlevel);
-				}
+			sleep(5);			
 #ifndef __i386__
 			//Обратное копирование hex-файлов
 			QDir dir("/mnt/destdisk");
 			QFileInfoList listFiles = dir.entryInfoList(QStringList("*.hex"), QDir::Files);
-			if((errorlevel==0)&&(listFiles.count()>0))
+			hex_exists=listFiles.count()>0;
+			if(hex_exists)
 				{
+				//Удаление все hex на локальном диске
+				strcpy(command, "rm -f /mnt/localdisk/*.hex");
+				fp = popen(command, "r");
+				if(fp)
+					{
+					memset(str0, 0, 256);
+					while(fgets(str0, 255, fp) != NULL)
+						{
+						qDebug() << str0;
+						}
+					status=pclose(fp);
+					errorlevel=WEXITSTATUS(status);
+					qDebug() << QString("rm *.hex on localdisk: %1").arg(errorlevel);
+					}
+				//Копирование всех hex с внешнего на локальный
 				strcpy(command, "cp -v -f /mnt/destdisk/*.hex /mnt/localdisk");
 				fp = popen(command, "r");
 				if(fp)
@@ -389,7 +384,30 @@ remdeverr_loc:
 					qDebug() << QString("cp destdisk->localdisk: %1").arg(errorlevel);
 					}
 				}
+			else
 #endif
+			//Копирование содержимого каталога
+				{
+				strcpy(command, "cp -v -f -r /mnt/localdisk/oscs /mnt/destdisk/osc_from__");
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+				strcat(command, QDateTime::currentDateTime().toString("dd_MM_yyyy__hh_mm_ss").toLatin1().data());
+#else
+				strcat(command, QDateTime::currentDateTime().toString("dd_MM_yyyy__hh_mm_ss").toAscii().data());
+#endif
+				fp = popen(command, "r");
+				if(fp)
+					{
+					memset(str0, 0, 256);
+					while(fgets(str0, 255, fp) != NULL)
+						{
+						qDebug() << str0;
+						}
+					status=pclose(fp);
+					errorlevel=WEXITSTATUS(status);
+					qDebug() << QString("cp localdisk/oscs->destdisk: %1").arg(errorlevel);
+					}
+				}
+
 			//Размонтирование флешки
 			umount("/mnt/destdisk");
 			}

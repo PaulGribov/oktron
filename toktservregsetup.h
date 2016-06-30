@@ -162,7 +162,7 @@ class TGetBlocksIDPar : public QWidget
 		explicit TGetBlocksIDPar(QWidget *parent = 0, int index=0) : QWidget(parent)
 			{
 			Index=index;
-			OSRS_parent=parent;
+			if((OSRS_parent==NULL)&&(parent)) OSRS_parent=parent;
 			for(int i=0;i<GETBLOCKSID_COLS_NUM;i++)
 				{
 				pCell[i]=NULL;
@@ -176,11 +176,10 @@ class TGetBlocksIDPar : public QWidget
 		int Addr;
 		QStandardItem *pCell[GETBLOCKSID_COLS_NUM];	//Указатель на ячейку
 
-
 	private:
 		int Index;
 		static int IndexCounter;
-		void *OSRS_parent;
+		static void *OSRS_parent;
 
 	public slots:
 		void ButClick();
