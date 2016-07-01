@@ -15,12 +15,11 @@
 
 QStringList TOktServRegSetup::YESNO_sl;
 
-void *TGetBlocksIDPar::OSRS_parent=NULL;
-
 void TGetBlocksIDPar::ButClick()
 	{
+	if(OSRS_parent==NULL) return;
 	//QMessageBox::information(this, QObject::tr("ButClick нажата"), QObject::tr("Кнопка %1").arg(Index));
-	if((OSRS_parent!=NULL)&&(!((TOktServRegSetup *)OSRS_parent)->IsBusy()))
+	if(!((TOktServRegSetup *)OSRS_parent)->IsBusy())
 		{
 		((TOktServRegSetup *)OSRS_parent)->PostReq(CMD_PUT_CODE_BLOCK, Index);
 		}

@@ -35,6 +35,7 @@ class TProgSettings : public QMainWindow
 		xButton *Close_Button;
 		void Retranslate();
 		QWidget *obj_MainWindow;
+		xButton *TSC_Button;
 
 	private:
 		void SaveCommSettings(QXmlStreamWriter &xml, int server_index);
@@ -51,7 +52,7 @@ class TProgSettings : public QMainWindow
 		void Close();
 		void Save();
 		void Load();
-
+		void TSC_Exe();
 	};
 
 #define INI_FILENAME	"ini.xml"

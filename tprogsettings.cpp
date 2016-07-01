@@ -5,6 +5,21 @@
 #include "work.h"
 #include "mainwindow.h"
 
+#ifndef __i386__
+	#include <sys/mount.h>
+	#include <sys/types.h>
+	#include <sys/wait.h>
+	#include <sys/ioctl.h>
+	#include <linux/rtc.h>
+	#include <fcntl.h>
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <unistd.h>
+	#include <errno.h>
+	#include <sys/ioctl.h>
+	#include <linux/watchdog.h>
+#endif
+
 TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWindow)
 	{
 	this->obj_MainWindow=obj_MainWindow;
@@ -41,6 +56,10 @@ TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWind
 	SetDateTime=new QDateTimeEdit();
 	SetDateTime->setStyleSheet("font: 20pt;");
 	SetDateTime_Layout->addWidget(SetDateTime);
+
+	TSC_Button = new xButton(GenBut, QIcon(), 32, Qt::ToolButtonTextBesideIcon);
+	GeneralSettings_Layout->addWidget(TSC_Button, 0, Qt::AlignHCenter | Qt::AlignBottom);
+	connect(TSC_Button, SIGNAL(clicked()), this, SLOT(TSC_Exe()));;
 
 	//Присвоение слоя закладке
 	GeneralSettings_Tab->setLayout(GeneralSettings_Layout);
@@ -129,6 +148,7 @@ void TProgSettings::Retranslate()
 	SetDateTime_GroupBox->setTitle(tr("УСТАНОВКА ВРЕМЕНИ"));
 	Save_Button->setText(tr("СОХРАНИТЬ"));
 	Close_Button->setText(tr("ЗАКРЫТЬ"));
+	TSC_Button->setText(tr("КАЛИБРОВКА СЕНСОРНОЙ ПАНЕЛИ"));
 	}
 
 void TProgSettings::show()
@@ -146,6 +166,19 @@ void TProgSettings::PortsSettingsApply()
 	}
 
 #endif
+
+void TProgSettings::TSC_Exe()
+	{
+#ifndef __i386__
+	//Установка Wdt - 5мин таймаут
+	int timeout=300;
+	if(((MainWindow *)obj_MainWindow)->watchdog_fd)
+		{
+		ioctl(((MainWindow *)obj_MainWindow)->watchdog_fd, WDIOC_SETTIMEOUT, &timeout);
+		}
+#endif
+	QApplication::exit(100);
+	}
 
 void TProgSettings::Close()
 	{

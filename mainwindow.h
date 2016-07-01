@@ -43,6 +43,7 @@ class MainWindow : public QMainWindow
 		QMainWindow *Baner_MainWindow;
 		QLabel *Baner0_Label;
 		QLabel *Baner1_Label;
+		int watchdog_fd;
 
 		void Connect_Disconnect(bool state);
 		void PrintEvent(TEventExt *);
@@ -82,7 +83,6 @@ class MainWindow : public QMainWindow
 
 
 	private:
-		int watchdog_fd;
 		Ui::MainWindow *ui;
 
 		unsigned short KeysState;
