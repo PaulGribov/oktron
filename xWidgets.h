@@ -13,6 +13,7 @@
 #include <QTabBar>
 #include <QStylePainter>
 #include <QStyleOptionTabV3>
+#include <QCheckBox>
 #include <QPainter>
 #include <QIcon>
 #include <QString>
@@ -46,6 +47,13 @@ class xTabWidget : public QTabWidget
 		bool eventFilter(QObject *obj, QEvent *e);
 	};
 
+
+class xCheckBox : public QCheckBox
+	{
+	public:
+		xCheckBox(QWidget *parent=NULL);
+		bool eventFilter(QObject *obj, QEvent *e);
+	};
 
 class xComboBox : public QComboBox
 	{

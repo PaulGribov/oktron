@@ -7,24 +7,42 @@
 #include "OscService.h"
 
 #ifndef __i386__
-	#include <sys/mount.h>
-	#include <sys/types.h>
-	#include <sys/wait.h>
-	#include <sys/ioctl.h>
-	#include <linux/rtc.h>
-	#include <fcntl.h>
-	#include <stdlib.h>
-	#include <stdio.h>
-	#include <unistd.h>
-	#include <errno.h>
-	#include <sys/ioctl.h>
-	#include <linux/watchdog.h>
+#include <sys/mount.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/ioctl.h>
+#include <linux/rtc.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/ioctl.h>
+#include <linux/watchdog.h>
 #endif
 
 int MainWindow::IdleTimeout=0;
 
+#define CREATE_STATUS_LABEL(a,b) {\
+	QVBoxLayout *a = new QVBoxLayout();\
+	a##0##b=new QLabel();\
+	a##0##b->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);\
+	a##0##b->setStyleSheet("\
+color: rgb(154,154,154);\
+font: 18pt;\
+");\
+a->addWidget(a##0##b);\
+a##1##b=new QLabel();\
+a##1##b->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);\
+a##1##b->setStyleSheet("\
+color: rgb(154,154,154);\
+font: 21pt;\
+");\
+a->addWidget(a##1##b);\
+Status_Layout->addLayout(a); }
+
 MainWindow::MainWindow(QWidget *parent)
-	: QMainWindow(parent), ui(new Ui::MainWindow)
+: QMainWindow(parent), ui(new Ui::MainWindow)
 	{
 	watchdog_fd=NULL;
 	ui->setupUi(this);
@@ -39,28 +57,12 @@ MainWindow::MainWindow(QWidget *parent)
 
 	QHBoxLayout *Status_Layout = new QHBoxLayout();
 
-#define CREATE_STATUS_LABEL(a,b) {\
-	QVBoxLayout *a = new QVBoxLayout();\
-	a##0##b=new QLabel();\
-	a##0##b->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);\
-	a##0##b->setStyleSheet("\
-		color: rgb(154,154,154);\
-		font: 18pt;\
-		");\
-	a->addWidget(a##0##b);\
-	a##1##b=new QLabel();\
-	a##1##b->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);\
-	a##1##b->setStyleSheet("\
-		color: rgb(154,154,154);\
-		font: 21pt;\
-		");\
-	a->addWidget(a##1##b);\
-	Status_Layout->addLayout(a); }
-
 	CREATE_STATUS_LABEL(Reg, _Label[0])
 	CREATE_STATUS_LABEL(Reg, _Label[1])
 	CREATE_STATUS_LABEL(SystemTime, _Label)
 	CREATE_STATUS_LABEL(DestDiskState, _Label)
+
+	ChangesCopyBetweenRegsState=false;
 
 	//Создание серверов
 	ProgSettings=new TProgSettings(this);
@@ -69,6 +71,9 @@ MainWindow::MainWindow(QWidget *parent)
 		connect(OktServExt[i], SIGNAL(DataProcessLocal(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)), this, SLOT(DataProcess(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)));
 		PrintDataEnabled[i]=true;
 		}
+	//Подключить кнопки дублирования настроек
+	connect(OktServExt[0]->RegSetup_GetBlocksID->ChangesCopyBetweenRegs_Button, SIGNAL(clicked()), this, SLOT(ChangesCopyBetweenRegsStateChanged()));
+	connect(OktServExt[1]->RegSetup_GetBlocksID->ChangesCopyBetweenRegs_Button, SIGNAL(clicked()), this, SLOT(ChangesCopyBetweenRegsStateChanged()));
 
 	ProgSettings->GeneralSettings.AutomaticStart=true;
 	ProgSettings->Load();
@@ -117,15 +122,15 @@ MainWindow::MainWindow(QWidget *parent)
 	Baner_CentralWidget->setLayout(Baner_Layout);
 	Baner0_Label = new QLabel(Baner_MainWindow);
 	Baner0_Label->setStyleSheet("\
-		color: rgb(154,154,154);\
-		font: 32pt;\
-		");\
+	color: rgb(154,154,154);\
+	font: 32pt;\
+	");\
 	Baner_Layout->addWidget(Baner0_Label, 0, Qt::AlignHCenter | Qt::AlignBottom);
 	Baner1_Label = new QLabel(Baner_MainWindow);
 	Baner1_Label->setStyleSheet("\
-		color: rgb(154,154,154);\
-		font: 32pt;\
-		");\
+	color: rgb(154,154,154);\
+	font: 32pt;\
+	");\
 	Baner_Layout->addWidget(Baner1_Label, 0, Qt::AlignHCenter | Qt::AlignTop);
 
 	for(int i=0;i<OKT_KEYS_NUM;i++) KeyTimeCnt[i]=0;
@@ -142,7 +147,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 	Retranslate();
 
-
 #ifndef __i386__
 	//Установка Wdt - 30c таймаут
 	int timeout=30;
@@ -152,6 +156,33 @@ MainWindow::MainWindow(QWidget *parent)
 		ioctl(watchdog_fd, WDIOC_SETTIMEOUT, &timeout);
 		}
 #endif
+	}
+
+void MainWindow::ChangesCopyBetweenRegsStateChanged()
+	{
+	bool state=!ChangesCopyBetweenRegsState;
+	ChangesCopyBetweenRegsState=state;
+	QIcon icon;
+	if(state)
+		{
+		icon=QIcon(":/images/but_on_enabled.png");
+		//Установить свзяь между осн. и резерв. при настройке
+		connect(OktServExt[0]->RegSetup_GetBlocksID, SIGNAL(RegSetupReqEvent_Signal(TRegSetupCmd,int)), OktServExt[1]->RegSetup_GetBlocksID, SLOT(RegSetupReqEvent_Slot(TRegSetupCmd,int)));
+		connect(OktServExt[0]->RegSetup_GetBlocksID, SIGNAL(ChangeValEvent_Signal(int,int)), OktServExt[1]->RegSetup_GetBlocksID, SLOT(ChangeValEvent_Slot(int,int)));
+		connect(OktServExt[1]->RegSetup_GetBlocksID, SIGNAL(RegSetupReqEvent_Signal(TRegSetupCmd,int)), OktServExt[0]->RegSetup_GetBlocksID, SLOT(RegSetupReqEvent_Slot(TRegSetupCmd,int)));
+		connect(OktServExt[1]->RegSetup_GetBlocksID, SIGNAL(ChangeValEvent_Signal(int,int)), OktServExt[0]->RegSetup_GetBlocksID, SLOT(ChangeValEvent_Slot(int,int)));
+		}
+	else
+		{
+		icon=QIcon(":/images/but_off_enabled.png");
+		//Разорвать свзяь между осн. и резерв. при настройке
+		disconnect(OktServExt[0]->RegSetup_GetBlocksID, SIGNAL(RegSetupReqEvent_Signal(TRegSetupCmd,int)), OktServExt[1]->RegSetup_GetBlocksID, SLOT(RegSetupReqEvent_Slot(TRegSetupCmd,int)));
+		disconnect(OktServExt[0]->RegSetup_GetBlocksID, SIGNAL(ChangeValEvent_Signal(int,int)), OktServExt[1]->RegSetup_GetBlocksID, SLOT(ChangeValEvent_Slot(int,int)));
+		disconnect(OktServExt[1]->RegSetup_GetBlocksID, SIGNAL(RegSetupReqEvent_Signal(TRegSetupCmd,int)), OktServExt[0]->RegSetup_GetBlocksID, SLOT(RegSetupReqEvent_Slot(TRegSetupCmd,int)));
+		disconnect(OktServExt[1]->RegSetup_GetBlocksID, SIGNAL(ChangeValEvent_Signal(int,int)), OktServExt[0]->RegSetup_GetBlocksID, SLOT(ChangeValEvent_Slot(int,int)));
+		}
+	OktServExt[0]->RegSetup_GetBlocksID->ChangesCopyBetweenRegs_Button->setIcon(icon);
+	OktServExt[1]->RegSetup_GetBlocksID->ChangesCopyBetweenRegs_Button->setIcon(icon);
 	}
 
 void MainWindow::Retranslate()
@@ -242,7 +273,7 @@ void MainWindow::SystemTimeTick()
 
 #ifdef __linux__
 	if((time_scale & 0x3)==0x3)
-		{		
+		{
 		WDT_RST_MAINWINDOW() //Сброс Wdt
 
 		SystemTime_QTimer->stop();
@@ -354,16 +385,16 @@ void MainWindow::CheckGrowKeys(unsigned short mask)
 	if(mask==OKT_KEY_UP_MASK)
 		{
 		QApplication::postEvent(QApplication::focusWidget(),
-			new QKeyEvent(QEvent::KeyPress,
-			Qt::Key_Up,
-			Qt::NoModifier));
+		new QKeyEvent(QEvent::KeyPress,
+		Qt::Key_Up,
+		Qt::NoModifier));
 		}
 	else if(mask==OKT_KEY_DOWN_MASK)
 		{
 		QApplication::postEvent(QApplication::focusWidget(),
-			new QKeyEvent(QEvent::KeyPress,
-			Qt::Key_Down,
-			Qt::NoModifier));
+		new QKeyEvent(QEvent::KeyPress,
+		Qt::Key_Down,
+		Qt::NoModifier));
 		}
 	}
 
@@ -388,11 +419,11 @@ void MainWindow::ChildWindowClose(bool CloseAnyway)
 		{
 		//.. и есть родитель из закладок, то переход на закладки
 		if(	w->inherits("xButton") ||
-			w->inherits("xTableView") ||
-			w->inherits("RegSetupTableView") ||
-			w->inherits("QTableView") ||
-			w->inherits("QDateTimeEdit")
-			)
+		w->inherits("xTableView") ||
+		w->inherits("RegSetupTableView") ||
+		w->inherits("QTableView") ||
+		w->inherits("QDateTimeEdit")
+		)
 			{
 			while(w->inherits("QMainWindow")==false)
 				{
@@ -407,9 +438,9 @@ void MainWindow::ChildWindowClose(bool CloseAnyway)
 			}
 		// Настройки регулятора - редакторы - просто закрыть виджет
 		else if(w->inherits("QComboBox") ||
-			w->inherits("HexSpinBox") ||
-			w->inherits("DoubleSpinBox")
-			)
+		w->inherits("HexSpinBox") ||
+		w->inherits("DoubleSpinBox")
+		)
 			{
 			w->close();
 			return;
@@ -441,16 +472,16 @@ void MainWindow::KeysPoll()
 				else if(mask==OKT_KEY_LEFT_MASK)
 					{
 					QApplication::postEvent(w,
-						new QKeyEvent(QEvent::KeyPress,
-						Qt::Key_Left,
-						Qt::NoModifier));
+					new QKeyEvent(QEvent::KeyPress,
+					Qt::Key_Left,
+					Qt::NoModifier));
 					}
 				else if(mask==OKT_KEY_RIGHT_MASK)
 					{
 					QApplication::postEvent(w,
-						new QKeyEvent(QEvent::KeyPress,
-						Qt::Key_Right,
-						Qt::NoModifier));
+					new QKeyEvent(QEvent::KeyPress,
+					Qt::Key_Right,
+					Qt::NoModifier));
 					}
 				else if(mask==OKT_KEY_ENTER_MASK)
 					{
@@ -462,13 +493,13 @@ void MainWindow::KeysPoll()
 					else
 						{
 						QApplication::postEvent(w,
-									new QKeyEvent(QEvent::KeyPress,
-									Qt::Key_Space,
-									Qt::NoModifier));
+						new QKeyEvent(QEvent::KeyPress,
+						Qt::Key_Space,
+						Qt::NoModifier));
 						QApplication::postEvent(w,
-									new QKeyEvent(QEvent::KeyRelease,
-									Qt::Key_Space,
-									Qt::NoModifier));
+						new QKeyEvent(QEvent::KeyRelease,
+						Qt::Key_Space,
+						Qt::NoModifier));
 						}
 					}
 				else if(mask==OKT_KEY_ESC_MASK)
@@ -481,9 +512,9 @@ void MainWindow::KeysPoll()
 					}
 				}
 			else if(((KeyTimeCnt[i]>1000)&&(KeyTimeCnt[i]%50==0)) ||
-				((KeyTimeCnt[i]>3000)&&(KeyTimeCnt[i]%5==0)) ||
-				((KeyTimeCnt[i]>6000))
-				)
+			((KeyTimeCnt[i]>3000)&&(KeyTimeCnt[i]%5==0)) ||
+			((KeyTimeCnt[i]>6000))
+			)
 				{
 				CheckGrowKeys(mask);
 				}

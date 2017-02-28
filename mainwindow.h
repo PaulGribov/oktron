@@ -80,7 +80,7 @@ class MainWindow : public QMainWindow
 		void CheckGrowKeys(unsigned short mask);
 		void DataSender();
 		void Retranslate();
-
+		void ChangesCopyBetweenRegsStateChanged();
 
 	private:
 		Ui::MainWindow *ui;
@@ -91,6 +91,7 @@ class MainWindow : public QMainWindow
 		QTimer *KeysPoll_QTimer;
 		QTimer *DataSender_QTimer;
 		qint64 time_scale;
+		bool ChangesCopyBetweenRegsState;
 
 	};
 

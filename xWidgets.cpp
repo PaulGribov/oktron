@@ -1,6 +1,44 @@
 #include "xWidgets.h"
 #include "mainwindow.h"
 
+QString xCheckBoxSelectedStyleSheet="\
+	::indicator:checked {\
+	border-width: 0px;\
+	image: url(:/images/but_on_enabled.png);}\
+	::indicator:unchecked {\
+	border-width: 0px;\
+	image: url(:/images/but_off_enabled.png);}\
+	:enabled {\
+	border-image: url(:/images/border_but0_enabled.png)10;\
+	border-width: 10px;\
+	color: white;\
+	font: 18pt; }\
+	:disabled {\
+	border-image: url(:/images/border_but0_disabled.png) 10;\
+	border-width: 10px;\
+	color: white;\
+	font: 18pt; }\
+	";
+
+QString xCheckBoxNormalStyleSheet="\
+	::indicator:checked {\
+	border-width: 0px;\
+	image: url(:/images/but_on_enabled.png);}\
+	::indicator:unchecked {\
+	border-width: 0px;\
+	image: url(:/images/but_off_enabled.png);}\
+	:enabled {\
+	border-image: url(:/images/border_but3_enabled.png) 10;\
+	border-width: 10px;\
+	color: rgb(5,116,174);\
+	font: 18pt; }\
+	:disabled {\
+	border-image: url(:/images/border_but3_disabled.png) 10;\
+	border-width: 10px;\
+	color: rgb(154,154,154);\
+	font: 18pt; }\
+	";
+
 QString xButtonSelectedStyleSheet="\
 	:enabled {\
 	border-image: url(:/images/border_but0_enabled.png)10;\
@@ -167,6 +205,38 @@ QString xTableViewStyleSheet="\
 	";
 
 QString xTabStyleSheet="";
+
+xCheckBox::xCheckBox(QWidget *parent) : QCheckBox(parent)
+	{
+	setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+	setStyleSheet(xCheckBoxNormalStyleSheet);
+	installEventFilter(this);
+	}
+
+bool xCheckBox::eventFilter(QObject *obj, QEvent *e)
+	{
+	switch(e->type())
+		{
+		case QEvent::FocusIn:
+			setStyleSheet(xCheckBoxSelectedStyleSheet);
+			break;
+		case QEvent::FocusOut:
+			setStyleSheet(xCheckBoxNormalStyleSheet);
+			break;
+		case QEvent::KeyPress:
+			break;
+		case QEvent::MouseMove:
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonDblClick:
+			{
+			MainWindow::IdleTimeout=0;
+			}
+			break;
+		default:
+			break;
+		}
+	return QObject::eventFilter(obj, e);
+	}
 
 xButton::xButton(int v, const QIcon &icon, int icon_size, Qt::ToolButtonStyle style, QWidget *parent) : QToolButton(parent)
 	{

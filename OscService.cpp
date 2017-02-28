@@ -79,6 +79,7 @@ TOscService::TOscService(QWidget *OscList_parent, QWidget *ParametersView_parent
 	OscList_TableView->setStyleSheet(xTableViewStyleSheet);
 	OscList_TableView->verticalHeader()->setVisible(false);
 	OscList_TableView->setShowGrid(false);
+	OscList_TableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 	QHeaderView *verticalHeader = OscList_TableView->verticalHeader();
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 	verticalHeader->sectionResizeMode(QHeaderView::Fixed);

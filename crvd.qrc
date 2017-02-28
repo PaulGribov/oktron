@@ -44,5 +44,7 @@
         <file>images/border_but2_pressed.png</file>
         <file>images/spin_down_enabled.png</file>
         <file>images/spin_up_enabled.png</file>
+        <file>images/but_off_enabled.png</file>
+        <file>images/but_on_enabled.png</file>
     </qresource>
 </RCC>

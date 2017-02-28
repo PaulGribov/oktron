@@ -19,6 +19,7 @@ TEventsLog::TEventsLog(QWidget *obj_MainWindow) : QWidget(obj_MainWindow)
 	EventsList_TableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	EventsList_TableView->setStyleSheet(xTableViewStyleSheet);
 	EventsList_TableView->verticalHeader()->setVisible(false);
+	EventsList_TableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 	//EventsList_TableView->setShowGrid(false);
 	QHeaderView *verticalHeader = EventsList_TableView->verticalHeader();
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))

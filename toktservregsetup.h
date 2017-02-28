@@ -61,18 +61,17 @@ typedef enum { afNot=0,			//Не влияет на другие параметр
 
 //Размерность параметра и тип отображения
 typedef enum { tyName=0,		//Название
-		tyTitle,		//Заголовок
-		tyYesNo,		//Двоичный формат. Если параметр равен "0" то индицировать "НЕТ", иначе индицировать "ДА "
-		tyButton,		//Параметр "Кнопка"
-		tyHexChar,		//HEX формат отображения 1 байт
-		tyHexShort,		//HEX формат отображения 2 байта
-		tyUnsigned,		//Десятичный, беззнаковый формат
-		tySigned		//Десятичный, знаковый формат
-		} TRegSetupParType;
+	tyTitle,		//Заголовок
+	tyYesNo,		//Двоичный формат. Если параметр равен "0" то индицировать "НЕТ", иначе индицировать "ДА "
+	tyButton,		//Параметр "Кнопка"
+	tyHexChar,		//HEX формат отображения 1 байт
+	tyHexShort,		//HEX формат отображения 2 байта
+	tyUnsigned,		//Десятичный, беззнаковый формат
+	tySigned		//Десятичный, знаковый формат
+	} TRegSetupParType;
 
 typedef enum { db1_0=0, db1_28, db2_56, db5_12 } TRegSetupParDivBy;
 typedef enum { odb1_0=0, odb0_1, odb0_01, odb0_001 } TRegSetupParOrder;
-
 
 //Столбцы таблицы
 typedef enum  {REGSETUPLIST_NAME_COL=0, REGSETUPLIST_VAL_COL, REGSETUPLIST_PLUSBUT_COL, REGSETUPLIST_MINUSBUT_COL, REGSETUPLIST_READBUT_COL, REGSETUPLIST_WRITEBUT_COL, REGSETUPLIST_STATUS_COL, REGSETUPLIST_COLS_NUM } TRegSetupListColumn;
@@ -109,6 +108,7 @@ class TRegSetupPar : public QWidget
 		bool EditorIsOpened[REGSETUPLIST_COLS_NUM];
 
 		bool IsEditable[REGSETUPLIST_COLS_NUM]; //Для хранения знаачения из поля StandartItem
+
 
 	private:
 		int Index;
@@ -224,6 +224,7 @@ class RegSetupTableView : public QTableView
 		TRegSetupPar **pRegSetupPars;
 		TGetBlocksIDPar **pGetBlocksIDPars;
 		void *OSRS_parent;
+		void verticalScrollbarValueChanged(int);
 #ifndef  REGSETUPLIST_PERSISTENT_EDITORS
 		void OpenEditor4Index(QModelIndex current);
 		void CloseEditor4Index(QModelIndex previous);
@@ -232,26 +233,80 @@ class RegSetupTableView : public QTableView
 #endif
 	};
 
-typedef struct
+class VertLabel : public QLabel
 	{
-	RegSetupTableView *TableView;
-	QStandardItemModel Model;
-	QVBoxLayout *Layout;
-	struct
-		{
-		QFrame *Frame;
+	public:
+		void paintEvent(QPaintEvent *)
+			{
+			QStylePainter painter(this);
+			painter.rotate(90);
+			painter.drawText(0, 0, text());
+			}
+	};
+
+class TRegSetupWidgets : public QWidget
+	{
+	public:
+		explicit TRegSetupWidgets(QWidget *NextFocusChain, TRegSetupPar **pRegSetupPars, TGetBlocksIDPar **pGetBlocksIDPars);
+
+		void StartLoad()
+			{
+			LoadPars.Label->setText(tr("Загрузка параметров ..."));
+			LoadPars.Layout->setAlignment(LoadPars.Label, Qt::AlignHCenter | Qt::AlignBottom);
+			LoadPars.Frame->setVisible(true);
+			LoadPars.ProgressBar->setVisible(true);
+			LoadPars.ProgressBar->setRange(1,100);
+			LoadPars.ProgressBar->setValue(1);
+			TableView->setVisible(false);
+			PgUp_Button->setVisible(false);
+			PgTxt_Label->setVisible(false);
+			PgDn_Button->setVisible(false);
+			}
+		void ShowList()
+			{
+			LoadPars.Layout->setAlignment(LoadPars.Label, Qt::AlignHCenter | Qt::AlignVCenter);
+			LoadPars.Frame->setVisible(false);
+			LoadPars.ProgressBar->setVisible(false);
+			TableView->setVisible(true);
+			PgUp_Button->setVisible(true);
+			PgTxt_Label->setVisible(true);
+			PgDn_Button->setVisible(true);
+			}
+		void ShowErr(QString ErrMsg)
+			{
+			LoadPars.Label->setText(ErrMsg);
+			LoadPars.Layout->setAlignment(LoadPars.Label, Qt::AlignHCenter | Qt::AlignVCenter);
+			LoadPars.Frame->setVisible(true);
+			LoadPars.ProgressBar->setVisible(false);
+			TableView->setVisible(false);
+			PgUp_Button->setVisible(false);
+			PgTxt_Label->setVisible(false);
+			PgDn_Button->setVisible(false);
+			ButtonsBar.Close_Button->setFocus();
+			}
+
+		RegSetupTableView *TableView;
+		QStandardItemModel Model;
 		QVBoxLayout *Layout;
-		QLabel *Label;
-		QProgressBar *ProgressBar;
-		} LoadPars;
-	struct
-		{
-		QHBoxLayout *Layout;
-		xButton *Reload_Button;
-		xButton *Close_Button;
-		} ButtonsBar;
-	QWidget *Focused;
-	} TRegSetupWidgets;
+		QHBoxLayout *Table_Layout;
+		QVBoxLayout *PgButs_Layout;
+		xButton *PgUp_Button;
+		xButton *PgDn_Button;
+		VertLabel *PgTxt_Label;
+		struct
+			{
+			QFrame *Frame;
+			QVBoxLayout *Layout;
+			QLabel *Label;
+			QProgressBar *ProgressBar;
+			} LoadPars;
+		struct
+			{
+			QHBoxLayout *Layout;
+			xButton *Reload_Button;
+			xButton *Close_Button;
+			} ButtonsBar;
+	};
 
 
 class TOktServRegSetup : public QWidget
@@ -260,7 +315,7 @@ class TOktServRegSetup : public QWidget
 	public:
 		explicit TOktServRegSetup(QWidget *RegSetupParent=NULL, QWidget *GetBlocksIDParent=NULL, TOktServ *OktServ=NULL);
 
-
+		xButton *ChangesCopyBetweenRegs_Button;
 		xButton *SettingsApply_Button;
 		xButton *SaveSettings_Button;
 
@@ -274,13 +329,12 @@ class TOktServRegSetup : public QWidget
 		TOktServ *OktServ;
 		QTimer *RegSetup_QTimer;
 
-		TRegSetupWidgets RegSetup;
+		TRegSetupWidgets *RegSetup;
 		TRegSetupList_ItemDelegate *RegSetupList_ItemDelegate;
 
-		TRegSetupWidgets GetBlocksID;
+		TRegSetupWidgets *GetBlocksID;
 		TGetBlocksIDList_ItemDelegate *GetBlocksIDList_ItemDelegate;
 
-		void RegSetupWidgetsCreate(TRegSetupWidgets &, QWidget *NextFocusChain, TRegSetupPar **pRegSetupPars, TGetBlocksIDPar **pGetBlocksIDPars);
 		void WidgetsEnabled(bool);
 
 		TRegSetupPar **pRegSetupPars;
@@ -304,8 +358,10 @@ class TOktServRegSetup : public QWidget
 			return false;
 			}
 
-		bool PostReqWithStatusClear(TRegSetupCmd c, int index)
+		bool PostReqWithStatusClear(TRegSetupCmd c, int index, bool from_slot=false)
 			{
+			if(!from_slot) RegSetupReqEvent_Signal(c, index);
+
 			if(!pRegSetupPars[index]->Enabled) return false;
 			for(int i=0;i<REG_SETUP_PARS_NUM;i++)
 				{
@@ -317,8 +373,6 @@ class TOktServRegSetup : public QWidget
 				}
 			return PostReq(c, index);
 			}
-
-
 
 		void RegSetupParSetFlags(int);
 		QStringList GetBlocksID_StringList;
@@ -341,7 +395,7 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 		int LastErrorCode;
 		QStringList RegSetupErrors_StringList;
 		int StartupDelay;
-
+		void ChangeValEvent(int, int);
 
 	private:
 		int Hex2Byte_LoadHEX_GetBlocksID(QString HexLine, int &p, int &CRC, bool &res);
@@ -368,6 +422,9 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 		void RegSetup_CloseSignal();
 		void GetBlocksID_CloseSignal();
 
+		void RegSetupReqEvent_Signal(TRegSetupCmd, int);		
+		void ChangeValEvent_Signal(int, int);
+
 	public slots:
 		void ReadSettingsDesc();
 		void RegSetupReq();
@@ -377,9 +434,10 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 		void SaveSettings();
 		void GetBlocksID_CloseSlot();
 		void GetBlocksIDSlot();
-
+		void RegSetupReqEvent_Slot(TRegSetupCmd, int);
+		void ChangeValEvent_Slot(int, int);
 	};
 
-//#define REGSETUPDBG
+#define REGSETUPDBG
 
 #endif // TOKTSERVREGSETUP_H
