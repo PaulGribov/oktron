@@ -202,40 +202,12 @@ class TGetBlocksIDList_ItemDelegate : public QStyledItemDelegate
 		void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
 	};
 
-
-class RegSetupTableView : public QTableView
-	{
-		Q_OBJECT
-	public:
-		RegSetupTableView(QWidget *NextFocusChain=NULL, TRegSetupPar **pRegSetupPars=NULL, TGetBlocksIDPar **pGetBlocksIDPars=NULL, void *parent=NULL) : QTableView()
-			{
-			this->NextFocusChain=NextFocusChain;
-			this->pRegSetupPars=pRegSetupPars;
-			this->pGetBlocksIDPars=pGetBlocksIDPars;
-			OSRS_parent=parent;
-			setStyleSheet(xTableViewStyleSheet);
-			verticalHeader()->setVisible(false);
-#ifndef REGSETUPLIST_PERSISTENT_EDITORS
-			installEventFilter(this);
-#endif
-			}
-
-		QWidget *NextFocusChain;
-		TRegSetupPar **pRegSetupPars;
-		TGetBlocksIDPar **pGetBlocksIDPars;
-		void *OSRS_parent;
-		void verticalScrollbarValueChanged(int);
-#ifndef  REGSETUPLIST_PERSISTENT_EDITORS
-		void OpenEditor4Index(QModelIndex current);
-		void CloseEditor4Index(QModelIndex previous);
-		void currentChanged(const QModelIndex &current, const QModelIndex &previous);
-		bool eventFilter(QObject *obj, QEvent *e);
-#endif
-	};
-
 class VertLabel : public QLabel
 	{
 	public:
+		VertLabel(QWidget *parent=NULL) : QLabel(parent)
+			{
+			}
 		void paintEvent(QPaintEvent *)
 			{
 			QStylePainter painter(this);
@@ -243,6 +215,141 @@ class VertLabel : public QLabel
 			painter.drawText(0, 0, text());
 			}
 	};
+
+#define REGSETUP_LIST_PAGESIZE	8
+
+class RegSetupTableView : public QTableView
+	{
+		Q_OBJECT
+	public:
+		RegSetupTableView(QWidget *NextFocusChain=NULL, TRegSetupPar **pRegSetupPars=NULL, TGetBlocksIDPar **pGetBlocksIDPars=NULL, bool ViewByPageMode=false, void *parent=NULL) : QTableView()
+			{
+			this->NextFocusChain=NextFocusChain;
+			this->pRegSetupPars=pRegSetupPars;
+			this->pGetBlocksIDPars=pGetBlocksIDPars;
+			this->ViewByPageMode=ViewByPageMode;
+			OSRS_parent=parent;
+			setStyleSheet(xTableViewStyleSheet);
+#ifndef REGSETUPLIST_PERSISTENT_EDITORS
+			installEventFilter(this);
+#endif
+			setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+#ifdef __i386__
+			setMinimumHeight(270);
+			setMinimumWidth(600);
+#endif
+			verticalHeader()->setVisible(false);
+			setSelectionMode(QAbstractItemView::SingleSelection);
+			setSelectionBehavior(QAbstractItemView::SelectRows);
+			setIconSize(QSize(28,28));
+			setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+			horizontalHeader()->setVisible(false);
+			if(ViewByPageMode)
+				{
+				setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+				PgUp_Button = new xButton(GenBut, QIcon(":/images/spin_up_enabled.png"), 32, Qt::ToolButtonIconOnly, this);
+				PgUp_Button->setMaximumWidth(45);
+				connect(PgUp_Button, SIGNAL(clicked()), this, SLOT(PgUp_OnClick()));
+				PgDn_Button = new xButton(GenBut, QIcon(":/images/spin_down_enabled.png"), 32, Qt::ToolButtonIconOnly, this);
+				PgDn_Button->setMaximumWidth(45);
+				connect(PgDn_Button, SIGNAL(clicked()), this, SLOT(PgDn_OnClick()));
+				PgTxt_Label = new VertLabel(this);
+				PgTxt_Label->setStyleSheet(
+#ifdef __i386__
+	"color: rgb(5,116,174); font: 16pt;"
+#else
+	"color: rgb(5,116,174); font: 22pt;"
+#endif
+					);
+				PgTxt_Label->setMaximumWidth(32);
+				}
+			else
+				{
+				PgUp_Button=NULL;
+				PgDn_Button=NULL;
+				PgTxt_Label=NULL;
+				}
+			}
+
+		QWidget *NextFocusChain;
+		TRegSetupPar **pRegSetupPars;
+		TGetBlocksIDPar **pGetBlocksIDPars;
+		void *OSRS_parent;		
+#ifndef  REGSETUPLIST_PERSISTENT_EDITORS
+		void OpenEditor4Index(QModelIndex current);
+		void CloseEditor4Index(QModelIndex previous);
+		void currentChanged(const QModelIndex &current, const QModelIndex &previous);
+		bool eventFilter(QObject *obj, QEvent *e);
+#endif
+		xButton *PgUp_Button;
+		xButton *PgDn_Button;
+		VertLabel *PgTxt_Label;
+		//Событие изменения позиции вертикального ScrollBar'а
+		void verticalScrollbarValueChanged(int val)
+			{
+			int page2print;
+			if(ViewByPageMode)
+				{
+				QRect rect=this->viewport()->rect();
+				//Текщуая строка, выранная
+				int currentRow = this->selectionModel()->currentIndex().row();
+				//Верхняя строка
+				int topRow = this->indexAt(rect.topLeft()).row();
+				//Если есть остаток => был сдвиг содержимого => переход на др.страницу
+				if(topRow%REGSETUP_LIST_PAGESIZE>0)
+					{
+					//Сдвиг вниз?
+					if((currentRow-topRow)>(REGSETUP_LIST_PAGESIZE/2))
+						{
+						//Перемещение содержимого в соответствии странице
+						this->selectRow(((topRow/REGSETUP_LIST_PAGESIZE)+2)*REGSETUP_LIST_PAGESIZE-1);
+						//Выбор верхней строки
+						this->selectRow(((topRow/REGSETUP_LIST_PAGESIZE)+1)*REGSETUP_LIST_PAGESIZE);
+						//т.к. количество строк в окне не ровно 8, то при открытии последней страницы
+						//первая строка в окне не кратна 8 => не печатается её номер, надо сделать это отдельно...
+						if((topRow==this->model()->rowCount()-REGSETUP_LIST_PAGESIZE-1))
+							{
+							page2print=(topRow+1)/REGSETUP_LIST_PAGESIZE+1;
+							goto PrintPageNum_loc;
+							}
+						}
+					//Сдвиг вверх
+					else
+						{
+						//Перемещение содержимого в соответствии странице
+						this->selectRow(((topRow/REGSETUP_LIST_PAGESIZE))*REGSETUP_LIST_PAGESIZE);
+						//Выбор нижней строки
+						this->selectRow(((topRow/REGSETUP_LIST_PAGESIZE)+1)*REGSETUP_LIST_PAGESIZE-1);
+						}
+					}
+				else
+					{
+					page2print=topRow/REGSETUP_LIST_PAGESIZE+1;
+PrintPageNum_loc:
+					PgTxt_Label->setText(tr("СТРАНИЦА %1").arg(page2print));
+					}
+				}
+			QTableView::verticalScrollbarValueChanged(val);
+			}
+
+	public slots:
+		void PgUp_OnClick()
+			{
+			int currentRow = this->selectionModel()->currentIndex().row();
+			if(currentRow+1>REGSETUP_LIST_PAGESIZE) this->selectRow(currentRow-REGSETUP_LIST_PAGESIZE);
+			else this->selectRow(0);
+			}
+		void PgDn_OnClick()
+			{
+			int currentRow = this->selectionModel()->currentIndex().row();
+			if(currentRow+REGSETUP_LIST_PAGESIZE<this->model()->rowCount()) this->selectRow(currentRow+REGSETUP_LIST_PAGESIZE);
+			else this->selectRow(this->model()->rowCount()-1);
+			}
+	private:
+		bool ViewByPageMode;
+
+	};
+
 
 class TRegSetupWidgets : public QWidget
 	{
@@ -258,9 +365,12 @@ class TRegSetupWidgets : public QWidget
 			LoadPars.ProgressBar->setRange(1,100);
 			LoadPars.ProgressBar->setValue(1);
 			TableView->setVisible(false);
-			PgUp_Button->setVisible(false);
-			PgTxt_Label->setVisible(false);
-			PgDn_Button->setVisible(false);
+			if(TableView->PgUp_Button)
+				{
+				TableView->PgUp_Button->setVisible(false);
+				TableView->PgTxt_Label->setVisible(false);
+				TableView->PgDn_Button->setVisible(false);
+				}
 			}
 		void ShowList()
 			{
@@ -268,9 +378,13 @@ class TRegSetupWidgets : public QWidget
 			LoadPars.Frame->setVisible(false);
 			LoadPars.ProgressBar->setVisible(false);
 			TableView->setVisible(true);
-			PgUp_Button->setVisible(true);
-			PgTxt_Label->setVisible(true);
-			PgDn_Button->setVisible(true);
+			if(TableView->PgUp_Button)
+				{
+				TableView->PgUp_Button->setVisible(true);
+				TableView->PgTxt_Label->setVisible(true);
+				TableView->PgDn_Button->setVisible(true);
+				TableView->verticalScrollbarValueChanged(0);
+				}
 			}
 		void ShowErr(QString ErrMsg)
 			{
@@ -279,9 +393,12 @@ class TRegSetupWidgets : public QWidget
 			LoadPars.Frame->setVisible(true);
 			LoadPars.ProgressBar->setVisible(false);
 			TableView->setVisible(false);
-			PgUp_Button->setVisible(false);
-			PgTxt_Label->setVisible(false);
-			PgDn_Button->setVisible(false);
+			if(TableView->PgUp_Button)
+				{
+				TableView->PgUp_Button->setVisible(false);
+				TableView->PgTxt_Label->setVisible(false);
+				TableView->PgDn_Button->setVisible(false);
+				}
 			ButtonsBar.Close_Button->setFocus();
 			}
 
@@ -290,9 +407,6 @@ class TRegSetupWidgets : public QWidget
 		QVBoxLayout *Layout;
 		QHBoxLayout *Table_Layout;
 		QVBoxLayout *PgButs_Layout;
-		xButton *PgUp_Button;
-		xButton *PgDn_Button;
-		VertLabel *PgTxt_Label;
 		struct
 			{
 			QFrame *Frame;

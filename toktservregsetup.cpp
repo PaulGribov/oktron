@@ -56,19 +56,8 @@ TRegSetupWidgets::TRegSetupWidgets(QWidget *NextFocusChain, TRegSetupPar **pRegS
 
 	if((pRegSetupPars)||(pGetBlocksIDPars))
 		{
-		TableView = new RegSetupTableView(NextFocusChain?NextFocusChain:ButtonsBar.Reload_Button, pRegSetupPars, pGetBlocksIDPars, this);
+		TableView = new RegSetupTableView(NextFocusChain?NextFocusChain:ButtonsBar.Reload_Button, pRegSetupPars, pGetBlocksIDPars, pRegSetupPars!=NULL, this);
 		TableView->setModel(&Model);
-		TableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-#ifdef __i386__
-		TableView->setMinimumHeight(270);
-		TableView->setMinimumWidth(600);
-#endif
-		TableView->setSelectionMode(QAbstractItemView::SingleSelection);
-		TableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-		TableView->setIconSize(QSize(28,28));
-		TableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-		TableView->horizontalHeader()->setVisible(false);
-		TableView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
 		//Выстота строки в таблице...
 		QHeaderView *verticalHeader = TableView->verticalHeader();
@@ -85,18 +74,14 @@ TRegSetupWidgets::TRegSetupWidgets(QWidget *NextFocusChain, TRegSetupPar **pRegS
 #endif
 		Table_Layout = new QHBoxLayout();
 		Table_Layout->addWidget(TableView);
-		PgButs_Layout = new QVBoxLayout();
-		Table_Layout->addLayout(PgButs_Layout);
-		PgUp_Button = new xButton(GenBut, QIcon(":/images/spin_up_enabled.png"), 32, Qt::ToolButtonIconOnly);
-		PgUp_Button->setMaximumWidth(45);
-		PgButs_Layout->addWidget(PgUp_Button);
-		PgTxt_Label = new VertLabel();
-		PgTxt_Label->setStyleSheet("color: rgb(5,116,174); font: 18pt;");
-		PgTxt_Label->setMaximumWidth(32);
-		PgButs_Layout->addWidget(PgTxt_Label);
-		PgDn_Button = new xButton(GenBut, QIcon(":/images/spin_down_enabled.png"), 32, Qt::ToolButtonIconOnly);
-		PgDn_Button->setMaximumWidth(45);
-		PgButs_Layout->addWidget(PgDn_Button);
+		if(TableView->PgUp_Button)
+			{
+			PgButs_Layout = new QVBoxLayout();
+			Table_Layout->addLayout(PgButs_Layout);
+			PgButs_Layout->addWidget(TableView->PgUp_Button);
+			PgButs_Layout->addWidget(TableView->PgTxt_Label);
+			PgButs_Layout->addWidget(TableView->PgDn_Button);
+			}
 		}
 
 	Layout=new QVBoxLayout();
@@ -169,7 +154,9 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 
 	PrevWidget=RegSetupParent->parentWidget();
 	RegSetupParent->parentWidget()->parentWidget()->setTabOrder(RegSetupParent->parentWidget(), RegSetup->TableView);
-	RegSetupParent->parentWidget()->parentWidget()->setTabOrder(RegSetup->TableView, ChangesCopyBetweenRegs_Button);
+	RegSetupParent->parentWidget()->parentWidget()->setTabOrder(RegSetup->TableView, RegSetup->TableView->PgUp_Button);
+	RegSetupParent->parentWidget()->parentWidget()->setTabOrder(RegSetup->TableView->PgUp_Button, RegSetup->TableView->PgDn_Button);
+	RegSetupParent->parentWidget()->parentWidget()->setTabOrder(RegSetup->TableView->PgDn_Button, ChangesCopyBetweenRegs_Button);
 	RegSetupParent->parentWidget()->parentWidget()->setTabOrder(ChangesCopyBetweenRegs_Button, SettingsApply_Button);
 	RegSetupParent->parentWidget()->parentWidget()->setTabOrder(SettingsApply_Button, SaveSettings_Button);
 	RegSetupParent->parentWidget()->parentWidget()->setTabOrder(SaveSettings_Button, RegSetup->ButtonsBar.Reload_Button);
@@ -201,7 +188,6 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 
 void TOktServRegSetup::Retranslate()
 	{
-	RegSetup->PgTxt_Label->setText(tr("СТРАНИЦА 8"));
 	YESNO_sl.clear();
 	YESNO_sl << tr("НЕТ") << tr("ДА");
 	ChangesCopyBetweenRegs_Button->setText(tr("КОПИР.:\nОСН.-РЕЗ."));
@@ -241,28 +227,6 @@ void TOktServRegSetup::Retranslate()
 	<< tr("12") << tr("Блок связи с дисплейным процессором") << tr("T8W-");
 #define INSTALLED_FW_TEXT	"Текущ.:"
 #define AVAILABLE_FW_TEXT	" Доступ.:"
-	}
-
-void RegSetupTableView::verticalScrollbarValueChanged(int val)
-	{
-	QRect rect=this->viewport()->rect();
-	int currentRow = this->selectionModel()->currentIndex().row();
-	int topRow = this->indexAt(rect.topLeft()).row();
-	if(topRow%8>0)
-		{
-		if((currentRow-topRow)>4)
-			{
-			this->selectRow(((topRow/8)+2)*8-1);
-			this->selectRow(((topRow/8)+1)*8);
-			}
-		else
-			{
-			this->selectRow(((topRow/8))*8);
-			this->selectRow(((topRow/8)+1)*8-1);
-			}
-		}
-	qDebug()<<tr("%1").arg(topRow);
-	QTableView::verticalScrollbarValueChanged(val);
 	}
 
 void TOktServRegSetup::Start_Service()
@@ -311,22 +275,15 @@ void TOktServRegSetup::RegSetup_CloseSlotInternal()
 
 void TOktServRegSetup::SettingsApply()
 	{
-	//RegSetup->TableView->selectRow(1);
-	//RegSetup->TableView->scroll(0,10);
-	//RegSetup->Model.setHeaderData(1,Qt::Vertical);
-	//PostReqWithStatusClear(CMD_SETTINGS_APPLY, 0);
+	PostReqWithStatusClear(CMD_SETTINGS_APPLY, 0);
 	}
 
 void TOktServRegSetup::SaveSettings()
 	{
-	//RegSetup->TableView->scroll(0,200);
-	//RegSetup->TableView->selectRow(200);
-	//egSetup.Model.setHeaderData(200,Qt::Vertical);
-	/*
 	for(int i=0;i<REG_SETUP_PARS_NUM;i++)
 		{
 		PostReqWithStatusClear(CMD_SAVE_VAL, i);
-		}*/
+		}
 	}
 
 const float Order[]={1.0, 0.1, 0.01, 0.001};
@@ -629,6 +586,7 @@ void TOktServRegSetup::WidgetsEnabled(bool e)
 	//Скрыть кнопку
 	if(!e)
 		{
+		ChangesCopyBetweenRegs_Button->setEnabled(false);
 		SettingsApply_Button->setEnabled(false);
 		SaveSettings_Button->setEnabled(false);
 		for(int i=0;i<REG_SETUP_PARS_NUM;i++)
@@ -648,6 +606,7 @@ void TOktServRegSetup::WidgetsEnabled(bool e)
 		{
 		if(RegSetup->TableView->isEnabled())
 			{
+			ChangesCopyBetweenRegs_Button->setEnabled(true);
 			SettingsApply_Button->setEnabled(true);
 			SaveSettings_Button->setEnabled(true);
 			}
@@ -1116,7 +1075,7 @@ ErrorCmd_loc:
 #ifdef REGSETUPDBG
 					//Значение
 					pRegSetupPars[ParameterIndex]->Value = 123;
-					pRegSetupPars[ParameterIndex]->Name=tr("тест");
+					pRegSetupPars[ParameterIndex]->Name=tr("тест %1").arg(ParameterIndex);
 					pRegSetupPars[ParameterIndex]->Enabled=1;
 					pRegSetupPars[ParameterIndex]->Writable=1;//ParameterIndex&1;
 					pRegSetupPars[ParameterIndex]->Affect=(TRegSetupParAffect)0;
