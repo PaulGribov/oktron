@@ -85,7 +85,7 @@ TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWind
 	#ifndef __i386__
 		, "ttySP1"
 	#else
-		, "ttyUSB0"
+		, "ttyS0"
 	#endif
 #endif
 		, (((MainWindow *)obj_MainWindow)->Reg1_Label)[0]
@@ -96,7 +96,7 @@ TProgSettings::TProgSettings(QWidget *obj_MainWindow) : QMainWindow(obj_MainWind
 	#ifndef __i386__
 		, "ttySP2"
 	#else
-		, "ttyS0"
+		, "ttyUSB0"
 	#endif
 #endif
 		, (((MainWindow *)obj_MainWindow)->Reg1_Label)[1]

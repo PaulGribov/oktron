@@ -84,6 +84,7 @@ class MainWindow : public QMainWindow
 
 	private:
 		Ui::MainWindow *ui;
+		TOktServExt *cur_okt_serv;
 
 		unsigned short KeysState;
 #define OKT_KEYS_NUM	16

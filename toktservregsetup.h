@@ -84,13 +84,20 @@ class TRegSetupPar : public QWidget
 			{
 			Index=index;
 			OSRS_parent=parent;
+			Clear();
+			}
+		void Clear()
+			{
 			for(int i=0;i<REGSETUPLIST_COLS_NUM;i++)
 				{
 				pCell[i]=NULL;
 				EditorIsOpened[i]=false;
 				}
 			Enabled=false;
+			NeedToReadName=true;
+			NeedToReadVal=true;
 			}
+
 		int Value;
 		QString Name;
 		bool Enabled;
@@ -108,6 +115,8 @@ class TRegSetupPar : public QWidget
 		bool EditorIsOpened[REGSETUPLIST_COLS_NUM];
 
 		bool IsEditable[REGSETUPLIST_COLS_NUM]; //Для хранения знаачения из поля StandartItem
+		bool NeedToReadName;
+		bool NeedToReadVal;
 
 
 	private:
@@ -163,6 +172,10 @@ class TGetBlocksIDPar : public QWidget
 			{
 			Index=index;
 			OSRS_parent=parent;
+			Clear();
+			}
+		void Clear()
+			{
 			for(int i=0;i<GETBLOCKSID_COLS_NUM;i++)
 				{
 				pCell[i]=NULL;
@@ -205,15 +218,7 @@ class TGetBlocksIDList_ItemDelegate : public QStyledItemDelegate
 class VertLabel : public QLabel
 	{
 	public:
-		VertLabel(QWidget *parent=NULL) : QLabel(parent)
-			{
-			}
-		void paintEvent(QPaintEvent *)
-			{
-			QStylePainter painter(this);
-			painter.rotate(90);
-			painter.drawText(0, 0, text());
-			}
+		void paintEvent(QPaintEvent *);
 	};
 
 #define REGSETUP_LIST_PAGESIZE	8
@@ -235,13 +240,13 @@ class RegSetupTableView : public QTableView
 #endif
 			setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 #ifdef __i386__
-			setMinimumHeight(270);
-			setMinimumWidth(600);
+			setFixedHeight(270);
+			setFixedWidth(600);
 #endif
 			verticalHeader()->setVisible(false);
 			setSelectionMode(QAbstractItemView::SingleSelection);
 			setSelectionBehavior(QAbstractItemView::SelectRows);
-			setIconSize(QSize(28,28));
+			setIconSize(QSize(26,26));
 			setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 			horizontalHeader()->setVisible(false);
 			if(ViewByPageMode)
@@ -249,16 +254,18 @@ class RegSetupTableView : public QTableView
 				setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 				PgUp_Button = new xButton(GenBut, QIcon(":/images/spin_up_enabled.png"), 32, Qt::ToolButtonIconOnly, this);
 				PgUp_Button->setMaximumWidth(45);
+				PgUp_Button->setMaximumHeight(45);
 				connect(PgUp_Button, SIGNAL(clicked()), this, SLOT(PgUp_OnClick()));
 				PgDn_Button = new xButton(GenBut, QIcon(":/images/spin_down_enabled.png"), 32, Qt::ToolButtonIconOnly, this);
 				PgDn_Button->setMaximumWidth(45);
+				PgDn_Button->setMaximumHeight(45);
 				connect(PgDn_Button, SIGNAL(clicked()), this, SLOT(PgDn_OnClick()));
-				PgTxt_Label = new VertLabel(this);
+				PgTxt_Label = new VertLabel();
 				PgTxt_Label->setStyleSheet(
 #ifdef __i386__
-	"color: rgb(5,116,174); font: 16pt;"
+	"color: rgb(5,116,174); font: 12pt;"
 #else
-	"color: rgb(5,116,174); font: 22pt;"
+	"color: rgb(5,116,174); font: 16pt;"
 #endif
 					);
 				PgTxt_Label->setMaximumWidth(32);
@@ -274,7 +281,7 @@ class RegSetupTableView : public QTableView
 		QWidget *NextFocusChain;
 		TRegSetupPar **pRegSetupPars;
 		TGetBlocksIDPar **pGetBlocksIDPars;
-		void *OSRS_parent;		
+		void *OSRS_parent;
 #ifndef  REGSETUPLIST_PERSISTENT_EDITORS
 		void OpenEditor4Index(QModelIndex current);
 		void CloseEditor4Index(QModelIndex previous);
@@ -285,66 +292,12 @@ class RegSetupTableView : public QTableView
 		xButton *PgDn_Button;
 		VertLabel *PgTxt_Label;
 		//Событие изменения позиции вертикального ScrollBar'а
-		void verticalScrollbarValueChanged(int val)
-			{
-			int page2print;
-			if(ViewByPageMode)
-				{
-				QRect rect=this->viewport()->rect();
-				//Текщуая строка, выранная
-				int currentRow = this->selectionModel()->currentIndex().row();
-				//Верхняя строка
-				int topRow = this->indexAt(rect.topLeft()).row();
-				//Если есть остаток => был сдвиг содержимого => переход на др.страницу
-				if(topRow%REGSETUP_LIST_PAGESIZE>0)
-					{
-					//Сдвиг вниз?
-					if((currentRow-topRow)>(REGSETUP_LIST_PAGESIZE/2))
-						{
-						//Перемещение содержимого в соответствии странице
-						this->selectRow(((topRow/REGSETUP_LIST_PAGESIZE)+2)*REGSETUP_LIST_PAGESIZE-1);
-						//Выбор верхней строки
-						this->selectRow(((topRow/REGSETUP_LIST_PAGESIZE)+1)*REGSETUP_LIST_PAGESIZE);
-						//т.к. количество строк в окне не ровно 8, то при открытии последней страницы
-						//первая строка в окне не кратна 8 => не печатается её номер, надо сделать это отдельно...
-						if((topRow==this->model()->rowCount()-REGSETUP_LIST_PAGESIZE-1))
-							{
-							page2print=(topRow+1)/REGSETUP_LIST_PAGESIZE+1;
-							goto PrintPageNum_loc;
-							}
-						}
-					//Сдвиг вверх
-					else
-						{
-						//Перемещение содержимого в соответствии странице
-						this->selectRow(((topRow/REGSETUP_LIST_PAGESIZE))*REGSETUP_LIST_PAGESIZE);
-						//Выбор нижней строки
-						this->selectRow(((topRow/REGSETUP_LIST_PAGESIZE)+1)*REGSETUP_LIST_PAGESIZE-1);
-						}
-					}
-				else
-					{
-					page2print=topRow/REGSETUP_LIST_PAGESIZE+1;
-PrintPageNum_loc:
-					PgTxt_Label->setText(tr("СТРАНИЦА %1").arg(page2print));
-					}
-				}
-			QTableView::verticalScrollbarValueChanged(val);
-			}
+		void verticalScrollbarValueChanged(int val);
 
 	public slots:
-		void PgUp_OnClick()
-			{
-			int currentRow = this->selectionModel()->currentIndex().row();
-			if(currentRow+1>REGSETUP_LIST_PAGESIZE) this->selectRow(currentRow-REGSETUP_LIST_PAGESIZE);
-			else this->selectRow(0);
-			}
-		void PgDn_OnClick()
-			{
-			int currentRow = this->selectionModel()->currentIndex().row();
-			if(currentRow+REGSETUP_LIST_PAGESIZE<this->model()->rowCount()) this->selectRow(currentRow+REGSETUP_LIST_PAGESIZE);
-			else this->selectRow(this->model()->rowCount()-1);
-			}
+		void PgUp_OnClick();
+		void PgDn_OnClick();
+
 	private:
 		bool ViewByPageMode;
 
@@ -354,7 +307,7 @@ PrintPageNum_loc:
 class TRegSetupWidgets : public QWidget
 	{
 	public:
-		explicit TRegSetupWidgets(QWidget *NextFocusChain, TRegSetupPar **pRegSetupPars, TGetBlocksIDPar **pGetBlocksIDPars);
+		explicit TRegSetupWidgets(QWidget *NextFocusChain, TRegSetupPar **pRegSetupPars, TGetBlocksIDPar **pGetBlocksIDPars, QWidget *parent);
 
 		void StartLoad()
 			{
@@ -428,7 +381,20 @@ class TOktServRegSetup : public QWidget
 		Q_OBJECT
 	public:
 		explicit TOktServRegSetup(QWidget *RegSetupParent=NULL, QWidget *GetBlocksIDParent=NULL, TOktServ *OktServ=NULL);
-
+		void RegSetupClear()
+			{
+			for(int i=0;i<REG_SETUP_PARS_NUM;i++)
+				{
+				pRegSetupPars[i]->Clear();
+				}
+			}
+		void GetBlocksIDClear()
+			{
+			for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
+				{
+				pGetBlocksIDPars[i]->Clear();
+				}
+			}
 		xButton *ChangesCopyBetweenRegs_Button;
 		xButton *SettingsApply_Button;
 		xButton *SaveSettings_Button;
@@ -487,7 +453,7 @@ class TOktServRegSetup : public QWidget
 				}
 			return PostReq(c, index);
 			}
-
+		void PostReqOrSetFlags(TRegSetupCmd, int);
 		void RegSetupParSetFlags(int);
 		QStringList GetBlocksID_StringList;
 		void FindHEXs_GetBlocksID();
@@ -536,7 +502,7 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 		void RegSetup_CloseSignal();
 		void GetBlocksID_CloseSignal();
 
-		void RegSetupReqEvent_Signal(TRegSetupCmd, int);		
+		void RegSetupReqEvent_Signal(TRegSetupCmd, int);
 		void ChangeValEvent_Signal(int, int);
 
 	public slots:
@@ -552,6 +518,6 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 		void ChangeValEvent_Slot(int, int);
 	};
 
-#define REGSETUPDBG
+//#define REGSETUPDBG
 
 #endif // TOKTSERVREGSETUP_H

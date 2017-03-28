@@ -44,6 +44,7 @@ Status_Layout->addLayout(a); }
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), ui(new Ui::MainWindow)
 	{
+	cur_okt_serv=NULL;
 	watchdog_fd=NULL;
 	ui->setupUi(this);
 	setStyleSheet("background-color: rgb(235,236,236);");
@@ -533,8 +534,6 @@ void MainWindow::KeysPoll()
 //Обработка данных от сервера
 void MainWindow::DataProcess(TOscDataWithIndic &od, TOscDataWithIndic &previous_od, TOktServExt *okt_serv, int error_flags, bool print)
 	{
-	static TOktServExt *cur_okt_serv;
-
 	if(error_flags==0)
 		{
 		okt_serv->Master = (od.OscData.Packet0.ModeFlags1 & REG_SELECTED_MODEFALGS1_BIT)?true:false;
@@ -565,7 +564,7 @@ data_acquire_loc:
 				}
 
 			//Вывод данных на форму
-			if(print)
+			if((print)&&(cur_okt_serv))
 				{
 				GeneralMeasView->PrintData(od, cur_okt_serv->Name);
 				RegViewSetEnabled(true, okt_serv->server_index);
@@ -576,6 +575,10 @@ data_acquire_loc:
 			}
 		else if(((TOktServExt *)(okt_serv->okt_serv_other))->ErrorFlags)
 			{
+			if(cur_okt_serv==NULL)
+				{
+				cur_okt_serv=((TOktServExt *)(okt_serv->okt_serv_other));
+				}
 			//Проверка перехода на др.регулятор в "пассивном" режиме - отслеживания нуля в бите выбора
 			// -- для случая отсутствия связи с ведущим
 			if(cur_okt_serv==okt_serv)

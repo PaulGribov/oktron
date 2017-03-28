@@ -15,6 +15,34 @@
 
 QStringList TOktServRegSetup::YESNO_sl;
 
+void VertLabel::paintEvent(QPaintEvent *)
+	{
+	QStringList caption=text().split("\n");
+	QStylePainter painter(this);
+	painter.save();
+	int w = width(), h=height();
+	/*
+	//Повернуть на 90
+	painter.translate(w/2, 0);
+	painter.rotate(90);*/
+	//Повернуть на 270
+	painter.translate(w/2, h);
+	painter.rotate(270);
+	if(caption.count()>1)
+		{
+		painter.translate(0, -4);
+		painter.drawText(0, 0, caption[0]);
+		painter.translate(0, w/2+1);
+		painter.drawText(0, 0, caption[1]);
+		}
+	else
+		{
+		painter.drawText(0, 0, text());
+		}
+	painter.restore();
+	drawFrame(&painter);
+	};
+
 void TGetBlocksIDPar::ButClick()
 	{
 	if(OSRS_parent==NULL) return;
@@ -26,7 +54,7 @@ void TGetBlocksIDPar::ButClick()
 	}
 
 
-TRegSetupWidgets::TRegSetupWidgets(QWidget *NextFocusChain, TRegSetupPar **pRegSetupPars, TGetBlocksIDPar **pGetBlocksIDPars)
+TRegSetupWidgets::TRegSetupWidgets(QWidget *NextFocusChain, TRegSetupPar **pRegSetupPars, TGetBlocksIDPar **pGetBlocksIDPars, QWidget *parent)
 	{
 	LoadPars.Frame=new QFrame();
 	LoadPars.Frame->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -56,7 +84,7 @@ TRegSetupWidgets::TRegSetupWidgets(QWidget *NextFocusChain, TRegSetupPar **pRegS
 
 	if((pRegSetupPars)||(pGetBlocksIDPars))
 		{
-		TableView = new RegSetupTableView(NextFocusChain?NextFocusChain:ButtonsBar.Reload_Button, pRegSetupPars, pGetBlocksIDPars, pRegSetupPars!=NULL, this);
+		TableView = new RegSetupTableView(NextFocusChain?NextFocusChain:ButtonsBar.Reload_Button, pRegSetupPars, pGetBlocksIDPars, pRegSetupPars!=NULL, parent);
 		TableView->setModel(&Model);
 
 		//Выстота строки в таблице...
@@ -107,7 +135,7 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 		}
 	Wait4Parameter=false;
 
-	RegSetup = new TRegSetupWidgets(SettingsApply_Button, pRegSetupPars, NULL);
+	RegSetup = new TRegSetupWidgets(SettingsApply_Button, pRegSetupPars, NULL, this);
 	RegSetup->Layout->removeItem(RegSetup->ButtonsBar.Layout);
 #define BUT_WIDTH	225
 #define BUT_HEIGHT	55
@@ -173,7 +201,7 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 		}
 
 	//Создание виджетов списка блоков, аналогичных настройкам регулятора
-	GetBlocksID = new TRegSetupWidgets(NULL, NULL, pGetBlocksIDPars);
+	GetBlocksID = new TRegSetupWidgets(NULL, NULL, pGetBlocksIDPars, this);
 
 	GetBlocksIDList_ItemDelegate = new TGetBlocksIDList_ItemDelegate(this);
 	GetBlocksID->TableView->setItemDelegate(GetBlocksIDList_ItemDelegate);
@@ -331,6 +359,40 @@ void TOktServRegSetup::StringValue(int index, QString &str)
 		}
 	}
 
+void TOktServRegSetup::PostReqOrSetFlags(TRegSetupCmd c, int index)
+	{
+	if(!pRegSetupPars[index]->Enabled) return;
+
+	QRect rect=this->RegSetup->TableView->viewport()->rect();
+	//Верхняя строка в окне
+	int topRow=this->RegSetup->TableView->indexAt(rect.topLeft()).row();
+	//Нижняя строка в окне
+	int botRow=this->RegSetup->TableView->indexAt(rect.bottomLeft()).row();
+	//Если текущий параметр попал в видимость,то сделать запрос сразу
+	bool PostReqNow=(index>=topRow)&&(index<=botRow);
+
+	if(c==CMD_GET_VAL)
+		{
+		switch(pRegSetupPars[index]->ParType)
+			{
+			case tyHexChar:
+			case tyHexShort:
+			case tyUnsigned:
+			case tySigned:
+			case tyYesNo:
+				if(PostReqNow) PostReq(CMD_GET_VAL, index);
+				else pRegSetupPars[index]->NeedToReadVal=true;
+			default:
+				break;
+			}
+		}
+	else
+		{
+		if(PostReqNow) PostReq(c, index);
+		else pRegSetupPars[index]->NeedToReadName=true;
+		}
+	}
+
 void TOktServRegSetup::RegSetupParSetFlags(int index)
 	{
 	switch(pRegSetupPars[index]->Affect)
@@ -344,7 +406,7 @@ void TOktServRegSetup::RegSetupParSetFlags(int index)
 		case afOnValInOwnGroup:
 			for(int i=0,j=index&(~0xF);i<16;i++)
 				{
-				PostReq(CMD_GET_VAL, j+i);
+				PostReqOrSetFlags(CMD_GET_VAL, j+i);
 				}
 			break;
 
@@ -354,14 +416,14 @@ void TOktServRegSetup::RegSetupParSetFlags(int index)
 				{
 				if((i&(~0xF))!=(index&(~0xF)))
 					{
-					PostReq(CMD_GET_VAL, i);
+					PostReqOrSetFlags(CMD_GET_VAL, i);
 					}
 				}
 			break;
 
 		//Влияет только на свое собственное название
 		case afOnOwnName:
-			PostReq(CMD_GET_NAME, index);
+			PostReqOrSetFlags(CMD_GET_NAME, index);
 			break;
 
 		//Влияет на значения параметров в своей и других группах отображения
@@ -370,7 +432,7 @@ void TOktServRegSetup::RegSetupParSetFlags(int index)
 				{
 				if(i!=index)
 					{
-					PostReq(CMD_GET_VAL, i);
+					PostReqOrSetFlags(CMD_GET_VAL, i);
 					}
 				}
 			break;
@@ -379,7 +441,7 @@ void TOktServRegSetup::RegSetupParSetFlags(int index)
 		case afOnNamesInOwnGroup:
 			for(int i=0,j=index&(~0xF);i<16;i++)
 				{
-				PostReq(CMD_GET_NAME, j+i);
+				PostReqOrSetFlags(CMD_GET_NAME, j+i);
 				}
 			break;
 
@@ -389,7 +451,7 @@ void TOktServRegSetup::RegSetupParSetFlags(int index)
 				{
 				if((i&(~0xF))!=(index&(~0xF)))
 					{
-					PostReq(CMD_GET_NAME, i);
+					PostReqOrSetFlags(CMD_GET_NAME, i);
 					}
 				}
 			break;
@@ -508,7 +570,7 @@ void TOktServRegSetup::AddRow2Table_RegSetup()
 		}
 
 	//Скрыть строку, если её нет
-	RegSetup->TableView->setRowHidden(ParameterIndex,!(pRegSetupPars[ParameterIndex]->Enabled));
+	//RegSetup->TableView->setRowHidden(ParameterIndex,!(pRegSetupPars[ParameterIndex]->Enabled));
 	}
 
 //Добавление стоки в таблицу
@@ -615,7 +677,8 @@ void TOktServRegSetup::WidgetsEnabled(bool e)
 			if(pRegSetupPars[i]->Enabled)
 				for(int j=0;j<REGSETUPLIST_COLS_NUM;j++)
 					{
-					pRegSetupPars[i]->pCell[j]->setEditable(pRegSetupPars[i]->IsEditable[j]);
+					if(pRegSetupPars[i]->pCell[j]!=NULL)
+						pRegSetupPars[i]->pCell[j]->setEditable(pRegSetupPars[i]->IsEditable[j]);
 					}
 			}
 		}
@@ -835,6 +898,7 @@ FormattingReq_loc:
 						//Инициирование: чтение настроек
 						case CMD_READ_SETTINGS_DESC:
 							RegSetup->Model.clear();
+							RegSetupClear();
 							RegSetup->Model.setHorizontalHeaderLabels(QStringList() << tr("Параметр") << tr("Значение") << tr("") << tr("") << tr("") << tr("") << tr("Статус"));
 							RegSetup->TableView->setColumnWidth(REGSETUPLIST_NAME_COL, 270);
 							RegSetup->TableView->setColumnWidth(REGSETUPLIST_VAL_COL, 85);
@@ -847,6 +911,7 @@ FormattingReq_loc:
 						//Инициирование: чтение ID блоков
 						case CMD_GET_BLOCK_ID:
 							GetBlocksID->Model.clear();
+							GetBlocksIDClear();
 							GetBlocksID->Model.setHorizontalHeaderLabels(QStringList() << tr("Блок") << tr("№") << tr("ПО блока") << tr("Обновлние") << tr("Состояние"));
 							GetBlocksID->TableView->setColumnWidth(GETBLOCKSID_NAME_COL, 180);
 							GetBlocksID->TableView->setColumnWidth(GETBLOCKSID_N_COL, 25);
@@ -1027,6 +1092,7 @@ FormattingReq_loc:
 							{
 							pRegSetupPars[ParameterIndex]->Value = *(unsigned short *)&Packet.data_w[1];
 							}
+						pRegSetupPars[ParameterIndex]->NeedToReadVal=false;
 						RegSetup->TableView->update(RegSetup->Model.index(ParameterIndex, REGSETUPLIST_VAL_COL, QModelIndex()));
 						QString str;
 						StringValue(ParameterIndex, str);
@@ -1036,12 +1102,12 @@ FormattingReq_loc:
 						{
 						RegSetupParSetFlags(ParameterIndex);
 						}
-
 					Cmd=CMD_IDLE;
 					}
 #else
 				//Значение
 				pRegSetupPars[ParameterIndex]->Value = 123;
+				pRegSetupPars[ParameterIndex]->NeedToReadVal=false;
 				Cmd=CMD_IDLE;
 #endif
 				break;
@@ -1073,30 +1139,37 @@ ErrorCmd_loc:
 					{
 					int i;
 #ifdef REGSETUPDBG
-					//Значение
-					pRegSetupPars[ParameterIndex]->Value = 123;
-					pRegSetupPars[ParameterIndex]->Name=tr("тест %1").arg(ParameterIndex);
-					pRegSetupPars[ParameterIndex]->Enabled=1;
-					pRegSetupPars[ParameterIndex]->Writable=1;//ParameterIndex&1;
-					pRegSetupPars[ParameterIndex]->Affect=(TRegSetupParAffect)0;
-					pRegSetupPars[ParameterIndex]->TakenImmediately=0;
-					pRegSetupPars[ParameterIndex]->ParType=(TRegSetupParType)(1-(ParameterIndex&1));
-					float DivBy[]={1.0, 1.28, 2.56, 5.12};
-					pRegSetupPars[ParameterIndex]->DivBy=DivBy[0];
-					pRegSetupPars[ParameterIndex]->Order=0;
-					pRegSetupPars[ParameterIndex]->OnlyDecInc=0;
-					if(ParameterIndex==16)
+					if(((ParameterIndex>15)&&(ParameterIndex<48))||(ParameterIndex>127))
 						{
-						pRegSetupPars[ParameterIndex]->ParType=tyButton;
+						pRegSetupPars[ParameterIndex]->Enabled=0;
 						}
-					if(ParameterIndex==2)
+					else
 						{
-						pRegSetupPars[ParameterIndex]->Order=2;
-						pRegSetupPars[ParameterIndex]->ParType=tySigned;
+						//Значение
+						pRegSetupPars[ParameterIndex]->Value = 123;
+						pRegSetupPars[ParameterIndex]->Name=tr("тест %1").arg(ParameterIndex);
+						pRegSetupPars[ParameterIndex]->Enabled=1;
+						pRegSetupPars[ParameterIndex]->Writable=1;//ParameterIndex&1;
+						pRegSetupPars[ParameterIndex]->Affect=(TRegSetupParAffect)0;
+						pRegSetupPars[ParameterIndex]->TakenImmediately=0;
+						pRegSetupPars[ParameterIndex]->ParType=(TRegSetupParType)(1-(ParameterIndex&1));
+						float DivBy[]={1.0, 1.28, 2.56, 5.12};
+						pRegSetupPars[ParameterIndex]->DivBy=DivBy[0];
+						pRegSetupPars[ParameterIndex]->Order=0;
+						pRegSetupPars[ParameterIndex]->OnlyDecInc=0;
+						if(ParameterIndex==16)
+							{
+							pRegSetupPars[ParameterIndex]->ParType=tyButton;
+							}
+						if(ParameterIndex==2)
+							{
+							pRegSetupPars[ParameterIndex]->Order=2;
+							pRegSetupPars[ParameterIndex]->ParType=tySigned;
+							}
+						if(ParameterIndex==5) pRegSetupPars[ParameterIndex]->ParType=tyYesNo;
+						if(ParameterIndex==7) pRegSetupPars[ParameterIndex]->ParType=tyHexChar;
 						}
-					if(ParameterIndex==5) pRegSetupPars[ParameterIndex]->ParType=tyYesNo;
-					if(ParameterIndex==7) pRegSetupPars[ParameterIndex]->ParType=tyHexChar;
-
+					pRegSetupPars[ParameterIndex]->NeedToReadVal=false;
 					if(Cmd!=CMD_GET_NAME)
 						{
 						{
@@ -1113,10 +1186,25 @@ ErrorCmd_loc:
 					char buf[REG_SETUP_NAME_LEN*4+1];
 					cp1251_to_utf8(buf, NameInWin1251);
 					pRegSetupPars[ParameterIndex]->Name=buf; //+QString(tr(" (%1)")).arg(*(unsigned short *)&Packet.data[4+REG_SETUP_NAME_LEN], 4, 16, QLatin1Char('0')).toUpper();
+					pRegSetupPars[ParameterIndex]->NeedToReadName=false;
 					if(Cmd!=CMD_GET_NAME)
 						{
+						typedef struct  {
+							unsigned short Enabled		: 1;
+							unsigned short Writable		: 1;
+							unsigned short Group		: 2;
+							unsigned short Affect		: 3;
+							unsigned short TakenImmediately	: 1;
+							unsigned short ParType		: 3;
+							unsigned short DivBy		: 2;
+							unsigned short Order		: 2;
+							unsigned short OnlyDecInc	: 1;
+							} TParSettingsFields;
+
+						TParSettingsFields fields=*(TParSettingsFields *)&Packet.data[4+REG_SETUP_NAME_LEN];
+
 						//Выборка параметров
-						pRegSetupPars[ParameterIndex]->Enabled=(Packet.data[4+REG_SETUP_NAME_LEN]&0x01);
+						pRegSetupPars[ParameterIndex]->Enabled=fields.Enabled;
 						//Если первый из каждых 16ти параметров не доступен, то не также недоступны все 16
 						if(((ParameterIndex&0xF)==0)&&(pRegSetupPars[ParameterIndex]->Enabled==false))
 							{
@@ -1125,6 +1213,8 @@ ErrorCmd_loc:
 								pRegSetupPars[ParameterIndex]->Enabled=false;
 								pRegSetupPars[ParameterIndex]->Writable=false;
 								pRegSetupPars[ParameterIndex]->Affect=afNot;
+								pRegSetupPars[ParameterIndex]->NeedToReadName=false;
+								pRegSetupPars[ParameterIndex]->NeedToReadVal=false;
 								AddRow2Table_RegSetup();
 								if(++ParameterIndex>=REG_SETUP_PARS_NUM)
 									{
@@ -1134,16 +1224,15 @@ ErrorCmd_loc:
 							}
 						else
 							{
-							pRegSetupPars[ParameterIndex]->Writable=(Packet.data[4+REG_SETUP_NAME_LEN]&0x02);
-							//pRegSetupPars[ParameterIndex]->Group=(TRegSetupParGroup)((Packet.data[4+REG_SETUP_NAME_LEN]>>2)&0x3);
-							pRegSetupPars[ParameterIndex]->Affect=(TRegSetupParAffect)((Packet.data[4+REG_SETUP_NAME_LEN]>>4)&0x7);
-							pRegSetupPars[ParameterIndex]->TakenImmediately=(Packet.data[4+REG_SETUP_NAME_LEN]&0x07);
-							pRegSetupPars[ParameterIndex]->ParType=(TRegSetupParType)((Packet.data[4+REG_SETUP_NAME_LEN+1]>>(8-8))&0x7);
+							pRegSetupPars[ParameterIndex]->Writable=fields.Writable;
+							pRegSetupPars[ParameterIndex]->Affect=(TRegSetupParAffect)fields.Affect;
+							pRegSetupPars[ParameterIndex]->TakenImmediately=fields.TakenImmediately;
+							pRegSetupPars[ParameterIndex]->ParType=(TRegSetupParType)fields.ParType;
 							float DivBy[]={1.0, 1.28, 2.56, 5.12};
-							pRegSetupPars[ParameterIndex]->DivBy=DivBy[(Packet.data[4+REG_SETUP_NAME_LEN+1]>>(11-8))&0x3];
-							pRegSetupPars[ParameterIndex]->Order=(Packet.data[4+REG_SETUP_NAME_LEN+1]>>(13-8))&0x3;
-							pRegSetupPars[ParameterIndex]->OnlyDecInc=(Packet.data[4+REG_SETUP_NAME_LEN+1]&(1<<(15-8)));
-
+							pRegSetupPars[ParameterIndex]->DivBy=DivBy[fields.DivBy];
+							pRegSetupPars[ParameterIndex]->Order=fields.Order;
+							pRegSetupPars[ParameterIndex]->OnlyDecInc=fields.OnlyDecInc;
+							pRegSetupPars[ParameterIndex]->NeedToReadVal=false;
 							//Значение
 							if(pRegSetupPars[ParameterIndex]->ParType==tySigned)
 								{
@@ -1153,7 +1242,6 @@ ErrorCmd_loc:
 								{
 								pRegSetupPars[ParameterIndex]->Value = *(unsigned short *)&Packet.data_w[1];
 								}
-
 #endif
 
 							//Добавление стоки в таблицу
@@ -1580,6 +1668,118 @@ void TRegSetupPar::WriteButClick()
 	((TOktServRegSetup *)OSRS_parent)->PostReqWithStatusClear(CMD_SET_VAL, Index);
 	}
 
+
+//Событие изменения позиции вертикального ScrollBar'а
+void RegSetupTableView::verticalScrollbarValueChanged(int val)
+	{
+	int page2print;
+	QRect rect=this->viewport()->rect();
+	//Верхняя строка
+	int topRow = this->indexAt(rect.topLeft()).row();
+	if((ViewByPageMode)&&(topRow>=0))
+		{
+		//Текщуая строка, выранная
+		int currentRow = this->selectionModel()->currentIndex().row();
+		//Если есть остаток => был сдвиг содержимого => переход на др.страницу
+		if(topRow%REGSETUP_LIST_PAGESIZE>0)
+			{
+			int setRow;
+			//Сдвиг вниз?
+			if((currentRow-topRow)>(REGSETUP_LIST_PAGESIZE/2))
+				{
+				setRow=((topRow/REGSETUP_LIST_PAGESIZE)+1)*REGSETUP_LIST_PAGESIZE;
+				//Пропуск пустых страниц
+				while((!((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[currentRow]->Enabled) && (currentRow+REGSETUP_LIST_PAGESIZE<REG_SETUP_PARS_NUM))
+					{
+					currentRow+=REGSETUP_LIST_PAGESIZE;
+					setRow+=REGSETUP_LIST_PAGESIZE;
+					}
+				//Если далее список пуст...
+				if(!((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[currentRow]->Enabled) goto shiftup_loc;
+
+				//Перемещение содержимого в соответствии странице
+				this->selectRow(setRow+REGSETUP_LIST_PAGESIZE-1);
+				//Выбор верхней строки
+				this->selectRow(setRow);
+
+				//т.к. количество строк в окне не ровно 8, то при открытии последней страницы
+				//первая строка в окне не кратна 8 => не печатается её номер, надо сделать это отдельно...
+				if((topRow==this->model()->rowCount()-REGSETUP_LIST_PAGESIZE-1))
+					{
+					page2print=(topRow+1)/REGSETUP_LIST_PAGESIZE+1;
+					goto PrintPageNum_loc;
+					}
+				}
+			//Сдвиг вверх
+			else
+				{
+shiftup_loc:
+				//Пропуск пустых страниц
+				setRow=((topRow/REGSETUP_LIST_PAGESIZE))*REGSETUP_LIST_PAGESIZE;
+				while((!((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[setRow]->Enabled) && (setRow-REGSETUP_LIST_PAGESIZE>=0))
+					{
+					setRow-=REGSETUP_LIST_PAGESIZE;
+					}
+				//Перемещение содержимого в соответствии странице
+				this->selectRow(setRow);
+				//Выбор нижней строки
+				this->selectRow(setRow+REGSETUP_LIST_PAGESIZE-1);
+				}
+			}
+		else
+			{
+			page2print=topRow/REGSETUP_LIST_PAGESIZE+1;
+PrintPageNum_loc:
+			QString title;
+			for(int i=0;i<=topRow;i+=REGSETUP_LIST_PAGESIZE)
+				{
+				if(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[i]->ParType==tyTitle)
+					{
+					title=((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[i]->Name;
+					}
+				}
+			//Чтенине имён и значений для параметров на текущей странице если требуется...
+			for(int i=topRow;(i<topRow+REGSETUP_LIST_PAGESIZE)&&(i<REG_SETUP_PARS_NUM);i++)
+				{
+				if(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[i]->NeedToReadVal)
+					{
+					((TOktServRegSetup *)OSRS_parent)->PostReq(CMD_GET_VAL, i);
+					}
+				if(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[i]->NeedToReadName)
+					{
+					((TOktServRegSetup *)OSRS_parent)->PostReq(CMD_GET_NAME, i);
+					}
+				}
+			PgTxt_Label->setText(tr("СТРАНИЦА %1\n").arg(page2print)+title);
+			}
+		}
+	QTableView::verticalScrollbarValueChanged(val);
+	}
+
+void RegSetupTableView::PgUp_OnClick()
+	{
+	int currentRow = this->selectionModel()->currentIndex().row();
+	if(currentRow>=REGSETUP_LIST_PAGESIZE)
+		{
+		int setRow=((currentRow/REGSETUP_LIST_PAGESIZE)-1)*REGSETUP_LIST_PAGESIZE;
+		//Пропуск пустых страниц
+		while((!((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[setRow]->Enabled) && (setRow-REGSETUP_LIST_PAGESIZE>=0))
+			{
+			setRow-=REGSETUP_LIST_PAGESIZE;
+			}
+		this->selectRow(setRow);
+		}
+
+	else this->selectRow(0);
+	}
+
+void RegSetupTableView::PgDn_OnClick()
+	{
+	int currentRow = this->selectionModel()->currentIndex().row();
+	if(currentRow+REGSETUP_LIST_PAGESIZE<this->model()->rowCount()) this->selectRow(((currentRow/REGSETUP_LIST_PAGESIZE)+1)*REGSETUP_LIST_PAGESIZE);
+	else this->selectRow(this->model()->rowCount()-1);
+	}
+
 #ifndef  REGSETUPLIST_PERSISTENT_EDITORS
 void RegSetupTableView::OpenEditor4Index(QModelIndex current)
 	{
@@ -1751,7 +1951,7 @@ void TRegSetupList_ItemDelegate::paint(QPainter *painter, const QStyleOptionView
 			{
 			QStyleOptionViewItemV4 opt(option);
 			initStyleOption(&opt, index);
-			opt.rect.moveLeft(opt.rect.left()+2);
+			opt.rect.moveLeft(opt.rect.left()+4);
 			QStyledItemDelegate::paint(painter, opt, index);
 			return;
 			}
@@ -1761,12 +1961,12 @@ void TRegSetupList_ItemDelegate::paint(QPainter *painter, const QStyleOptionView
 
 	switch(((TOktServRegSetup *)OSRS_parent)->pRegSetupPars[index.row()]->ParType)
 		{
-		case tyButton:
 		case tyHexChar:
 		case tyHexShort:
 		case tyUnsigned:
 		case tySigned:
 		case tyYesNo:
+		case tyButton:
 		case tyName:
 			if(index.column() == REGSETUPLIST_NAME_COL)
 				{
