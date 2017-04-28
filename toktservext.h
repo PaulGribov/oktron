@@ -34,7 +34,6 @@ class TOktServExt : public TOktServ
 		void StartStop(bool);
 		void Retranslate();
 		QLabel *RegState_Label;
-		int server_index;
 		void *okt_serv_other;
 		bool FirstDataAsquired;
 
@@ -58,7 +57,6 @@ class TOktServExt : public TOktServ
 	private:
 		TOscDataWithIndic previous_od;
 		int PktCntPrescale;
-		static int server_count;
 	};
 
 

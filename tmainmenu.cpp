@@ -107,6 +107,12 @@ void TMainMenu::RegsSetup_Button_OnClick()
 	OktServExt[0]->RegSetup_MainWindow->showNormal();
 #endif
 	OktServExt[0]->RegSetup_Tab->setFocus();
+	//Сброс отображения ошибок
+	for(int j=0;j<2;j++)
+		{
+		OktServExt[j]->RegSetup_tabWidget->setTabText(j, OktServExt[j]->Name);
+		OktServExt[j]->RegSetup_tabWidget->setTabIcon(j, QIcon(""));
+		}
 	}
 
 void TMainMenu::ProgSettings_Button_OnClick()
@@ -143,4 +149,10 @@ void TMainMenu::GetBlocksID_Button_OnClick()
 #else
 	OktServExt[0]->GetBlocksID_MainWindow->showNormal();
 #endif
+	//Сброс отображения ошибок
+	for(int j=0;j<2;j++)
+		{
+		OktServExt[j]->GetBlocksID_tabWidget->setTabText(j, OktServExt[j]->Name);
+		OktServExt[j]->GetBlocksID_tabWidget->setTabIcon(j, QIcon(""));
+		}
 	}

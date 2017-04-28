@@ -203,6 +203,13 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 	//Создание виджетов списка блоков, аналогичных настройкам регулятора
 	GetBlocksID = new TRegSetupWidgets(NULL, NULL, pGetBlocksIDPars, this);
 
+	UpdateAll_Button = new xButton(GenBut, QIcon(":/images/advancedsettings.png"), 32, Qt::ToolButtonTextBesideIcon);
+	GetBlocksID->ButtonsBar.Layout->insertWidget(0,UpdateAll_Button);
+	UpdateAll_Button->setMinimumWidth(210);
+	GetBlocksID->ButtonsBar.Reload_Button->setMinimumWidth(220);
+	GetBlocksID->ButtonsBar.Close_Button->setMinimumWidth(175);
+
+
 	GetBlocksIDList_ItemDelegate = new TGetBlocksIDList_ItemDelegate(this);
 	GetBlocksID->TableView->setItemDelegate(GetBlocksIDList_ItemDelegate);
 
@@ -211,6 +218,8 @@ TOktServRegSetup::TOktServRegSetup(QWidget *RegSetupParent, QWidget *GetBlocksID
 
 	GetBlocksIDParent->setLayout(GetBlocksID->Layout);
 
+	BusyFlag=false;
+
 	Retranslate();
 	}
 
@@ -218,6 +227,7 @@ void TOktServRegSetup::Retranslate()
 	{
 	YESNO_sl.clear();
 	YESNO_sl << tr("НЕТ") << tr("ДА");
+	UpdateAll_Button->setText(tr("ОБНОВ.ВСЁ"));
 	ChangesCopyBetweenRegs_Button->setText(tr("КОПИР.:\nОСН.-РЕЗ."));
 	RegSetup->ButtonsBar.Reload_Button->setText(tr("ПЕРЕЧИТАТЬ"));
 	RegSetup->ButtonsBar.Close_Button->setText(tr("ЗАКРЫТЬ"));
@@ -227,6 +237,7 @@ void TOktServRegSetup::Retranslate()
 	GetBlocksID->ButtonsBar.Close_Button->setText(tr("ЗАКРЫТЬ"));
 	RegSetupErrors_StringList.clear();
 	RegSetupErrors_StringList  \
+	<< tr("Нет")\
 	<< tr("Таймаут при получении пакета от блока связи")\
 	<< tr("Таймаут при получении пакета от ведущего блока")\
 	<< tr("Таймаут при получении ответа от ведущего блока")\
@@ -274,10 +285,6 @@ void TOktServRegSetup::StopService()
 	Stop();
 	}
 
-bool TOktServRegSetup::IsBusy()
-	{
-	return (Cmd!=CMD_IDLE)&&(Cmd!=CMD_ERROR);
-	}
 
 void TOktServRegSetup::GetBlocksID_CloseSlot()
 	{
@@ -636,7 +643,7 @@ BlockFound_loc:
 		}
 	pGetBlocksIDPars[ParameterIndex]->Id=id;
 	pGetBlocksIDPars[ParameterIndex]->Addr=BlockAddr;
-	pGetBlocksIDPars[ParameterIndex]->Updatable=updatable;
+	pGetBlocksIDPars[ParameterIndex]->Updateble=updatable;
 	GetBlocksID->Model.appendRow(items);
 
 	//Скрыть строку, если её нет
@@ -648,6 +655,8 @@ void TOktServRegSetup::WidgetsEnabled(bool e)
 	//Скрыть кнопку
 	if(!e)
 		{
+		BusyFlag=true;
+		UpdateAll_Button->setEnabled(false);
 		ChangesCopyBetweenRegs_Button->setEnabled(false);
 		SettingsApply_Button->setEnabled(false);
 		SaveSettings_Button->setEnabled(false);
@@ -668,9 +677,16 @@ void TOktServRegSetup::WidgetsEnabled(bool e)
 		{
 		if(RegSetup->TableView->isEnabled())
 			{
+			bool updateall_is_enable=false;
+			for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
+				{
+				if(pGetBlocksIDPars[i]->Updateble) { updateall_is_enable=true; break; }
+				}
+			UpdateAll_Button->setEnabled(updateall_is_enable);
 			ChangesCopyBetweenRegs_Button->setEnabled(true);
 			SettingsApply_Button->setEnabled(true);
 			SaveSettings_Button->setEnabled(true);
+			BusyFlag=false;
 			}
 		for(int i=0;i<REG_SETUP_PARS_NUM;i++)
 			{
@@ -729,11 +745,7 @@ void TOktServRegSetup::RegSetupReq()
 
 		case CMD_IDLE:
 			if(prevCmd==Cmd) break;
-			//Очередь пуста - сделать доступными элементы
-			if(ReqSeqIndex==0)
-				{
-				WidgetsEnabled(true);
-				}
+
 			switch(prevCmd)
 				{
 				//Параметры прочтены - показать список
@@ -768,6 +780,12 @@ void TOktServRegSetup::RegSetupReq()
 				default:
 					break;
 				}
+			//Очередь пуста - сделать доступными элементы
+			if(ReqSeqIndex==0)
+				{
+				WidgetsEnabled(true);
+				}
+			ReqResultCallback_Signal(LastErrorCode, OktServ);
 			break;
 
 		case CMD_ERROR:
@@ -779,12 +797,6 @@ void TOktServRegSetup::RegSetupReq()
 			if(LastErrorCode<RegSetupErrors_StringList.count())
 				{
 				ErrMsg=tr("Ошибка: ")+RegSetupErrors_StringList[LastErrorCode];
-				}
-
-			//Очередь пуста - сделать доступными элементы
-			if(ReqSeqIndex==0)
-				{
-				WidgetsEnabled(true);
 				}
 
 			switch(prevCmd)
@@ -826,7 +838,7 @@ void TOktServRegSetup::RegSetupReq()
 					//Если не было таймаута, то вывод ошибки связи
 					if(HexUploadTimeout<10)
 						{
-						pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(102));
+						pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(tr("Ошибка связи"));
 						}
 					}
 					break;
@@ -835,6 +847,13 @@ void TOktServRegSetup::RegSetupReq()
 				default:
 					break;
 				}
+			//Очередь пуста - сделать доступными элементы
+			if(ReqSeqIndex==0)
+				{
+				WidgetsEnabled(true);
+				}
+
+			ReqResultCallback_Signal(LastErrorCode, OktServ);
 #ifdef __i3_86__
 			RegSetup_QTimer->stop();
 			QMessageBox::critical(0, QObject::tr("Ошибка"), ErrMsg);
@@ -861,7 +880,7 @@ void TOktServRegSetup::RegSetupReq()
 		case CMD_PUT_CODE_BLOCK:
 			{
 			if(prevCmd==Cmd) break;
-			pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(0));
+			pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(tr(""));
 			}
 			break;
 		}
@@ -885,6 +904,7 @@ FormattingReq_loc:
 					{
 					QMutexLocker locker(&ReqSeqLock);
 					WidgetsEnabled(false);
+					LastErrorCode=errNO;
 					Cmd=ReqSeq[0].c;
 					ParameterIndex=ReqSeq[0].index;
 					TimeoutCnt=0;
@@ -930,7 +950,7 @@ FormattingReq_loc:
 							else
 								{
 								if(pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]!=NULL)
-									pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(104));
+									pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(tr("Ошибка 'HEX'"));
 								LastErrorCode=errHexFileNotLoaded;
 								Cmd=CMD_ERROR;
 								}
@@ -1334,14 +1354,16 @@ T8R-0001 122800");
 						HexUploadTimeout=0;
 						if(++HexLineIndex<HexLinesNumber)
 							{
+							int n=HexLineIndex*100/HexLinesNumber;
+							if(n==0) n=1;
 							if(pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]!=NULL)
-								pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(HexLineIndex*100/HexLinesNumber));
+								pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(n));
 							}
 						break;
 					//команда выполнена, запись закончена
 					case 1:
 						if(pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]!=NULL)
-							pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(101));
+							pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(tr("Обнов-\nлено"));
 						Cmd=CMD_IDLE;
 						break;
 					//команда не выполнена, устройство не отвечает
@@ -1354,7 +1376,7 @@ T8R-0001 122800");
 						if(++HexUploadTimeout>10)
 							{
 							if(pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]!=NULL)
-								pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(103));
+								pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(tr("Таймаут, занят"));
 							LastErrorCode=errPutCodeBlock_DeviceBusyTimeout;
 							Cmd=CMD_ERROR;
 							}
@@ -1367,7 +1389,7 @@ T8R-0001 122800");
 					}
 				else
 					{
-					pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(QString::number(101));
+					pGetBlocksIDPars[ParameterIndex]->pCell[GETBLOCKSID_STATUS_COL]->setText(tr("Обнов."));
 					Cmd=CMD_IDLE;
 					}
 #endif
@@ -1415,7 +1437,7 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 	for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
 		{
 #ifndef REG_SETUPDBG
-		pGetBlocksIDPars[i]->Updatable=false;
+		pGetBlocksIDPars[i]->Updateble=false;
 		pGetBlocksIDPars[i]->HexId=tr("");
 		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL])
 			{
@@ -1426,7 +1448,7 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 			pGetBlocksIDPars[i]->pCell[GETBLOCKSID_UPDATE_COL]->setIcon(QIcon());
 			}
 #else
-		pGetBlocksIDPars[i]->Updatable=(i&0x01)?true:false;
+		pGetBlocksIDPars[i]->Updateble=(i&0x01)?true:false;
 		pGetBlocksIDPars[i]->HexId=tr("T8R-12345678");
 		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL])
 			{
@@ -1434,7 +1456,7 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 			}
 		if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_UPDATE_COL])
 			{
-			pGetBlocksIDPars[i]->pCell[GETBLOCKSID_UPDATE_COL]->setIcon(QIcon((pGetBlocksIDPars[i]->Updatable)?":/images/advancedsettings.png":""));
+			pGetBlocksIDPars[i]->pCell[GETBLOCKSID_UPDATE_COL]->setIcon(QIcon((pGetBlocksIDPars[i]->Updateble)?":/images/advancedsettings.png":""));
 			}
 #endif
 		}
@@ -1451,7 +1473,7 @@ void TOktServRegSetup::FindHEXs_GetBlocksID()
 				str=str.left(3).toUpper();
 				if(name.indexOf(str)!=-1)
 					{
-					pGetBlocksIDPars[i]->Updatable=true;
+					pGetBlocksIDPars[i]->Updateble=true;
 					pGetBlocksIDPars[i]->HexId=name;
 					qDebug() << tr("Hex: ") << name;
 					if(pGetBlocksIDPars[i]->pCell[GETBLOCKSID_ID_HEXFILE_COL])
@@ -1792,16 +1814,16 @@ void RegSetupTableView::OpenEditor4Index(QModelIndex current)
 		pRegSetupPars[current.row()]->Writable)||
 		   ((current.column()==REGSETUPLIST_NAME_COL)&&(pRegSetupPars[current.row()]->ParType==tyButton))))
 			{
-			if(!((TOktServRegSetup *)OSRS_parent)->IsBusy())
+			//if(!((TOktServRegSetup *)OSRS_parent)->IsBusy())
 				{
 				pRegSetupPars[current.row()]->pCell[current.column()]->setIcon(QIcon());
 				edit(current);
 				pRegSetupPars[current.row()]->EditorIsOpened[current.column()]=true;
 				}
 			}
-		else if((pGetBlocksIDPars)&&(current.column()==GETBLOCKSID_UPDATE_COL)&&(pGetBlocksIDPars[current.row()]->Updatable))
+		else if((pGetBlocksIDPars)&&(current.column()==GETBLOCKSID_UPDATE_COL)&&(pGetBlocksIDPars[current.row()]->Updateble))
 			{
-			if(!((TOktServRegSetup *)OSRS_parent)->IsBusy())
+			//if(!((TOktServRegSetup *)OSRS_parent)->IsBusy())
 				{
 				pGetBlocksIDPars[current.row()]->pCell[current.column()]->setIcon(QIcon());
 				edit(current);
@@ -1848,7 +1870,7 @@ void RegSetupTableView::CloseEditor4Index(QModelIndex previous)
 					break;
 				}
 			}
-		else if((pGetBlocksIDPars)&&(previous.column()==GETBLOCKSID_UPDATE_COL)&&(pGetBlocksIDPars[previous.row()]->Updatable))
+		else if((pGetBlocksIDPars)&&(previous.column()==GETBLOCKSID_UPDATE_COL)&&(pGetBlocksIDPars[previous.row()]->Updateble))
 			{
 			pGetBlocksIDPars[previous.row()]->pCell[previous.column()]->setIcon(QIcon(":/images/advancedsettings.png"));
 			}
@@ -2274,52 +2296,24 @@ void TGetBlocksIDList_ItemDelegate::paint(QPainter *painter, const QStyleOptionV
 		case GETBLOCKSID_STATUS_COL:
 			{
 			int progress = index.data(Qt::DisplayRole).toInt();
-			QStyleOptionProgressBar progressBarOption;
-			progressBarOption.rect = option.rect;
-			progressBarOption.rect.setHeight(progressBarOption.rect.height()-1);
-			progressBarOption.rect.setTop(progressBarOption.rect.top()+1);
-			progressBarOption.rect.setWidth(progressBarOption.rect.width()-1);
-			progressBarOption.rect.setLeft(progressBarOption.rect.left()+1);
-			progressBarOption.minimum = 1;
-			progressBarOption.maximum = 100;
-			progressBarOption.progress = progress;
-			//Код 0 - ничего нет
-			if(progress==0)
+			if(progress>0)
 				{
-				break;
-				}
-			//Код 101 - Сохранена
-			else if(progress==101)
-				{
-				progressBarOption.text = tr("Обнов.");
-				}
-			//Код 102 - Ошибка
-			else if(progress==102)
-				{
-				progressBarOption.progress = 0;
-				progressBarOption.text = tr("Ошибка связи");
-				}
-			//Код 103 - Таймаут
-			else if(progress==103)
-				{
-				progressBarOption.progress = 0;
-				progressBarOption.text = tr("Таймаут, занят");
-				}
-			//Код 104 - Ошибка файла
-			else if(progress==104)
-				{
-				progressBarOption.progress = 0;
-				progressBarOption.text = tr("Ошибка 'HEX'");
-				}
-			else
-				{
+				QStyleOptionProgressBar progressBarOption;
+				progressBarOption.rect = option.rect;
+				progressBarOption.rect.setHeight(progressBarOption.rect.height()-1);
+				progressBarOption.rect.setTop(progressBarOption.rect.top()+1);
+				progressBarOption.rect.setWidth(progressBarOption.rect.width()-1);
+				progressBarOption.rect.setLeft(progressBarOption.rect.left()+1);
+				progressBarOption.minimum = 1;
+				progressBarOption.maximum = 100;
+				progressBarOption.progress = progress;
 				progressBarOption.text = QString::number(progress) + "%";
+				progressBarOption.textAlignment = Qt::AlignHCenter;
+				progressBarOption.textVisible = true;
+				QApplication::style()->drawControl(QStyle::CE_ProgressBar, &progressBarOption, painter);
+				return;
 				}
-			progressBarOption.textAlignment = Qt::AlignHCenter;
-			progressBarOption.textVisible = true;
-
-			QApplication::style()->drawControl(QStyle::CE_ProgressBar, &progressBarOption, painter);
-			return;
+			break;
 			}
 
 		default:

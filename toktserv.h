@@ -57,7 +57,7 @@ class TOktServ : public QWidget
 		int ErrorFlags;
 #define OKTSERVERR_TIMEOUT_FLAG			0x01
 		void DataSender();
-
+		int server_index;
 #if defined(Q_OS_WIN)
 		void PortSettingsApply();
 		void PrintPortsParameters();
@@ -93,6 +93,7 @@ class TOktServ : public QWidget
 #else
 		int CommPortFD;
 #endif
+		static int server_count;
 	};
 
 #define OKTSERV_BOX_MINWIDTH    200

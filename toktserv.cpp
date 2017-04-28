@@ -1,6 +1,7 @@
 #include "toktserv.h"
 #include "mainwindow.h"
 
+int TOktServ::server_count=0;
 
 #if defined(Q_OS_WIN)
 TCommPortSettingsTexts TOktServ::CommPortSettingsTexts;
@@ -13,6 +14,7 @@ TOktServ::TOktServ(QGroupBox *PortSettings_GroupBox
 #endif
 		) : QWidget(PortSettings_GroupBox)
 	{
+	server_index=server_count++;
 	TimeoutCnt=0;
 	ErrorFlags=0;
 	StateOn=false;

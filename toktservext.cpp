@@ -1,6 +1,5 @@
 #include "toktservext.h"
 
-int TOktServExt::server_count=0;
 QMainWindow *TOktServExt::RegSetup_MainWindow=NULL;
 xTabWidget *TOktServExt::RegSetup_tabWidget=NULL;
 QPixmap *TOktServExt::wait_qp[4]={NULL, NULL, NULL, NULL};
@@ -13,9 +12,7 @@ TOktServExt::TOktServExt(QGroupBox *PortSettings_GroupBox
 #else
 		, QLabel *RegState_Label) : TOktServ(PortSettings_GroupBox)
 #endif
-	{
-	server_index=server_count++;
-
+	{	
 	this->RegState_Label=(RegState_Label==NULL)?new QLabel():RegState_Label;
 
 	connect(this, SIGNAL(DataUpdate(TOscDataWithIndic &)), this, SLOT(GetDataOktServ(TOscDataWithIndic &)));
@@ -42,9 +39,10 @@ TOktServExt::TOktServExt(QGroupBox *PortSettings_GroupBox
 	if(RegSetup_tabWidget==NULL)
 		{
 		RegSetup_tabWidget = new xTabWidget(RegSetup_MainWindow);
-		RegSetup_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(24).arg(180).arg(36));
+		RegSetup_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(24).arg(250).arg(36));
 		RegSetup_MainWindow->setCentralWidget(RegSetup_tabWidget);
 		RegSetup_tabWidget->setVisible(true);
+		RegSetup_tabWidget->setIconSize(QSize(32,32));
 		}
 	RegSetup_Tab = new QWidget(RegSetup_MainWindow); //Закладка
 	RegSetup_tabWidget->addTab(RegSetup_Tab/*, QIcon(":/images/advancedsettings.png")*/, "");
@@ -55,13 +53,13 @@ TOktServExt::TOktServExt(QGroupBox *PortSettings_GroupBox
 		GetBlocksID_MainWindow = new QMainWindow();
 		GetBlocksID_MainWindow->setWindowIcon(QIcon(":/images/memory.png"));
 		}
-
 	//Виджет закладок
 	if(GetBlocksID_tabWidget==NULL)
 		{
 		GetBlocksID_tabWidget = new xTabWidget(GetBlocksID_MainWindow);
-		GetBlocksID_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(24).arg(180).arg(36));
+		GetBlocksID_tabWidget->setStyleSheet(xTabWidgetStyleSheet.arg(24).arg(250).arg(36));
 		GetBlocksID_MainWindow->setCentralWidget(GetBlocksID_tabWidget);
+		GetBlocksID_tabWidget->setIconSize(QSize(32,32));
 		}
 	GetBlocksID_Tab = new QWidget(GetBlocksID_MainWindow); //Закладка
 	GetBlocksID_tabWidget->addTab(GetBlocksID_Tab/*, QIcon(":/images/memory.png")*/, "");

@@ -180,12 +180,12 @@ class TGetBlocksIDPar : public QWidget
 				{
 				pCell[i]=NULL;
 				}
-			Updatable=false;
+			Updateble=false;
 			}
 
 		QString Id;
 		QString HexId;
-		bool Updatable;
+		bool Updateble;
 		int Addr;
 		QStandardItem *pCell[GETBLOCKSID_COLS_NUM];	//Указатель на ячейку
 
@@ -375,6 +375,17 @@ class TRegSetupWidgets : public QWidget
 			} ButtonsBar;
 	};
 
+typedef enum
+	{errNO=0,
+	errIOPacketReceiveTimeout,
+	errIOPacketDeliveredTimeout,
+	errAnswerTimeout,
+	errBlocksExistsInvalidAnswer,
+	errPutCodeBlock_DeviceBusyTimeout,
+	errPutCodeBlock_DeviceNotExists,
+	errProcessAborted,
+	errHexFileNotLoaded,
+	} TRegSetupErrors;
 
 class TOktServRegSetup : public QWidget
 	{
@@ -395,10 +406,10 @@ class TOktServRegSetup : public QWidget
 				pGetBlocksIDPars[i]->Clear();
 				}
 			}
-		xButton *ChangesCopyBetweenRegs_Button;
+		xButton *ChangesCopyBetweenRegs_Button;		
 		xButton *SettingsApply_Button;
 		xButton *SaveSettings_Button;
-
+		xButton *UpdateAll_Button;
 #define	REQ_SEQ_LEN	300
 		struct {
 			TRegSetupCmd c;
@@ -453,24 +464,25 @@ class TOktServRegSetup : public QWidget
 				}
 			return PostReq(c, index);
 			}
+
+		bool IsBusy()
+			{
+			return BusyFlag || (ReqSeqIndex>0);
+			}
+
+		int GetLastError()
+			{
+			return LastErrorCode;
+			}
+
 		void PostReqOrSetFlags(TRegSetupCmd, int);
 		void RegSetupParSetFlags(int);
 		QStringList GetBlocksID_StringList;
 		void FindHEXs_GetBlocksID();
 		bool LoadHEX_GetBlocksID(QString);
-		bool IsBusy();
 		void Start_Service();
 		void StopService();
 		void Retranslate();
-
-typedef enum	{errIOPacketReceiveTimeout=0,
-		errIOPacketDeliveredTimeout,
-		errAnswerTimeout,
-		errBlocksExistsInvalidAnswer,
-		errPutCodeBlock_DeviceBusyTimeout,
-		errPutCodeBlock_DeviceNotExists,
-		errProcessAborted,
-		errHexFileNotLoaded, } TRegSetupErrors;
 
 		int LastErrorCode;
 		QStringList RegSetupErrors_StringList;
@@ -486,6 +498,7 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 		int HexLineIndex, HexLinesNumber;
 		QStringList HexFile_StringList;
 		int HexUploadTimeout;
+		bool BusyFlag;
 
 		volatile bool Wait4Parameter;
 		int TimeoutCnt, IOPacketDeliveredTimeoutCnt, IOPacketReceiveTimeoutCnt;
@@ -504,6 +517,7 @@ typedef enum	{errIOPacketReceiveTimeout=0,
 
 		void RegSetupReqEvent_Signal(TRegSetupCmd, int);
 		void ChangeValEvent_Signal(int, int);
+		void ReqResultCallback_Signal(int, TOktServ *);
 
 	public slots:
 		void ReadSettingsDesc();

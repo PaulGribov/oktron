@@ -46,5 +46,6 @@
         <file>images/spin_up_enabled.png</file>
         <file>images/but_off_enabled.png</file>
         <file>images/but_on_enabled.png</file>
+        <file>images/warning48.png</file>
     </qresource>
 </RCC>

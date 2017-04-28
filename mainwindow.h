@@ -43,6 +43,7 @@ class MainWindow : public QMainWindow
 		QMainWindow *Baner_MainWindow;
 		QLabel *Baner0_Label;
 		QLabel *Baner1_Label;
+		QLabel *Baner2_Label;
 		int watchdog_fd;
 
 		void Connect_Disconnect(bool state);
@@ -81,11 +82,13 @@ class MainWindow : public QMainWindow
 		void DataSender();
 		void Retranslate();
 		void ChangesCopyBetweenRegsStateChanged();
+		void UpdateAll();
+		void RegSetup_GetResult(int, TOktServ *);
 
 	private:
 		Ui::MainWindow *ui;
 		TOktServExt *cur_okt_serv;
-
+		int ErrorsCount[2];
 		unsigned short KeysState;
 #define OKT_KEYS_NUM	16
 		int KeyTimeCnt[OKT_KEYS_NUM];

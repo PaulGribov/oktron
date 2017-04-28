@@ -71,10 +71,17 @@ MainWindow::MainWindow(QWidget *parent)
 		{
 		connect(OktServExt[i], SIGNAL(DataProcessLocal(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)), this, SLOT(DataProcess(TOscDataWithIndic &, TOscDataWithIndic &, TOktServExt *, int, bool)));
 		PrintDataEnabled[i]=true;
+		ErrorsCount[i]=0;
+
+		//Подключить кнопку дублирования настроек
+		connect(OktServExt[i]->RegSetup_GetBlocksID->ChangesCopyBetweenRegs_Button, SIGNAL(clicked()), this, SLOT(ChangesCopyBetweenRegsStateChanged()));
+
+		//Подключить кнопку полного обновления
+		connect(OktServExt[i]->RegSetup_GetBlocksID->UpdateAll_Button, SIGNAL(clicked()), this, SLOT(UpdateAll()));
+
+		//Подключить слот результата запроса
+		connect(OktServExt[i]->RegSetup_GetBlocksID, SIGNAL(ReqResultCallback_Signal(int,TOktServ *)), this, SLOT(RegSetup_GetResult(int,TOktServ *)));
 		}
-	//Подключить кнопки дублирования настроек
-	connect(OktServExt[0]->RegSetup_GetBlocksID->ChangesCopyBetweenRegs_Button, SIGNAL(clicked()), this, SLOT(ChangesCopyBetweenRegsStateChanged()));
-	connect(OktServExt[1]->RegSetup_GetBlocksID->ChangesCopyBetweenRegs_Button, SIGNAL(clicked()), this, SLOT(ChangesCopyBetweenRegsStateChanged()));
 
 	ProgSettings->GeneralSettings.AutomaticStart=true;
 	ProgSettings->Load();
@@ -133,6 +140,9 @@ MainWindow::MainWindow(QWidget *parent)
 	font: 32pt;\
 	");\
 	Baner_Layout->addWidget(Baner1_Label, 0, Qt::AlignHCenter | Qt::AlignTop);
+	Baner2_Label = new QLabel(Baner_MainWindow);
+	Baner_Layout->addWidget(Baner2_Label, 0, Qt::AlignHCenter | Qt::AlignTop);
+	Baner2_Label->setVisible(false);
 
 	for(int i=0;i<OKT_KEYS_NUM;i++) KeyTimeCnt[i]=0;
 	KeysPoll_QTimer = new QTimer(this);
@@ -185,6 +195,82 @@ void MainWindow::ChangesCopyBetweenRegsStateChanged()
 	OktServExt[0]->RegSetup_GetBlocksID->ChangesCopyBetweenRegs_Button->setIcon(icon);
 	OktServExt[1]->RegSetup_GetBlocksID->ChangesCopyBetweenRegs_Button->setIcon(icon);
 	}
+
+void MainWindow::RegSetup_GetResult(int e, TOktServ *o)
+	{
+	int j=o->server_index;
+	if(e)
+		{
+		ErrorsCount[j]++;
+		OktServExt[j]->RegSetup_tabWidget->setTabIcon(j, QIcon(":/images/warning48.png"));
+		//OktServExt[j]->RegSetup_tabWidget->setTabText(j, tr("(%1)").arg(++ErrorsCount[j])+OktServExt[j]->Name);
+		}
+	}
+
+
+#define UPDATE_IS_BUSY ((OktServExt[0]->RegSetup_GetBlocksID->IsBusy()) || (OktServExt[1]->RegSetup_GetBlocksID->IsBusy()))
+void MainWindow::UpdateAll()
+	{
+	if(UPDATE_IS_BUSY) return;
+	int attepts;
+	bool result=true;
+	Baner0_Label->setText(tr("Идёт процесс обновления..."));
+	Baner1_Label->setText(tr(""));
+	Baner2_Label->setVisible(true);
+#ifndef __i386__
+	Baner_MainWindow->showFullScreen();
+#else
+	Baner_MainWindow->showNormal();
+#endif
+	int k=0;
+	for(int j=0;j<2;j++)
+		{
+		//Отключить слот результата запроса
+		disconnect(OktServExt[j]->RegSetup_GetBlocksID, SIGNAL(ReqResultCallback_Signal(int,TOktServ *)), this, SLOT(RegSetup_GetResult(int,TOktServ *)));
+
+		//Отключить кнопку 'Обновить всё' у соседнего регулятора
+		OktServExt[(j==0)?1:0]->RegSetup_GetBlocksID->UpdateAll_Button->setEnabled(false);
+		for(int i=0;i<GETBLOCKSID_PARS_NUM;i++)
+			{
+			attepts=3;
+			do
+				{
+				if(OktServExt[j]->RegSetup_GetBlocksID->pGetBlocksIDPars[i]->Updateble)
+					{
+					Baner1_Label->setText(OktServExt[j]->Name+tr(": ")+OktServExt[j]->RegSetup_GetBlocksID->pGetBlocksIDPars[i]->HexId);
+					OktServExt[j]->RegSetup_GetBlocksID->PostReq(CMD_PUT_CODE_BLOCK, i);
+					}
+				while(UPDATE_IS_BUSY)
+					{
+					QPixmap pic(*TOktServExt::wait_qp[((k++)>>3)&0x03]);
+					Baner2_Label->setPixmap(pic);
+					QApplication::processEvents();
+					}
+				}while((OktServExt[j]->RegSetup_GetBlocksID->GetLastError()>0)&&(--attepts>0));
+			if(OktServExt[j]->RegSetup_GetBlocksID->GetLastError()>0)
+				{
+				OktServExt[j]->GetBlocksID_tabWidget->setTabIcon(j, QIcon(":/images/warning48.png"));
+				result=false;
+				}
+			}
+
+		//Включить кнопку 'Обновить всё' у соседнего регулятора
+		OktServExt[(j==0)?1:0]->RegSetup_GetBlocksID->UpdateAll_Button->setEnabled(true);
+
+		//Вернуть слот обратно
+		connect(OktServExt[j]->RegSetup_GetBlocksID, SIGNAL(ReqResultCallback_Signal(int,TOktServ *)), this, SLOT(RegSetup_GetResult(int,TOktServ *)));
+		}
+
+	WDT_RST_MAINWINDOW() //Сброс Wdt
+	Baner0_Label->setText(tr("Обновление завершено:"));
+	Baner1_Label->setText((result)?tr("Успешно!"):tr("Есть ошибки!"));
+	Baner2_Label->setVisible(false);
+	QApplication::processEvents();
+	sleep(5);
+	WDT_RST_MAINWINDOW() //Сброс Wdt
+	Baner_MainWindow->close();
+	}
+
 
 void MainWindow::Retranslate()
 	{
@@ -452,7 +538,7 @@ void MainWindow::ChildWindowClose(bool CloseAnyway)
 		{
 		w=w->parentWidget();
 		}
-	if((w!=this)&&(w!=MainMenu)) w->close();
+	if((w!=this)&&(w!=MainMenu)&&(w!=Baner_MainWindow)) w->close();
 	}
 
 void MainWindow::KeysPoll()
